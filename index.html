@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS需求：發票作廢與贈品回收優化 (RQ202601102)</title>
+    <title>商場POS-發票作廢贈品回收優化 (RQ202601102)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
@@ -11,15 +11,30 @@
         
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f5f5f4; /* Warm neutral background */
+            background-color: #f3f4f6;
+            color: #1f2937;
         }
 
+        /* Thermal Receipt Styling */
         .receipt-paper {
             background-color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             border: 1px solid #e5e5e5;
             position: relative;
+            transition: all 0.3s ease;
+            width: 300px;
+        }
+
+        .receipt-paper::before {
+            content: "";
+            position: absolute;
+            top: -5px;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%) -7px -8px / 16px 16px repeat-x;
+            transform: rotate(180deg);
         }
 
         .receipt-paper::after {
@@ -32,553 +47,482 @@
             background: radial-gradient(circle, transparent, transparent 50%, #ffffff 50%, #ffffff 100%) -7px -8px / 16px 16px repeat-x;
         }
 
-        .step-connector {
-            position: absolute;
-            top: 50%;
-            left: 100%;
-            width: 2rem;
-            height: 2px;
-            background-color: #d1d5db;
-            transform: translateY(-50%);
-            z-index: 0;
+        .printer-slot {
+            height: 12px;
+            background: #111827;
+            border-radius: 6px;
+            width: 260px;
+            margin: 0 auto 0 auto;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 20;
         }
 
-        .step-active .step-connector {
-            background-color: #f97316; /* Orange-500 */
+        .toggle-btn.active {
+            background-color: #ea580c; /* Orange-600 */
+            color: white;
+            border-color: #ea580c;
         }
 
+        .section-highlight {
+            border-left: 4px solid #ea580c;
+        }
+        
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
-            max-height: 400px;
-        }
-
-        /* Custom scrollbar for receipt preview if needed */
-        .receipt-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-        .receipt-scroll::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .receipt-scroll::-webkit-scrollbar-thumb {
-            background: #d4d4d4;
-            border-radius: 3px;
-        }
-
-        .tab-active {
-            border-bottom: 2px solid #f97316;
-            color: #ea580c;
-            font-weight: 600;
+            height: 200px;
         }
     </style>
-    <!-- Chosen Palette: Warm Neutrals with Orange/Terracotta Accents for emphasis against a clean technical background. -->
-    <!-- Application Structure Plan: 
-         1. Executive Dashboard: High-level summary of the goal and status.
-         2. Interactive Logic Simulator: The core tool. Allows users to toggle between "Current Period" and "Cross Period" scenarios to see the exact difference in printing output (Receipt Visualization). This directly addresses the complex "Printing Logic" requirement.
-         3. SOP Flow Explorer: A horizontal interactive stepper that breaks down the 4-step process. Clicking a step reveals technical details (Data Enrichment points) and operational actions.
-         4. Impact Analysis: A data visualization section justifying the change through projected error reduction and efficiency gains.
-         This structure moves from "What" (Goal) to "How" (Logic/Receipts) to "Process" (SOP) to "Why" (Impact), facilitating full understanding. -->
-    <!-- Visualization & Content Choices: 
-         1. Dynamic Receipt Preview (HTML/CSS): To visualize "Printing Logic Optimization". Goal: Show exactly what the new slip looks like. Interaction: Toggle scenarios. Justification: Text description of receipts is abstract; visual proof is better.
-         2. SOP Stepper (HTML/CSS/JS): To visualize "System Operation Process". Goal: Walk through the flow. Interaction: Click to expand details. Justification: Process flows are linear and best understood step-by-step.
-         3. Bar/Pie Charts (Chart.js): To visualize "Expected Benefits". Goal: Quantify impact. Interaction: Hover for values. Justification: Standard way to show metrics. 
-         4. Data Structure Cards: To visualize "Data Enrichment". Goal: Show backend data points. -->
+    <!-- Chosen Palette: Professional System Grey with High-Vis Orange for Alerts/Actions -->
+    <!-- Structure: 
+         1. Executive Summary (Goals & Priorities)
+         2. Logic Simulator (The Receipt Previewer - CORE)
+         3. Cumulative Logic Explainer (Why Original != Return)
+         4. Functionality Spec (Reprint vs Auto-print)
+    -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
-<body class="text-gray-700">
+<body class="antialiased">
 
-    <!-- Navigation / Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <span class="text-2xl font-bold text-gray-800 tracking-tight">POS發票作廢贈品回收優化</span>
-                    <span class="ml-3 px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">Q1 目標</span>
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl font-bold text-gray-800 tracking-tight">商場POS</span>
+                    <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded">v2.0 Q1目標</span>
                 </div>
-                <nav class="hidden md:flex space-x-8">
-                    <button onclick="scrollToSection('dashboard')" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">專案總覽</button>
-                    <button onclick="scrollToSection('logic')" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">核心邏輯與憑證</button>
-                    <button onclick="scrollToSection('sop')" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">作業流程 (SOP)</button>
-                    <button onclick="scrollToSection('impact')" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium">預期效益</button>
-                </nav>
+                <div class="hidden md:flex items-center space-x-6">
+                    <button onclick="scrollToId('dashboard')" class="text-sm font-medium text-gray-500 hover:text-orange-600 transition">需求總覽</button>
+                    <button onclick="scrollToId('simulator')" class="text-sm font-medium text-gray-500 hover:text-orange-600 transition">憑證模擬 (核心)</button>
+                    <button onclick="scrollToId('logic-diff')" class="text-sm font-medium text-gray-500 hover:text-orange-600 transition">累計邏輯說明</button>
+                    <button onclick="scrollToId('reprint-spec')" class="text-sm font-medium text-gray-500 hover:text-orange-600 transition">補印功能</button>
+                </div>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
-        <!-- 1. Executive Dashboard / Introduction -->
-        <section id="dashboard" class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div class="border-b border-gray-100 pb-4 mb-4">
-                <h2 class="text-xl font-bold text-gray-900">需求背景與目標</h2>
-                <p class="mt-2 text-gray-600 leading-relaxed">
-                    本專案旨在優化 POS 系統於「發票作廢」時的處理邏輯。目前系統針對原交易贈品（禮券、抵用券、點數）的資訊顯示不足，造成樓管現場核對困難。透過強化明細資訊與統一列印邏輯，我們將建立更完善的防呆機制。
+        <!-- 1. Executive Summary -->
+        <section id="dashboard" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">發票作廢與贈品回收優化案</h1>
+                <p class="text-gray-600">
+                    針對「跨期折讓」與「多筆累計贈品」之帳務防呆機制。解決退貨時，原發票贈品資訊不明，導致樓管無法準確回收贈品或計算現金買回金額之問題。
                 </p>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-orange-50 rounded-lg p-5 border border-orange-100">
-                    <h3 class="font-bold text-orange-800 mb-2">核心痛點</h3>
-                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        <li>贈品回收資訊不明確</li>
-                        <li>跨期折讓缺乏詳細明細</li>
-                        <li>現場核對依賴人工查詢後台</li>
-                    </ul>
-                </div>
-                <div class="bg-blue-50 rounded-lg p-5 border border-blue-100">
-                    <h3 class="font-bold text-blue-800 mb-2">解決方案</h3>
-                    <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
-                        <li>增印退貨明細（含跨期）</li>
-                        <li>標示自動 vs 人工回收狀態</li>
-                        <li>統一兩張憑證（商場/顧客）</li>
-                    </ul>
-                </div>
-                <div class="bg-green-50 rounded-lg p-5 border border-green-100">
-                    <h3 class="font-bold text-green-800 mb-2">預計時程</h3>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-700">狀態：</span>
-                        <span class="font-bold text-green-700">規劃中</span>
-                    </div>
-                    <div class="flex items-center justify-between mt-1">
-                        <span class="text-sm text-gray-700">Deadline：</span>
-                        <span class="font-bold text-green-700">Q1 結束前</span>
-                    </div>
+
+            <!-- Priority Card -->
+            <div class="bg-orange-50 p-5 rounded-lg border border-orange-200 section-highlight">
+                <h3 class="text-sm font-bold text-orange-800 uppercase mb-2">核心需求 (Priority 1)</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start">
+                        <span class="mr-2 text-orange-600 font-bold">1.</span>
+                        <span>作廢/退貨皆需列印明細 (含跨期折讓)。</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2 text-orange-600 font-bold">2.</span>
+                        <span>新增「補印退貨明細」功能 (支援重複列印)。</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Data Logic Card -->
+            <div class="bg-blue-50 p-5 rounded-lg border border-blue-200 section-highlight" style="border-color: #3b82f6;">
+                <h3 class="text-sm font-bold text-blue-800 uppercase mb-2">資料邏輯變更</h3>
+                <ul class="space-y-2 text-sm text-gray-700">
+                    <li class="flex items-start">
+                        <span class="mr-2 text-blue-600 font-bold">●</span>
+                        <span>區分「原交易獲贈」與「本次應收回」。</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="mr-2 text-blue-600 font-bold">●</span>
+                        <span>動態計算跨筆累計門檻 (非全額回收)。</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Fallback Plan -->
+            <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 section-highlight" style="border-color: #6b7280;">
+                <h3 class="text-sm font-bold text-gray-700 uppercase mb-2">備案機制 (Priority 2)</h3>
+                <p class="text-sm text-gray-600 mb-2">若補印功能開發不及：</p>
+                <div class="bg-white p-2 rounded border border-gray-300 text-xs text-gray-600">
+                    於退貨交易當下，強制自動列印 2 張退貨明細 (商場聯/顧客聯)。
                 </div>
             </div>
         </section>
 
-        <!-- 2. Interactive Logic Simulator (Core Feature) -->
-        <section id="logic" class="scroll-mt-20">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">核心功能：憑證列印邏輯模擬</h2>
-                <p class="mt-2 text-gray-600">
-                    此區域模擬系統更新後的列印邏輯。請切換不同的「交易情境」，查看系統應產出的憑證內容變化。這是本次開發的驗收重點。
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- 2. Logic Simulator (Receipt Preview) -->
+        <section id="simulator" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="bg-gray-900 text-white p-4 flex flex-wrap items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                        POS 憑證輸出模擬器
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">請切換下方情境，檢視收銀條邏輯變化</p>
+                </div>
                 <!-- Controls -->
-                <div class="lg:col-span-4 space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">情境設定</h3>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">選擇交易類型</label>
-                                <div class="flex rounded-md shadow-sm" role="group">
-                                    <button type="button" id="btn-current" onclick="setScenario('current')" 
-                                        class="flex-1 px-4 py-2 text-sm font-medium bg-orange-600 text-white border border-orange-600 rounded-l-lg hover:bg-orange-700 focus:z-10 focus:ring-2 focus:ring-orange-500">
-                                        當期作廢
-                                    </button>
-                                    <button type="button" id="btn-cross" onclick="setScenario('cross')" 
-                                        class="flex-1 px-4 py-2 text-sm font-medium bg-white text-gray-700 border border-gray-300 rounded-r-lg hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-orange-500">
-                                        跨期折讓
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="logic-explanation" class="p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm leading-relaxed">
-                                <p class="font-bold text-gray-900 mb-2">邏輯說明：</p>
-                                <p id="logic-text">
-                                    當期作廢時，系統除作廢原發票外，將產出<span class="text-orange-600 font-bold">兩張退貨明細</span>。明細上將清楚列出該筆交易原贈送之點數與抵用券，並標示回收狀態。
-                                </p>
-                            </div>
-
-                            <div class="border-t border-gray-100 pt-4">
-                                <h4 class="text-sm font-bold text-gray-900 mb-2">需強化的資料欄位 (Data Enrichment)</h4>
-                                <ul class="space-y-2 text-sm">
-                                    <li class="flex items-start">
-                                        <span class="flex-shrink-0 h-5 w-5 text-green-500 flex items-center justify-center">✓</span>
-                                        <span class="ml-2">原發放項目 (Original Issued)</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <span class="flex-shrink-0 h-5 w-5 text-green-500 flex items-center justify-center">✓</span>
-                                        <span class="ml-2">自動回收狀態 (Auto-Void Status)</span>
-                                    </li>
-                                </ul>
-                            </div>
+                <div class="flex gap-4 mt-2 md:mt-0">
+                    <div class="bg-gray-800 p-2 rounded-lg flex flex-col gap-2">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">1. 交易類型</span>
+                        <div class="flex rounded shadow-sm">
+                            <button onclick="setScenario('current')" id="btn-current" class="toggle-btn active px-3 py-1 text-xs font-bold rounded-l border border-gray-600">當期作廢</button>
+                            <button onclick="setScenario('cross')" id="btn-cross" class="toggle-btn px-3 py-1 text-xs font-bold rounded-r border border-gray-600 bg-gray-700 text-gray-300">跨期折讓</button>
                         </div>
                     </div>
+                    <div class="bg-gray-800 p-2 rounded-lg flex flex-col gap-2">
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">2. 贈品情境 (累計活動)</span>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="chk-cumulative" onchange="updateReceipt()" class="rounded text-orange-600 focus:ring-orange-500 bg-gray-700 border-gray-600">
+                            <span class="text-xs text-gray-300">保留部分消費 (收回 ≠ 原贈送)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="chk-insufficient" onchange="updateReceipt()" class="rounded text-orange-600 focus:ring-orange-500 bg-gray-700 border-gray-600">
+                            <span class="text-xs text-gray-300">點數不足 (需現金買回)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Printer Output Area -->
+            <div class="bg-gray-100 p-8 min-h-[600px] flex flex-col items-center justify-start relative">
+                
+                <!-- Output Feedback -->
+                <div id="print-feedback" class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-2 rounded-md shadow text-xs font-mono text-gray-600 border border-gray-200 z-10">
+                    正在模擬列印指令...
                 </div>
 
-                <!-- Visualization: Receipt Preview -->
-                <div class="lg:col-span-8">
-                    <div class="bg-gray-800 rounded-xl p-6 shadow-lg overflow-hidden relative min-h-[500px] flex flex-col items-center justify-center">
-                        <div class="absolute top-4 left-4 text-gray-400 text-xs font-mono">POS PRINTER OUTPUT SIMULATION</div>
-                        
-                        <!-- Printer Slot Animation Effect -->
-                        <div class="w-64 h-2 bg-black rounded-full mb-2 opacity-50"></div>
+                <!-- Printer Slot -->
+                <div class="printer-slot"></div>
 
-                        <!-- The Receipt -->
-                        <div id="receipt-container" class="receipt-paper p-4 w-[300px] text-xs leading-tight transform transition-all duration-500 origin-top">
+                <!-- The Receipts -->
+                <div class="flex flex-wrap justify-center gap-6 animate-slide-down relative top-[-10px]">
+                    
+                    <!-- 1. Allowance Slip (Only for Cross Period) -->
+                    <div id="receipt-allowance" class="hidden flex-col items-center">
+                        <div class="receipt-paper h-[250px] p-4 text-[10px] text-gray-400 flex flex-col items-center justify-center border-t-0">
+                            <span class="font-bold text-lg mb-2 text-gray-300 rotate-[-5deg] border-2 border-gray-300 p-1">財政部格式</span>
+                            <p>銷貨退回/折讓證明單</p>
+                            <p>(不含詳細贈品明細)</p>
+                        </div>
+                        <span class="text-xs font-bold text-gray-500 mt-2">折讓單 x2</span>
+                    </div>
+
+                    <!-- 2. Return Detail (Store Copy - MAIN FOCUS) -->
+                    <div class="flex flex-col items-center group">
+                        <div class="receipt-paper p-5 text-xs text-gray-800 leading-tight border-t-0 shadow-lg transform transition group-hover:scale-[1.02]">
+                            <!-- Header -->
                             <div class="text-center mb-4">
-                                <h2 class="text-base font-bold mb-1">XX百貨股份有限公司</h2>
-                                <p>電子發票證明聯 <span id="receipt-type-title">退貨明細</span></p>
-                                <p class="mt-1">115年01月31日 14:30:00</p>
-                                <p>機號: POS-01 序號: 00123</p>
+                                <h3 class="text-sm font-bold">XX百貨公司</h3>
+                                <h4 class="text-base font-bold my-1">退貨明細表</h4>
+                                <p>機號:01 序號:R99001</p>
+                                <p>2026-02-02 14:30:00</p>
+                                <span class="inline-block bg-black text-white text-[10px] px-1 mt-1">商場留存聯</span>
                             </div>
-                            
-                            <div class="border-b border-dashed border-gray-400 my-2"></div>
-                            
+
+                            <hr class="border-dashed border-gray-400 my-2">
+
                             <!-- Transaction Items -->
                             <div class="mb-2">
                                 <div class="flex justify-between font-bold">
-                                    <span>品名</span>
+                                    <span>商品名稱</span>
                                     <span>金額</span>
                                 </div>
                                 <div class="flex justify-between mt-1">
-                                    <span>(退) 專櫃服飾 A01</span>
-                                    <span>-3,000</span>
+                                    <span>(退) A專櫃-化妝品</span>
+                                    <span>-5,000</span>
                                 </div>
-                                <div class="flex justify-between text-gray-500">
-                                    <span>原發票: AB-12345678</span>
+                                <p class="text-[10px] text-gray-500">原發票: AB-12345678</p>
+                            </div>
+
+                            <hr class="border-dashed border-gray-400 my-2">
+
+                            <!-- SECTION 1: Original Context -->
+                            <div class="mb-3 opacity-70">
+                                <h5 class="font-bold border-l-2 border-gray-400 pl-1 mb-1 text-[11px]">【原交易獲贈資訊】(參考)</h5>
+                                <div class="pl-2 space-y-1 text-[10px]">
+                                    <div class="flex justify-between">
+                                        <span>會員點數:</span>
+                                        <span>50 點</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>滿額抵用券:</span>
+                                        <span>$500 (1張)</span>
+                                    </div>
+                                    <div class="flex justify-between text-blue-600">
+                                        <span>實體贈品 (服務台):</span>
+                                        <span>馬克杯 1個</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="border-b border-dashed border-gray-400 my-2"></div>
-
-                            <!-- Gift Recovery Section (New Feature) -->
-                            <div class="bg-gray-100 p-2 -mx-2 mb-2">
-                                <h3 class="font-bold border-b border-gray-400 pb-1 mb-1">應收回贈品明細</h3>
+                            <!-- SECTION 2: Return Action (Dynamic) -->
+                            <div class="bg-gray-50 p-2 -mx-2 mb-2 border-y border-gray-200">
+                                <h5 class="font-bold border-l-4 border-orange-500 pl-1 mb-2 text-[11px]">【本次應收回明細】(執行)</h5>
                                 
-                                <!-- Points -->
+                                <!-- Dynamic Point Logic -->
                                 <div class="flex justify-between items-center mb-1">
-                                    <span>會員點數</span>
-                                    <span class="font-bold">-30 點</span>
+                                    <span>會員點數:</span>
+                                    <span id="rec-points-val" class="font-bold">-50</span>
                                 </div>
-                                <div class="text-[10px] text-gray-500 flex items-center mb-2">
-                                    <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>
-                                    <span>系統已自動扣除</span>
+                                <div id="rec-points-status" class="text-[10px] text-green-700 mb-2 pl-2">
+                                    ✓ 系統自動扣除
                                 </div>
 
-                                <!-- Vouchers -->
+                                <!-- Dynamic Voucher Logic -->
                                 <div class="flex justify-between items-center mb-1">
-                                    <span>滿千送百抵用券</span>
-                                    <span class="font-bold">3 張</span>
+                                    <span>電子抵用券:</span>
+                                    <span id="rec-voucher-val" class="font-bold">$500 (1張)</span>
                                 </div>
-                                <div class="text-[10px] text-gray-500 pl-2 mb-1">
-                                    <p>券號: ...8801 (未使用/作廢)</p>
-                                    <p>券號: ...8802 (未使用/作廢)</p>
-                                    <p class="text-red-600 font-bold">券號: ...8803 (已使用/需追回)</p>
+                                <div class="text-[10px] text-gray-500 pl-2 mb-2">
+                                    券號: ...9901 (Void)
+                                </div>
+
+                                <!-- Manual Prompt -->
+                                <div id="manual-prompt" class="bg-white border border-gray-300 p-1.5 rounded mt-1">
+                                    <p class="font-bold text-[10px] text-red-600 flex items-center">
+                                        <span class="mr-1">⚠️</span> 服務台人工收回確認:
+                                    </p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="w-3 h-3 border border-gray-400 rounded-sm"></div>
+                                        <span class="text-[10px]">實體券/馬克杯</span>
+                                    </div>
+                                    <div id="cash-buyback-box" class="hidden mt-1 pt-1 border-t border-dashed border-gray-300">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 border border-gray-400 rounded-sm"></div>
+                                            <span class="text-[10px] font-bold text-red-600">收取現金: $ <span id="cash-amt">0</span></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="border-b border-dashed border-gray-400 my-2"></div>
+                            <hr class="border-dashed border-gray-400 my-2">
 
                             <div class="flex justify-between font-bold text-sm">
-                                <span>退貨總額</span>
-                                <span>$-3,000</span>
+                                <span>退款總額</span>
+                                <span>$5,000</span>
                             </div>
 
-                            <div class="mt-6 pt-4 border-t border-black text-center">
-                                <p class="mb-4">樓管簽章: ____________</p>
-                                <p>顧客簽名: ____________</p>
-                            </div>
-                            
-                            <div class="text-center mt-4 text-[10px]">
-                                *** 退貨憑證 (商場留存聯) ***
+                            <div class="mt-8 pt-2 border-t border-black text-center text-[10px]">
+                                <div class="flex justify-between mb-6">
+                                    <span>樓管簽章:_________</span>
+                                    <span>顧客簽名:_________</span>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Second Receipt Hint -->
-                        <div id="second-receipt-hint" class="absolute bottom-4 right-4 bg-white/10 backdrop-blur text-white px-3 py-1 rounded-full text-xs border border-white/20">
-                            + 自動列印第二聯 (顧客留存)
-                        </div>
-                         <!-- Cross Period Hint -->
-                         <div id="cross-period-extra" class="hidden absolute top-1/2 left-4 -translate-y-1/2 bg-yellow-100 text-yellow-800 p-3 rounded shadow-lg w-48 text-xs border border-yellow-300">
-                            <span class="font-bold block mb-1">⚠️ 跨期額外產出:</span>
-                            同時產出兩張「銷貨退回/折讓證明單」供稅務申報使用。
-                        </div>
+                        <span class="text-xs font-bold text-gray-500 mt-2">退貨明細 x2 (商/客)</span>
                     </div>
+
                 </div>
             </div>
         </section>
 
-        <!-- 3. System Operation Process (SOP) -->
-        <section id="sop" class="scroll-mt-20">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">系統作業流程 (SOP)</h2>
-                <p class="mt-2 text-gray-600">
-                    開發團隊需依據此流程實作後端邏輯與前端防呆提示。點擊下方步驟查看詳細技術需求。
+        <!-- 3. Logic Explanation Section -->
+        <section id="logic-diff" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">關鍵邏輯</span>
+                    為什麼「原獲贈」≠「應收回」？
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    根據需求說明與心宜0131回覆，商場活動常採「跨筆消費累計」。退貨時，系統需重新計算剩餘消費是否仍符合較低門檻，而非全數追回。
                 </p>
-            </div>
-
-            <!-- Stepper Container -->
-            <div class="relative">
-                <!-- Progress Bar Background -->
-                <div class="hidden md:block absolute top-8 left-0 w-full h-1 bg-gray-200 z-0"></div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10">
-                    <!-- Step 1 -->
-                    <button onclick="setStep(1)" class="group text-left focus:outline-none">
-                        <div id="step-circle-1" class="w-16 h-16 mx-auto md:mx-0 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xl border-4 border-white shadow-md transition-colors">1</div>
-                        <div class="mt-4 text-center md:text-left">
-                            <h3 class="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">觸發退貨</h3>
-                            <p class="text-sm text-gray-500">櫃員輸入</p>
+                <div class="space-y-4">
+                    <!-- Example 1 -->
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-xs">Case A</div>
+                        <div class="text-xs flex-1">
+                            <p class="font-bold text-gray-800">全額退貨 (一般情況)</p>
+                            <p class="text-gray-500">原獲贈 100 點 ➔ 收回 100 點</p>
                         </div>
-                    </button>
-
-                    <!-- Step 2 -->
-                    <button onclick="setStep(2)" class="group text-left focus:outline-none">
-                        <div id="step-circle-2" class="w-16 h-16 mx-auto md:mx-0 bg-white rounded-full flex items-center justify-center text-gray-500 font-bold text-xl border-4 border-gray-200 shadow-sm transition-colors group-hover:border-orange-200">2</div>
-                        <div class="mt-4 text-center md:text-left">
-                            <h3 class="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">計算回沖</h3>
-                            <p class="text-sm text-gray-500">系統自動運算</p>
+                    </div>
+                    <!-- Example 2 -->
+                    <div class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                        <div class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs">Case B</div>
+                        <div class="text-xs flex-1">
+                            <p class="font-bold text-gray-800">跨筆累計/部分退貨 (複雜情況)</p>
+                            <p class="text-gray-500">原獲贈 500 點 ➔ 剩餘消費仍達標 ➔ <span class="font-bold text-orange-600">僅收回 200 點</span></p>
+                            <p class="text-[10px] text-gray-400 mt-1">* 憑證必須明確列出本次「實際收回」數值，而非原贈送數值。</p>
                         </div>
-                    </button>
-
-                    <!-- Step 3 -->
-                    <button onclick="setStep(3)" class="group text-left focus:outline-none">
-                        <div id="step-circle-3" class="w-16 h-16 mx-auto md:mx-0 bg-white rounded-full flex items-center justify-center text-gray-500 font-bold text-xl border-4 border-gray-200 shadow-sm transition-colors group-hover:border-orange-200">3</div>
-                        <div class="mt-4 text-center md:text-left">
-                            <h3 class="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">產出憑證</h3>
-                            <p class="text-sm text-gray-500">列印優化</p>
-                        </div>
-                    </button>
-
-                    <!-- Step 4 -->
-                    <button onclick="setStep(4)" class="group text-left focus:outline-none">
-                        <div id="step-circle-4" class="w-16 h-16 mx-auto md:mx-0 bg-white rounded-full flex items-center justify-center text-gray-500 font-bold text-xl border-4 border-gray-200 shadow-sm transition-colors group-hover:border-orange-200">4</div>
-                        <div class="mt-4 text-center md:text-left">
-                            <h3 class="font-bold text-gray-900 group-hover:text-orange-600 transition-colors">人工核對</h3>
-                            <p class="text-sm text-gray-500">樓管檢核</p>
-                        </div>
-                    </button>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Detail Panel -->
-                <div class="mt-8 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden transition-all duration-300">
-                    <div class="p-6 md:p-8 flex flex-col md:flex-row gap-6">
-                        <div class="flex-1">
-                            <h3 id="step-title" class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                                <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded mr-3">Step 1</span>
-                                觸發退貨流程
-                            </h3>
-                            <div id="step-content" class="text-gray-600 space-y-4">
-                                <p>櫃員輸入原發票號碼進行作廢或折讓。</p>
-                            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="font-bold text-lg text-gray-900 mb-4">預期效益 (Q1)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs text-gray-500 text-center mb-2">現場核對時間 (分)</p>
+                        <div class="chart-container h-32">
+                            <canvas id="chartTime"></canvas>
                         </div>
-                        <div class="w-full md:w-1/3 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Technical Action</h4>
-                            <div id="step-tech" class="font-mono text-sm text-gray-700">
-                                Input: Invoice_ID<br>Action: Query Transaction API
-                            </div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 text-center mb-2">贈品爭議案件 (件/月)</p>
+                        <div class="chart-container h-32">
+                            <canvas id="chartDispute"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 4. Impact Analysis -->
-        <section id="impact" class="scroll-mt-20">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">預期效益分析</h2>
-                <p class="mt-2 text-gray-600">
-                    透過優化憑證資訊透明度，預期將大幅降低現場作業時間與客訴爭議。
-                </p>
-            </div>
-            
+        <!-- 4. Reprint Functionality Spec -->
+        <section id="reprint-spec" class="bg-gray-50 rounded-xl border border-gray-200 p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">功能需求：補印機制</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Chart 1: Efficiency -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-800 mb-4 text-center">單筆退貨處理時間 (分鐘)</h3>
-                    <div class="chart-container">
-                        <canvas id="efficiencyChart"></canvas>
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-2">Requirement 4.1 & 4.2 (優先)</h4>
+                    <p class="text-sm text-gray-600 mb-3">POS 補印按鈕需調整，支援針對「退貨單號」進行補印。</p>
+                    <div class="bg-white p-4 rounded border border-gray-300">
+                        <div class="text-xs font-mono text-gray-500 mb-1">UI 示意:</div>
+                        <div class="flex gap-2">
+                            <button class="bg-gray-200 text-gray-400 px-3 py-1 rounded text-xs cursor-not-allowed">補印原交易</button>
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs shadow-sm ring-2 ring-blue-200">補印退貨明細</button>
+                        </div>
+                        <p class="text-[10px] text-green-600 mt-2">✓ 允許重複多次列印 (供樓管與顧客留存)</p>
                     </div>
-                    <p class="text-center text-sm text-gray-500 mt-4">樓管無需往返後台查詢，現場即可核對。</p>
                 </div>
-
-                <!-- Chart 2: Dispute Reduction -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-800 mb-4 text-center">退貨贈品爭議發生率 (%)</h3>
-                    <div class="chart-container">
-                        <canvas id="disputeChart"></canvas>
-                    </div>
-                    <p class="text-center text-sm text-gray-500 mt-4">明細清楚列示應扣回項目，減少顧客疑慮。</p>
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-2">Fallback (備案)</h4>
+                    <p class="text-sm text-gray-600 mb-3">若無法實作選單補印，則必須於交易流程結束時：</p>
+                    <ul class="list-disc list-inside text-sm text-gray-600 bg-white p-4 rounded border border-gray-300">
+                        <li>強制觸發 Print Job 兩次</li>
+                        <li>第一張 Footer 標示：商場留存</li>
+                        <li>第二張 Footer 標示：顧客留存</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <footer class="bg-gray-800 text-gray-300 py-8 mt-12">
+    <footer class="bg-gray-800 text-white py-8 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="mb-2">POS System Specification Viewer</p>
-            <p class="text-sm text-gray-500">Based on requirement document: POS_Return_Detail_Requirement.md</p>
+            <p class="text-sm font-medium">POS 系統開發小組</p>
+            <p class="text-xs text-gray-400 mt-1">文件版號: 2026.02.02 (Based on 需求說明.txt & 心宜回覆)</p>
         </div>
     </footer>
 
     <script>
         // --- Logic Simulator State ---
-        let currentScenario = 'current';
-
-        // --- SOP Step Data ---
-        const stepData = {
-            1: {
-                title: "觸發退貨流程",
-                content: `<p>櫃員於 POS 介面輸入原發票號碼，並選擇「作廢」或「折讓」。系統即時驗證發票有效性及是否跨越申報期。</p>
-                          <ul class="list-disc list-inside mt-2 pl-2"><li>驗證發票號碼格式</li><li>檢查交易日期是否跨期</li></ul>`,
-                tech: `Input: Invoice_No<br>Validate: isCrossPeriod(TransDate)`
-            },
-            2: {
-                title: "計算回沖與贈品狀態",
-                content: `<p>系統自動計算需扣回之點數，並查詢關聯券類狀態。</p>
-                          <ul class="list-disc list-inside mt-2 pl-2">
-                            <li><span class="font-bold text-orange-600">會員點數：</span>依原交易發放比例計算扣回額。</li>
-                            <li><span class="font-bold text-orange-600">電子券類：</span>若未使用，系統自動標記失效(Void)；若已使用，標記需人工追回。</li>
-                          </ul>`,
-                tech: `Func: calcPointsReversal()<br>Func: checkVoucherStatus()<br>Return: { points: -30, vouchers: [{id: '..8803', status: 'used'}] }`
-            },
-            3: {
-                title: "產出憑證 (列印優化)",
-                content: `<p>根據交易類型產出對應憑證。關鍵在於<span class="font-bold">強制列印兩張退貨明細</span>。</p>
-                          <div class="mt-2 bg-yellow-50 p-2 border border-yellow-200 rounded text-sm">
-                            <strong>重要邏輯：</strong>即使是跨期折讓，除了制式折讓單外，也必須加印此退貨明細供內部稽核。
-                          </div>`,
-                tech: `PrintJob.add(Receipt_Detail_Shop);<br>PrintJob.add(Receipt_Detail_Cust);<br>if(crossPeriod) PrintJob.add(Allowance_Slips);`
-            },
-            4: {
-                title: "人工核對與簽章",
-                content: `<p>樓管人員依據明細上的「應收回贈品明細」欄位，逐一核對顧客繳回之實體券或確認補繳金額。</p>
-                          <p class="mt-2">核對無誤後，於商場留存聯簽章確認，完成退貨程序。</p>`,
-                tech: `Process: Manual_Verification<br>Output: Signed_Receipt_Stored`
-            }
+        const state = {
+            mode: 'current',
+            cumulative: false,
+            insufficient: false
         };
 
-        // --- Initialization ---
+        function setScenario(mode) {
+            state.mode = mode;
+            // Update Buttons
+            document.getElementById('btn-current').className = mode === 'current' 
+                ? 'toggle-btn active px-3 py-1 text-xs font-bold rounded-l border border-gray-600'
+                : 'toggle-btn px-3 py-1 text-xs font-bold rounded-l border border-gray-600 bg-gray-700 text-gray-300';
+            
+            document.getElementById('btn-cross').className = mode === 'cross' 
+                ? 'toggle-btn active px-3 py-1 text-xs font-bold rounded-r border border-gray-600'
+                : 'toggle-btn px-3 py-1 text-xs font-bold rounded-r border border-gray-600 bg-gray-700 text-gray-300';
+            
+            updateReceipt();
+        }
+
+        function updateReceipt() {
+            state.cumulative = document.getElementById('chk-cumulative').checked;
+            state.insufficient = document.getElementById('chk-insufficient').checked;
+
+            const feedback = document.getElementById('print-feedback');
+            const receiptAllowance = document.getElementById('receipt-allowance');
+            
+            // 1. Cross Period Logic
+            if (state.mode === 'cross') {
+                receiptAllowance.classList.remove('hidden');
+                receiptAllowance.classList.add('flex');
+                feedback.innerHTML = "🖨️ 正在列印: 2張折讓單 + 2張退貨明細...";
+                feedback.className = "absolute top-4 left-4 bg-orange-100 px-3 py-2 rounded-md shadow text-xs font-bold text-orange-800 border border-orange-200 z-10";
+            } else {
+                receiptAllowance.classList.add('hidden');
+                feedback.innerHTML = "🖨️ 正在列印: 2張退貨明細 (標準流程)...";
+                feedback.className = "absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-2 rounded-md shadow text-xs font-mono text-gray-600 border border-gray-200 z-10";
+            }
+
+            // 2. Point/Voucher Logic (Cumulative)
+            const ptsVal = document.getElementById('rec-points-val');
+            const ptsStatus = document.getElementById('rec-points-status');
+            const voucherVal = document.getElementById('rec-voucher-val');
+
+            if (state.cumulative) {
+                // Original was 50, but we only take back 20 because they kept some items
+                ptsVal.innerText = "-20 (部分回收)";
+                voucherVal.innerText = "$0 (未達門檻)";
+                voucherVal.className = "font-bold text-gray-500"; // Greyed out
+            } else {
+                // Full return
+                ptsVal.innerText = "-50";
+                voucherVal.innerText = "$500 (1張)";
+                voucherVal.className = "font-bold";
+            }
+
+            // 3. Insufficient Logic (Cash Buyback)
+            const cashBox = document.getElementById('cash-buyback-box');
+            const cashAmt = document.getElementById('cash-amt');
+            
+            if (state.insufficient) {
+                ptsStatus.innerText = "❌ 餘額不足 (剩10點)";
+                ptsStatus.className = "text-[10px] text-red-600 font-bold mb-2 pl-2";
+                
+                cashBox.classList.remove('hidden');
+                // If cumulative, buy back less; if full, buy back more
+                cashAmt.innerText = state.cumulative ? "20" : "50"; // Assuming 1 point = $1 for demo
+            } else {
+                ptsStatus.innerText = "✓ 系統自動扣除";
+                ptsStatus.className = "text-[10px] text-green-700 mb-2 pl-2";
+                cashBox.classList.add('hidden');
+            }
+        }
+
+        // --- Charts ---
         document.addEventListener('DOMContentLoaded', () => {
-            initCharts();
-            setStep(1);
+            const chartConfig = {
+                type: 'bar',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false } }
+                }
+            };
+
+            new Chart(document.getElementById('chartTime'), {
+                ...chartConfig,
+                data: {
+                    labels: ['Before', 'After'],
+                    datasets: [{
+                        data: [15, 3],
+                        backgroundColor: ['#d1d5db', '#ea580c'],
+                        borderRadius: 4
+                    }]
+                }
+            });
+
+            new Chart(document.getElementById('chartDispute'), {
+                ...chartConfig,
+                data: {
+                    labels: ['Before', 'After'],
+                    datasets: [{
+                        data: [12, 1],
+                        backgroundColor: ['#d1d5db', '#3b82f6'],
+                        borderRadius: 4
+                    }]
+                }
+            });
         });
 
-        // --- Navigation Scroll ---
-        function scrollToSection(id) {
+        function scrollToId(id) {
             document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- Logic Simulator Function ---
-        function setScenario(type) {
-            currentScenario = type;
-            const btnCurrent = document.getElementById('btn-current');
-            const btnCross = document.getElementById('btn-cross');
-            const logicText = document.getElementById('logic-text');
-            const crossHint = document.getElementById('cross-period-extra');
-
-            if (type === 'current') {
-                // UI Updates
-                btnCurrent.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
-                btnCurrent.classList.add('bg-orange-600', 'text-white', 'border-orange-600');
-                
-                btnCross.classList.remove('bg-orange-600', 'text-white', 'border-orange-600');
-                btnCross.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
-
-                // Content Updates
-                logicText.innerHTML = `當期作廢時，系統除作廢原發票外，將產出<span class="text-orange-600 font-bold">兩張退貨明細</span>。明細上將清楚列出該筆交易原贈送之點數與抵用券，並標示回收狀態。`;
-                crossHint.classList.add('hidden');
-                
-            } else {
-                // UI Updates
-                btnCross.classList.remove('bg-white', 'text-gray-700', 'border-gray-300');
-                btnCross.classList.add('bg-orange-600', 'text-white', 'border-orange-600');
-
-                btnCurrent.classList.remove('bg-orange-600', 'text-white', 'border-orange-600');
-                btnCurrent.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
-
-                // Content Updates
-                logicText.innerHTML = `跨期折讓時，除了制式的<span class="font-bold">兩張折讓單</span>外，系統需<span class="text-orange-600 font-bold">加印兩張退貨明細</span>。這是為了補足折讓單上缺乏贈品回收資訊的問題。`;
-                crossHint.classList.remove('hidden');
-            }
-            
-            // Trigger animation on receipt
-            const receipt = document.getElementById('receipt-container');
-            receipt.style.opacity = '0.5';
-            receipt.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-                receipt.style.opacity = '1';
-                receipt.style.transform = 'scale(1)';
-            }, 200);
-        }
-
-        // --- SOP Stepper Function ---
-        function setStep(stepNum) {
-            // Update circles
-            for (let i = 1; i <= 4; i++) {
-                const circle = document.getElementById(`step-circle-${i}`);
-                if (i === stepNum) {
-                    circle.className = "w-16 h-16 mx-auto md:mx-0 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xl border-4 border-white shadow-md transition-colors transform scale-110";
-                } else {
-                    circle.className = "w-16 h-16 mx-auto md:mx-0 bg-white rounded-full flex items-center justify-center text-gray-500 font-bold text-xl border-4 border-gray-200 shadow-sm transition-colors group-hover:border-orange-200";
-                }
-            }
-
-            // Update Content with fade effect
-            const panel = document.getElementById('step-content').parentElement.parentElement;
-            panel.style.opacity = '0.7';
-            
-            setTimeout(() => {
-                const data = stepData[stepNum];
-                document.getElementById('step-title').innerHTML = `<span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded mr-3">Step ${stepNum}</span> ${data.title}`;
-                document.getElementById('step-content').innerHTML = data.content;
-                document.getElementById('step-tech').innerHTML = data.tech;
-                panel.style.opacity = '1';
-            }, 150);
-        }
-
-        // --- Chart Initialization ---
-        function initCharts() {
-            // Efficiency Chart
-            const ctxEff = document.getElementById('efficiencyChart').getContext('2d');
-            new Chart(ctxEff, {
-                type: 'bar',
-                data: {
-                    labels: ['現況 (人工查核)', '調整後 (明細對照)'],
-                    datasets: [{
-                        label: '處理時間 (分鐘)',
-                        data: [15, 5],
-                        backgroundColor: ['#d1d5db', '#f97316'],
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-
-            // Dispute Chart
-            const ctxDisp = document.getElementById('disputeChart').getContext('2d');
-            new Chart(ctxDisp, {
-                type: 'bar', // Using bar for clearer comparison than pie
-                data: {
-                    labels: ['現況爭議率', '預期爭議率'],
-                    datasets: [{
-                        label: '爭議發生率 (%)',
-                        data: [12, 2],
-                        backgroundColor: ['#d1d5db', '#10b981'],
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, max: 20 }
-                    }
-                }
-            });
         }
     </script>
 </body>
