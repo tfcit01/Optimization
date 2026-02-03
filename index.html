@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商場POS-發票作廢贈品回收優化 (RQ202601102)</title>
+    <title>POS 系統需求規格 v2.0：發票作廢與贈品回收優化</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
@@ -90,8 +90,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <span class="text-2xl font-bold text-gray-800 tracking-tight">商場POS</span>
-                    <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded">v2.0 Q1目標</span>
+                    <span class="text-2xl font-bold text-gray-800 tracking-tight">POS 規格書</span>
+                    <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded">v2.1 Q1目標</span>
                 </div>
                 <div class="hidden md:flex items-center space-x-6">
                     <button onclick="scrollToId('dashboard')" class="text-sm font-medium text-gray-500 hover:text-orange-600 transition">需求總覽</button>
@@ -179,10 +179,6 @@
                             <input type="checkbox" id="chk-cumulative" onchange="updateReceipt()" class="rounded text-orange-600 focus:ring-orange-500 bg-gray-700 border-gray-600">
                             <span class="text-xs text-gray-300">保留部分消費 (收回 ≠ 原贈送)</span>
                         </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="chk-insufficient" onchange="updateReceipt()" class="rounded text-orange-600 focus:ring-orange-500 bg-gray-700 border-gray-600">
-                            <span class="text-xs text-gray-300">點數不足 (需現金買回)</span>
-                        </label>
                     </div>
                 </div>
             </div>
@@ -216,7 +212,7 @@
                         <div class="receipt-paper p-5 text-xs text-gray-800 leading-tight border-t-0 shadow-lg transform transition group-hover:scale-[1.02]">
                             <!-- Header -->
                             <div class="text-center mb-4">
-                                <h3 class="text-sm font-bold">XX百貨公司</h3>
+                                <h3 class="text-sm font-bold">TAIPEI101購物中心</h3>
                                 <h4 class="text-base font-bold my-1">退貨明細表</h4>
                                 <p>機號:01 序號:R99001</p>
                                 <p>2026-02-02 14:30:00</p>
@@ -412,8 +408,7 @@
         // --- Logic Simulator State ---
         const state = {
             mode: 'current',
-            cumulative: false,
-            insufficient: false
+            cumulative: false
         };
 
         function setScenario(mode) {
@@ -432,7 +427,6 @@
 
         function updateReceipt() {
             state.cumulative = document.getElementById('chk-cumulative').checked;
-            state.insufficient = document.getElementById('chk-insufficient').checked;
 
             const feedback = document.getElementById('print-feedback');
             const receiptAllowance = document.getElementById('receipt-allowance');
@@ -453,6 +447,12 @@
             const ptsVal = document.getElementById('rec-points-val');
             const ptsStatus = document.getElementById('rec-points-status');
             const voucherVal = document.getElementById('rec-voucher-val');
+            const cashBox = document.getElementById('cash-buyback-box');
+
+            // Reset Status to Default (Success)
+            ptsStatus.innerText = "✓ 系統自動扣除";
+            ptsStatus.className = "text-[10px] text-green-700 mb-2 pl-2";
+            if(cashBox) cashBox.classList.add('hidden');
 
             if (state.cumulative) {
                 // Original was 50, but we only take back 20 because they kept some items
@@ -464,23 +464,6 @@
                 ptsVal.innerText = "-50";
                 voucherVal.innerText = "$500 (1張)";
                 voucherVal.className = "font-bold";
-            }
-
-            // 3. Insufficient Logic (Cash Buyback)
-            const cashBox = document.getElementById('cash-buyback-box');
-            const cashAmt = document.getElementById('cash-amt');
-            
-            if (state.insufficient) {
-                ptsStatus.innerText = "❌ 餘額不足 (剩10點)";
-                ptsStatus.className = "text-[10px] text-red-600 font-bold mb-2 pl-2";
-                
-                cashBox.classList.remove('hidden');
-                // If cumulative, buy back less; if full, buy back more
-                cashAmt.innerText = state.cumulative ? "20" : "50"; // Assuming 1 point = $1 for demo
-            } else {
-                ptsStatus.innerText = "✓ 系統自動扣除";
-                ptsStatus.className = "text-[10px] text-green-700 mb-2 pl-2";
-                cashBox.classList.add('hidden');
             }
         }
 
