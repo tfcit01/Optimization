@@ -1,511 +1,341 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-} from 'recharts';
-import { 
-  UploadCloud, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Search, 
-  Clock, 
-  CreditCard,
-  RefreshCcw,
-  FileText
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>更版後檢查交易狀況</title>
+    <!-- 載入基礎套件 CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Recharts 必須在 React 之後載入 -->
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { background-color: #f9fafb; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-// --- 常數定義 ---
-const PAYMENT_OPTIONS = [
-  "中信收單", "聯信收單", "現金", "101 Pay中信", "101 Pay台新",
-  "LINE PAY", "街口錢包", "宜睿", "台灣PAY(被)", "微信支付",
-  "元大支付寶", "悠遊卡", "悠遊卡-停車", "購物金",
-  "新電子商品禮券", "銀聯UPLAN"
-];
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+        
+        // 確保 Recharts 已正確載入
+        const RechartsObj = window.Recharts || {};
+        const { 
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+        } = RechartsObj;
 
-const CARD_TYPE_OPTIONS = ["VISA", "MASTER", "A/E"];
-const ITEMS_PER_PAGE = 50;
+        // 常數定義
+        const PAYMENT_OPTIONS = [
+            "中信收單", "聯信收單", "現金", "101 Pay中信", "101 Pay台新",
+            "LINE PAY", "街口錢包", "宜睿", "台灣PAY(被)", "微信支付",
+            "元大支付寶", "悠遊卡", "悠遊卡-停車", "購物金",
+            "新電子商品禮券", "銀聯UPLAN"
+        ];
+        const CARD_TYPE_OPTIONS = ["VISA", "MASTER", "A/E"];
+        const ITEMS_PER_PAGE = 50;
+        const HEADER_KEYWORDS = ["付款別", "支付", "金額", "銷售日期", "序號"];
 
-// 判斷是否為標題列的關鍵字 (用於防呆)
-const HEADER_KEYWORDS = ["付款別", "支付", "金額", "銷售日期", "序號"];
+        function App() {
+            const [fileData, setFileData] = useState(null);
+            const [analysis, setAnalysis] = useState(null);
+            const [transactions, setTransactions] = useState([]);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [dragActive, setDragActive] = useState(false);
+            const [filters, setFilters] = useState({ posId: "", paymentType: "", cardType: "" });
+            const [searchResults, setSearchResults] = useState(null);
+            const [currentPage, setCurrentPage] = useState(1);
 
-export default function App() {
-  const [fileData, setFileData] = useState(null);
-  const [analysis, setAnalysis] = useState(null);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [dragActive, setDragActive] = useState(false);
+            // 每當畫面渲染時重新初始化 Lucide 圖標
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            });
 
-  const [filters, setFilters] = useState({ posId: "", paymentType: "", cardType: "" });
-  const [searchResults, setSearchResults] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+            // 輔助函式
+            const normalizeStr = (str) => str ? String(str).replace(/[\s\r\n\t\uFEFF\x00-\x1F]/g, "").toLowerCase() : "";
+            
+            const findColumnIndex = (headers, keywords) => headers.findIndex(header => {
+                const normalized = normalizeStr(header);
+                return keywords.some(keyword => normalized.includes(keyword));
+            });
 
-  // 動態載入 SheetJS (確保環境相容性)
-  useEffect(() => {
-    if (!window.XLSX) {
-      const script = document.createElement('script');
-      script.src = "https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js";
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  }, []);
+            const formatExcelDate = (val) => {
+                if (!val) return "";
+                if (typeof val === 'number') {
+                    const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+                    return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`;
+                }
+                return String(val).trim();
+            };
 
-  // --- 輔助函式 ---
-  const normalizeStr = (str) => {
-    if (!str) return "";
-    return String(str).replace(/[\s\r\n\t\uFEFF\x00-\x1F]/g, "").toLowerCase();
-  };
+            const getHour = (timeVal) => {
+                if (!timeVal && timeVal !== 0) return -1;
+                if (typeof timeVal === 'number') {
+                    if (timeVal < 1) return Math.floor((timeVal * 24) + 0.0001);
+                    if (timeVal >= 0 && timeVal <= 2400) return Math.floor(timeVal / 100);
+                }
+                const str = String(timeVal).trim();
+                const matchColon = str.match(/(\d{1,2}):\d{2}/);
+                if (matchColon) return parseInt(matchColon[1], 10);
+                if (/^\d{3,4}$/.test(str)) return Math.floor(parseInt(str, 10) / 100);
+                return -1;
+            };
 
-  const findColumnIndex = (headers, keywords) => {
-    return headers.findIndex(header => {
-      const normalized = normalizeStr(header);
-      return keywords.some(keyword => normalized.includes(keyword));
-    });
-  };
+            const formatTime = (timeVal) => {
+                if (timeVal === null || timeVal === undefined) return "";
+                if (typeof timeVal === 'number' && timeVal < 1) {
+                    const totalSeconds = Math.floor(timeVal * 86400);
+                    return `${String(Math.floor(totalSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')}`;
+                }
+                const s = String(timeVal).padStart(4, '0');
+                return /^\d{4}$/.test(s) ? `${s.substring(0, 2)}:${s.substring(2, 4)}` : String(timeVal);
+            };
 
-  const formatExcelDate = (val) => {
-    if (!val) return "";
-    if (typeof val === 'number') {
-      const date = new Date(Math.round((val - 25569) * 86400 * 1000));
-      return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`;
-    }
-    return String(val).trim();
-  };
+            const processExcel = async (file) => {
+                if (!file) return;
+                setLoading(true);
+                setError(null);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'binary' });
+                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                        if (jsonData.length < 2) throw new Error("檔案內容不足");
 
-  const getHour = (timeVal) => {
-    if (!timeVal && timeVal !== 0) return -1;
-    if (typeof timeVal === 'number') {
-      if (timeVal < 1) return Math.floor((timeVal * 24) + 0.0001);
-      if (timeVal >= 0 && timeVal <= 2400) return Math.floor(timeVal / 100);
-    }
-    const str = String(timeVal).trim();
-    const matchColon = str.match(/(\d{1,2}):\d{2}/);
-    if (matchColon) return parseInt(matchColon[1], 10);
-    if (/^\d{3,4}$/.test(str)) return Math.floor(parseInt(str, 10) / 100);
-    return -1;
-  };
+                        let headerRowIndex = -1, tenantColIdx = -1, paymentColIdx = -1, timeColIdx = -1, dateColIdx = -1, posColIdx = -1, amountColIdx = -1, cardTypeColIdx = -1;
+                        for (let i = 0; i < Math.min(jsonData.length, 20); i++) {
+                            const row = jsonData[i];
+                            const tIdx = findColumnIndex(row, ['租戶', '專櫃']);
+                            const pIdx = findColumnIndex(row, ['支付', '付款']);
+                            if (tIdx !== -1 && pIdx !== -1) {
+                                headerRowIndex = i; tenantColIdx = tIdx; paymentColIdx = pIdx;
+                                timeColIdx = findColumnIndex(row, ['時間', '交易時']);
+                                dateColIdx = findColumnIndex(row, ['日期', '銷售日']);
+                                posColIdx = findColumnIndex(row, ['收銀機', '機號']);
+                                amountColIdx = findColumnIndex(row, ['金額', 'amount']);
+                                cardTypeColIdx = findColumnIndex(row, ['信用卡類別', '卡別']);
+                                break;
+                            }
+                        }
+                        if (headerRowIndex === -1) throw new Error("無法辨識標題列");
 
-  const formatTime = (timeVal) => {
-    if (timeVal === null || timeVal === undefined) return "";
-    if (typeof timeVal === 'number' && timeVal < 1) {
-      const totalSeconds = Math.floor(timeVal * 86400);
-      return `${String(Math.floor(totalSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')}`;
-    }
-    const s = String(timeVal).padStart(4, '0');
-    if (/^\d{4}$/.test(s)) return `${s.substring(0, 2)}:${s.substring(2, 4)}`;
-    return String(timeVal);
-  };
+                        const rawData = jsonData.slice(headerRowIndex + 1);
+                        const stats = { totalTransactions: 0, paymentTypes: {}, hourlyData: Array(24).fill(0).map((_, i) => ({ hour: `${String(i).padStart(2, '0')}:00`, building: 0, mall: 0, total: 0 })) };
+                        const parsedTransactions = [];
 
-  // --- 核心處理邏輯 ---
-  const processExcel = async (file) => {
-    if (!window.XLSX) {
-      setError("Excel 函式庫尚未載入，請稍候再試。");
-      return;
-    }
+                        rawData.forEach((row, index) => {
+                            if (!row || row.length === 0) return;
+                            const tenantId = normalizeStr(row[tenantColIdx]).toUpperCase();
+                            const paymentType = String(row[paymentColIdx]).trim();
+                            if (!paymentType || HEADER_KEYWORDS.includes(paymentType)) return;
+                            if (tenantId.includes('共') && tenantId.includes('筆')) return;
 
-    setLoading(true);
-    setError(null);
-    const reader = new FileReader();
+                            stats.totalTransactions++;
+                            stats.paymentTypes[paymentType] = (stats.paymentTypes[paymentType] || 0) + 1;
+                            const hour = getHour(row[timeColIdx]);
+                            if (hour >= 0 && hour < 24) {
+                                if (tenantId.startsWith('T')) stats.hourlyData[hour].building++;
+                                else stats.hourlyData[hour].mall++;
+                                stats.hourlyData[hour].total++;
+                            }
+                            parsedTransactions.push({ id: index, date: formatExcelDate(row[dateColIdx]), time: formatTime(row[timeColIdx]), posId: String(row[posColIdx]).trim(), tenant: row[tenantColIdx], paymentType, amount: parseFloat(row[amountColIdx]) || 0, cardType: String(row[cardTypeColIdx]).trim() });
+                        });
 
-    reader.onload = (e) => {
-      try {
-        const data = e.target.result;
-        const workbook = window.XLSX.read(data, { type: 'binary' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = window.XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+                        setTransactions(parsedTransactions);
+                        setAnalysis({ generatedAt: new Date().toLocaleString(), stats });
+                        setFileData({ name: file.name });
+                        setSearchResults(null);
+                    } catch (err) { setError(err.message); }
+                    finally { setLoading(false); }
+                };
+                reader.readAsBinaryString(file);
+            };
 
-        if (jsonData.length < 2) throw new Error("檔案內容不足以分析");
+            const performSearch = () => {
+                const results = transactions.filter(t => {
+                    if (filters.posId && !t.posId.toLowerCase().includes(filters.posId.toLowerCase())) return false;
+                    if (filters.paymentType && t.paymentType !== filters.paymentType) return false;
+                    if (filters.cardType && !t.cardType.toUpperCase().includes(filters.cardType)) return false;
+                    return true;
+                });
+                setSearchResults(results);
+                setCurrentPage(1);
+            };
 
-        let headerRowIndex = -1;
-        let tenantColIdx = -1, paymentColIdx = -1, timeColIdx = -1, dateColIdx = -1, posColIdx = -1, amountColIdx = -1, cardTypeColIdx = -1;
+            const paginatedResults = useMemo(() => searchResults ? searchResults.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) : [], [searchResults, currentPage]);
 
-        for (let i = 0; i < Math.min(jsonData.length, 20); i++) {
-          const row = jsonData[i];
-          const tIdx = findColumnIndex(row, ['租戶', '專櫃', 'tenant']);
-          const pIdx = findColumnIndex(row, ['支付', '付款', 'payment']);
-          if (tIdx !== -1 && pIdx !== -1) {
-            headerRowIndex = i;
-            tenantColIdx = tIdx;
-            paymentColIdx = pIdx;
-            timeColIdx = findColumnIndex(row, ['時間', 'time', '交易時']);
-            dateColIdx = findColumnIndex(row, ['日期', 'date', '銷售日']);
-            posColIdx = findColumnIndex(row, ['收銀機', 'pos', '機號']);
-            amountColIdx = findColumnIndex(row, ['金額', 'amount', 'price']);
-            cardTypeColIdx = findColumnIndex(row, ['信用卡類別', 'card type', '卡別']);
-            break;
-          }
+            return (
+                <div className="min-h-screen p-4 md:p-8 max-w-[1600px] mx-auto pb-20">
+                    <div className="mb-10 text-center">
+                        <h1 className="text-4xl font-black text-gray-900 flex items-center justify-center gap-3">
+                            <i data-lucide="file-text" className="w-10 h-10 text-blue-600"></i>
+                            更版後檢查交易狀況
+                        </h1>
+                        <p className="text-gray-500 mt-2">上傳交易明細 XLSX 檔，即時核對各項支付別</p>
+                    </div>
+
+                    {!analysis ? (
+                        <div 
+                            className={`relative border-2 border-dashed rounded-3xl p-20 text-center transition-all bg-white shadow-xl ${dragActive ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+                            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                            onDragLeave={() => setDragActive(false)}
+                            onDrop={(e) => { e.preventDefault(); setDragActive(false); processExcel(e.dataTransfer.files[0]); }}
+                        >
+                            <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => processExcel(e.target.files[0])} />
+                            {loading ? (
+                                <div className="flex flex-col items-center">
+                                    <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                                    <p className="text-lg text-blue-600 font-bold">資料分析中...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <i data-lucide="upload-cloud" className="w-12 h-12 text-blue-600"></i>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-800 mb-2">點擊或拖放 Excel 檔案</p>
+                                    <p className="text-gray-400">支援 .xlsx, .xls 格式</p>
+                                </>
+                            )}
+                            {error && <p className="mt-4 text-red-500 font-bold">{error}</p>}
+                        </div>
+                    ) : (
+                        <div className="space-y-8 animate-in fade-in duration-500">
+                            <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                <div className="flex items-center gap-3">
+                                    <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Ready</span>
+                                    <span className="text-gray-500 text-sm font-medium">{fileData.name}</span>
+                                </div>
+                                <button onClick={() => window.location.reload()} className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors">
+                                    <i data-lucide="refresh-ccw" className="w-4 h-4"></i> 重新上傳
+                                </button>
+                            </div>
+
+                            {/* 支付統計 Grid */}
+                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                    <i data-lucide="credit-card" className="w-5 h-5 text-indigo-500"></i> 支付核查與統計 (占比)
+                                </h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                                    {PAYMENT_OPTIONS.map(option => {
+                                        const count = analysis.stats.paymentTypes[option] || 0;
+                                        const percentage = analysis.stats.totalTransactions > 0 ? ((count / analysis.stats.totalTransactions) * 100).toFixed(1) : "0.0";
+                                        return (
+                                            <div key={option} className={`flex flex-col p-4 rounded-xl border transition-all ${count > 0 ? 'border-green-200 bg-green-50/40 shadow-sm' : 'border-gray-100 bg-gray-50/50'}`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <i data-lucide={count > 0 ? "check-circle" : "x-circle"} className={`w-4 h-4 ${count > 0 ? 'text-green-600' : 'text-gray-400'}`}></i>
+                                                    {count > 0 && <span className="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">{percentage}%</span>}
+                                                </div>
+                                                <div className="text-sm font-bold truncate mb-1 text-gray-800">{option}</div>
+                                                <div className={`text-xl font-black ${count > 0 ? 'text-blue-600' : 'text-gray-300'}`}>{count.toLocaleString()} <span className="text-[10px] font-normal">筆</span></div>
+                                                {count > 0 && <div className="mt-2 w-full bg-gray-200 h-1 rounded-full overflow-hidden"><div className="bg-blue-500 h-full" style={{ width: `${percentage}%` }}></div></div>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 圖表 */}
+                            {BarChart && (
+                                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-[400px]">
+                                    <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                        <i data-lucide="clock" className="w-5 h-5 text-orange-500"></i> 每小時交易流量分布
+                                    </h3>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analysis.stats.hourlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                            <XAxis dataKey="hour" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis tickLine={false} axisLine={false} fontSize={12} />
+                                            <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                            <Legend iconType="circle" />
+                                            <Bar dataKey="building" name="大樓 (T)" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                                            <Bar dataKey="mall" name="商場 (M)" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+
+                            {/* 交易搜尋 */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="p-6 bg-gray-50 border-b border-gray-100">
+                                    <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest">交易明細過濾</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400">機號</label>
+                                            <input type="text" className="w-full px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="機號..." onChange={e => setFilters({...filters, posId: e.target.value})} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400">支付</label>
+                                            <select className="w-full px-4 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500" onChange={e => setFilters({...filters, paymentType: e.target.value})}>
+                                                <option value="">全部支付</option>
+                                                {PAYMENT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400">卡別</label>
+                                            <select className="w-full px-4 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500" onChange={e => setFilters({...filters, cardType: e.target.value})}>
+                                                <option value="">全部卡別</option>
+                                                {CARD_TYPE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                                            </select>
+                                        </div>
+                                        <button onClick={performSearch} className="bg-blue-600 text-white font-bold py-2 rounded-xl hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2">
+                                            <i data-lucide="search" className="w-4 h-4"></i> 執行篩選
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-50 text-gray-400 uppercase text-[10px] font-black">
+                                            <tr>
+                                                <th className="px-6 py-4">時間</th>
+                                                <th className="px-6 py-4">機號 / 租戶</th>
+                                                <th className="px-6 py-4">支付方式</th>
+                                                <th className="px-6 py-4 text-right">交易金額</th>
+                                                <th className="px-6 py-4">卡別</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {searchResults === null ? (
+                                                <tr><td colSpan="5" className="py-12 text-center text-gray-400 italic">請輸入篩選條件並點擊搜尋</td></tr>
+                                            ) : paginatedResults.length > 0 ? (
+                                                paginatedResults.map(t => (
+                                                    <tr key={t.id} className="hover:bg-blue-50/40 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-bold text-gray-800">{t.date}</div>
+                                                            <div className="text-[10px] text-gray-400">{t.time}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="font-mono text-blue-600 font-bold">{t.posId}</div>
+                                                            <div className="text-[10px] text-gray-400 truncate max-w-[150px]">{t.tenant}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 font-medium text-gray-700">{t.paymentType}</td>
+                                                        <td className="px-6 py-4 text-right font-black text-gray-900">${t.amount.toLocaleString()}</td>
+                                                        <td className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase">{t.cardType || '-'}</td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr><td colSpan="5" className="py-12 text-center text-gray-400">查無資料</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
         }
 
-        if (headerRowIndex === -1) throw new Error("無法辨識 Excel 的標題列內容");
-
-        const rawData = jsonData.slice(headerRowIndex + 1);
-        const stats = {
-          totalTransactions: 0,
-          paymentTypes: {},
-          hourlyData: Array(24).fill(0).map((_, i) => ({ 
-            hour: `${String(i).padStart(2, '0')}:00`, building: 0, mall: 0, total: 0 
-          }))
-        };
-        
-        const parsedTransactions = [];
-
-        rawData.forEach((row, index) => {
-          if (!row || row.length === 0) return;
-          
-          const tenantId = normalizeStr(row[tenantColIdx]).toUpperCase();
-          const paymentType = String(row[paymentColIdx]).trim();
-
-          if (!paymentType || HEADER_KEYWORDS.includes(paymentType)) return;
-          if (tenantId.includes('共') && tenantId.includes('筆')) return;
-
-          stats.totalTransactions++;
-          stats.paymentTypes[paymentType] = (stats.paymentTypes[paymentType] || 0) + 1;
-
-          const hour = getHour(row[timeColIdx]);
-          if (hour >= 0 && hour < 24) {
-            if (tenantId.startsWith('T')) stats.hourlyData[hour].building++;
-            else stats.hourlyData[hour].mall++;
-            stats.hourlyData[hour].total++;
-          }
-
-          parsedTransactions.push({
-            id: index,
-            date: dateColIdx !== -1 ? formatExcelDate(row[dateColIdx]) : "",
-            time: formatTime(row[timeColIdx]),
-            posId: posColIdx !== -1 ? String(row[posColIdx]).trim() : "",
-            tenant: row[tenantColIdx],
-            paymentType: paymentType,
-            amount: amountColIdx !== -1 ? parseFloat(row[amountColIdx]) || 0 : 0,
-            cardType: cardTypeColIdx !== -1 ? String(row[cardTypeColIdx]).trim() : ""
-          });
-        });
-
-        setTransactions(parsedTransactions);
-        setAnalysis({
-          generatedAt: new Date().toLocaleString(),
-          stats
-        });
-        setFileData({ name: file.name });
-        setSearchResults(null);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsBinaryString(file);
-  };
-
-  const performSearch = () => {
-    const results = transactions.filter(t => {
-      if (filters.posId && !t.posId.toLowerCase().includes(filters.posId.toLowerCase())) return false;
-      if (filters.paymentType && t.paymentType !== filters.paymentType) return false;
-      if (filters.cardType && !t.cardType.toUpperCase().includes(filters.cardType)) return false;
-      return true;
-    });
-    setSearchResults(results);
-    setCurrentPage(1);
-  };
-
-  const paginatedResults = useMemo(() => {
-    if (!searchResults) return [];
-    return searchResults.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  }, [searchResults, currentPage]);
-
-  // --- 統計組件 ---
-  const PaymentAuditGrid = () => {
-    const totalCount = analysis.stats.totalTransactions;
-    const undefinedPayments = Object.keys(analysis.stats.paymentTypes)
-      .filter(k => !PAYMENT_OPTIONS.includes(k));
-
-    return (
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-indigo-500" />
-          支付核查與統計
-        </h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {PAYMENT_OPTIONS.map(option => {
-            const count = analysis.stats.paymentTypes[option] || 0;
-            const hasData = count > 0;
-            const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : "0.0";
-            
-            return (
-              <div 
-                key={option} 
-                className={`flex flex-col p-4 rounded-xl border transition-all duration-300 ${
-                  hasData 
-                    ? 'border-green-200 bg-green-50/40 shadow-sm' 
-                    : 'border-gray-100 bg-gray-50/50'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className={`p-1 rounded-full ${hasData ? 'bg-green-100' : 'bg-gray-200'}`}>
-                    {hasData ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-gray-400" />}
-                  </div>
-                  {hasData && (
-                    <span className="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded">
-                      {percentage}%
-                    </span>
-                  )}
-                </div>
-                <div className={`text-sm font-bold truncate mb-1 ${hasData ? 'text-gray-800' : 'text-gray-400'}`}>
-                  {option}
-                </div>
-                <div className={`text-xl font-black ${hasData ? 'text-blue-600' : 'text-gray-300'}`}>
-                  {count.toLocaleString()} <span className="text-[10px] font-normal">筆</span>
-                </div>
-                {hasData && (
-                  <div className="mt-1 w-full bg-gray-200 h-1 rounded-full overflow-hidden">
-                    <div className="bg-blue-500 h-full" style={{ width: `${percentage}%` }}></div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {undefinedPayments.map(k => {
-            const count = analysis.stats.paymentTypes[k];
-            const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : "0.0";
-            
-            return (
-              <div key={k} className="flex flex-col p-4 rounded-xl border border-yellow-200 bg-yellow-50/40 shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="p-1 rounded-full bg-yellow-100">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  </div>
-                  <span className="text-[10px] font-bold text-yellow-700 bg-yellow-100 px-1.5 py-0.5 rounded">
-                    {percentage}%
-                  </span>
-                </div>
-                <div className="text-sm font-bold truncate mb-1 text-gray-800">
-                  {k}
-                </div>
-                <div className="text-xl font-black text-orange-600">
-                  {count.toLocaleString()} <span className="text-[10px] font-normal">筆</span>
-                </div>
-                <div className="text-[10px] text-yellow-700 mt-1 italic font-medium">未定義項目</div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-8 flex flex-wrap gap-4 items-center justify-between border-t pt-6">
-          <div className="flex gap-6">
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">總交易量</span>
-              <span className="text-2xl font-black text-gray-800">{analysis.stats.totalTransactions.toLocaleString()} <small className="text-sm font-normal text-gray-500">筆</small></span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">支付種類</span>
-              <span className="text-2xl font-black text-gray-800">{Object.keys(analysis.stats.paymentTypes).length} <small className="text-sm font-normal text-gray-500">種</small></span>
-            </div>
-          </div>
-          <div className="text-sm text-gray-400 bg-gray-50 px-4 py-2 rounded-lg border">
-            數據來源: {fileData.name} (分析於 {analysis.generatedAt})
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8 max-w-[1600px] mx-auto pb-20 font-sans">
-      <div className="mb-10 text-center">
-        <h1 className="text-4xl font-black text-gray-900 flex items-center justify-center gap-3">
-          <FileText className="w-10 h-10 text-blue-600" />
-          更版後檢查交易狀況
-        </h1>
-        <p className="text-gray-500 mt-2">上傳交易明細 XLSX 檔，即時核對各項支付別入帳狀態</p>
-      </div>
-
-      {!analysis && (
-        <div 
-          className={`relative border-2 border-dashed rounded-3xl p-20 text-center transition-all bg-white shadow-xl ${dragActive ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
-          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(e) => { e.preventDefault(); setDragActive(false); processExcel(e.dataTransfer.files[0]); }}
-        >
-          <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => processExcel(e.target.files[0])} />
-          {loading ? (
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-              <p className="text-lg text-blue-600 font-bold">正在讀取並過濾標題列...</p>
-            </div>
-          ) : (
-            <>
-              <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <UploadCloud className="w-12 h-12 text-blue-600" />
-              </div>
-              <p className="text-2xl font-bold text-gray-800 mb-2">點擊或拖放 Excel 檔案</p>
-              <p className="text-gray-400">支援 .xlsx, .xls 格式之商場交易明細</p>
-            </>
-          )}
-          {error && <p className="mt-4 text-red-500 font-medium">錯誤: {error}</p>}
-        </div>
-      )}
-
-      {analysis && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
-          <div className="flex justify-between items-center px-2">
-            <div className="flex items-center gap-4">
-               <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase">Report Ready</span>
-               <span className="text-gray-400 text-sm">檔案：{fileData.name}</span>
-            </div>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors bg-white px-4 py-2 rounded-lg border shadow-sm"
-            >
-              <RefreshCcw className="w-4 h-4" /> 重新分析
-            </button>
-          </div>
-
-          <PaymentAuditGrid />
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-orange-500" />
-              交易流量分布
-            </h3>
-            <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analysis.stats.hourlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="hour" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} fontSize={12} />
-                  <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  <Legend iconType="circle" />
-                  <Bar dataKey="building" name="大樓 (T)" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="mall" name="商場 (M)" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 bg-gray-50 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
-                <Search className="w-5 h-5 text-blue-600" />
-                交易明細檢索
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-400 uppercase">POS 機號</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
-                    value={filters.posId} 
-                    onChange={e => setFilters({...filters, posId: e.target.value})} 
-                    placeholder="輸入機號..." 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-400 uppercase">付款別</label>
-                  <select 
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500" 
-                    value={filters.paymentType} 
-                    onChange={e => setFilters({...filters, paymentType: e.target.value})}
-                  >
-                    <option value="">全部方式</option>
-                    {PAYMENT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                    {Object.keys(analysis.stats.paymentTypes).filter(k => !PAYMENT_OPTIONS.includes(k)).map(o => (
-                      <option key={o} value={o}>{o} (未定義)</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-400 uppercase">信用卡卡別</label>
-                  <select 
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500" 
-                    value={filters.cardType} 
-                    onChange={e => setFilters({...filters, cardType: e.target.value})}
-                  >
-                    <option value="">全部卡別</option>
-                    {CARD_TYPE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <button 
-                  onClick={performSearch} 
-                  className="bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-gray-200"
-                >
-                  <Search className="w-4 h-4" /> 篩選明細
-                </button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50/50 text-gray-400 border-b border-gray-100">
-                    <th className="px-8 py-4 font-black uppercase text-[11px]">日期/時間</th>
-                    <th className="px-8 py-4 font-black uppercase text-[11px]">機號/租戶</th>
-                    <th className="px-8 py-4 font-black uppercase text-[11px]">付款方式</th>
-                    <th className="px-8 py-4 font-black uppercase text-[11px] text-right">交易金額</th>
-                    <th className="px-8 py-4 font-black uppercase text-[11px]">備註/卡別</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {searchResults === null ? (
-                    <tr><td colSpan="5" className="py-20 text-center text-gray-400 font-medium">請選擇篩選條件以顯示詳細明細</td></tr>
-                  ) : searchResults.length > 0 ? (
-                    paginatedResults.map(t => (
-                      <tr key={t.id} className="hover:bg-blue-50/30 transition-colors">
-                        <td className="px-8 py-4">
-                          <div className="font-bold text-gray-800">{t.date}</div>
-                          <div className="text-[11px] text-gray-400">{t.time}</div>
-                        </td>
-                        <td className="px-8 py-4">
-                          <div className="font-mono text-blue-600 font-bold">{t.posId}</div>
-                          <div className="text-[11px] text-gray-400 truncate max-w-[150px]">{t.tenant}</div>
-                        </td>
-                        <td className="px-8 py-4">
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${PAYMENT_OPTIONS.includes(t.paymentType) ? 'bg-indigo-50 text-indigo-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                            {t.paymentType}
-                          </span>
-                        </td>
-                        <td className="px-8 py-4 text-right">
-                          <span className={`font-black text-base ${t.amount < 0 ? 'text-red-500' : 'text-gray-900'}`}>
-                            {t.amount < 0 ? '-' : ''}${Math.abs(t.amount).toLocaleString()}
-                          </span>
-                        </td>
-                        <td className="px-8 py-4">
-                           <span className="text-gray-400 text-xs font-medium tracking-tighter uppercase">{t.cardType || "-"}</span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan="5" className="py-20 text-center text-gray-400">查無相關交易資料</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {searchResults && searchResults.length > 0 && (
-              <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-                <p className="text-xs text-gray-400 font-bold">總計 {searchResults.length} 筆符合項</p>
-                <div className="flex gap-2">
-                  <button 
-                    disabled={currentPage === 1} 
-                    onClick={() => setCurrentPage(p => p - 1)} 
-                    className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 disabled:opacity-30 transition-all"
-                  >
-                    PREV
-                  </button>
-                  <button 
-                    disabled={currentPage * ITEMS_PER_PAGE >= searchResults.length} 
-                    onClick={() => setCurrentPage(p => p + 1)} 
-                    className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 disabled:opacity-30 transition-all"
-                  >
-                    NEXT
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
