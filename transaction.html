@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>更版後檢查交易狀況</title>
-    <!-- 載入基礎套件 CDN -->
+    <!-- 1. 載入 React 基礎 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Recharts 必須在 React 之後載入 -->
+    <!-- 2. 載入 Recharts (必須在 React 之後) -->
     <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <!-- 3. 載入其他輔助工具 -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -21,26 +22,19 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
-        
-        // 確保 Recharts 已正確載入
-        const RechartsObj = window.Recharts || {};
-        const { 
-            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-        } = RechartsObj;
+        // 使用此函式確保全域變數存在
+        const getRecharts = () => {
+            return window.Recharts || {};
+        };
 
-        // 常數定義
-        const PAYMENT_OPTIONS = [
-            "中信收單", "聯信收單", "現金", "101 Pay中信", "101 Pay台新",
-            "LINE PAY", "街口錢包", "宜睿", "台灣PAY(被)", "微信支付",
-            "元大支付寶", "悠遊卡", "悠遊卡-停車", "購物金",
-            "新電子商品禮券", "銀聯UPLAN"
-        ];
-        const CARD_TYPE_OPTIONS = ["VISA", "MASTER", "A/E"];
-        const ITEMS_PER_PAGE = 50;
-        const HEADER_KEYWORDS = ["付款別", "支付", "金額", "銷售日期", "序號"];
+        const App = () => {
+            const { useState, useMemo, useEffect } = React;
+            
+            // 從 Recharts 安全解構
+            const { 
+                BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+            } = getRecharts();
 
-        function App() {
             const [fileData, setFileData] = useState(null);
             const [analysis, setAnalysis] = useState(null);
             const [transactions, setTransactions] = useState([]);
@@ -51,16 +45,23 @@
             const [searchResults, setSearchResults] = useState(null);
             const [currentPage, setCurrentPage] = useState(1);
 
-            // 每當畫面渲染時重新初始化 Lucide 圖標
+            const PAYMENT_OPTIONS = [
+                "中信收單", "聯信收單", "現金", "101 Pay中信", "101 Pay台新",
+                "LINE PAY", "街口錢包", "宜睿", "台灣PAY(被)", "微信支付",
+                "元大支付寶", "悠遊卡", "悠遊卡-停車", "購物金",
+                "新電子商品禮券", "銀聯UPLAN"
+            ];
+            const CARD_TYPE_OPTIONS = ["VISA", "MASTER", "A/E"];
+            const ITEMS_PER_PAGE = 50;
+            const HEADER_KEYWORDS = ["付款別", "支付", "金額", "銷售日期", "序號"];
+
             useEffect(() => {
                 if (window.lucide) {
                     window.lucide.createIcons();
                 }
             });
 
-            // 輔助函式
             const normalizeStr = (str) => str ? String(str).replace(/[\s\r\n\t\uFEFF\x00-\x1F]/g, "").toLowerCase() : "";
-            
             const findColumnIndex = (headers, keywords) => headers.findIndex(header => {
                 const normalized = normalizeStr(header);
                 return keywords.some(keyword => normalized.includes(keyword));
@@ -147,7 +148,16 @@
                                 else stats.hourlyData[hour].mall++;
                                 stats.hourlyData[hour].total++;
                             }
-                            parsedTransactions.push({ id: index, date: formatExcelDate(row[dateColIdx]), time: formatTime(row[timeColIdx]), posId: String(row[posColIdx]).trim(), tenant: row[tenantColIdx], paymentType, amount: parseFloat(row[amountColIdx]) || 0, cardType: String(row[cardTypeColIdx]).trim() });
+                            parsedTransactions.push({ 
+                                id: index, 
+                                date: formatExcelDate(row[dateColIdx]), 
+                                time: formatTime(row[timeColIdx]), 
+                                posId: String(row[posColIdx]).trim(), 
+                                tenant: row[tenantColIdx], 
+                                paymentType, 
+                                amount: parseFloat(row[amountColIdx]) || 0, 
+                                cardType: String(row[cardTypeColIdx]).trim() 
+                            });
                         });
 
                         setTransactions(parsedTransactions);
@@ -167,7 +177,14 @@
                     if (filters.cardType && !t.cardType.toUpperCase().includes(filters.cardType)) return false;
                     return true;
                 });
-                setSearchResults(results);
+
+                const sortedResults = results.sort((a, b) => {
+                    const dateTimeA = `${a.date} ${a.time}`;
+                    const dateTimeB = `${b.date} ${b.time}`;
+                    return dateTimeB.localeCompare(dateTimeA);
+                });
+
+                setSearchResults(sortedResults);
                 setCurrentPage(1);
             };
 
@@ -208,7 +225,7 @@
                             {error && <p className="mt-4 text-red-500 font-bold">{error}</p>}
                         </div>
                     ) : (
-                        <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="space-y-8">
                             <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                                 <div className="flex items-center gap-3">
                                     <span className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Ready</span>
@@ -219,7 +236,6 @@
                                 </button>
                             </div>
 
-                            {/* 支付統計 Grid */}
                             <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                                 <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
                                     <i data-lucide="credit-card" className="w-5 h-5 text-indigo-500"></i> 支付核查與統計 (占比)
@@ -236,14 +252,12 @@
                                                 </div>
                                                 <div className="text-sm font-bold truncate mb-1 text-gray-800">{option}</div>
                                                 <div className={`text-xl font-black ${count > 0 ? 'text-blue-600' : 'text-gray-300'}`}>{count.toLocaleString()} <span className="text-[10px] font-normal">筆</span></div>
-                                                {count > 0 && <div className="mt-2 w-full bg-gray-200 h-1 rounded-full overflow-hidden"><div className="bg-blue-500 h-full" style={{ width: `${percentage}%` }}></div></div>}
                                             </div>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            {/* 圖表 */}
                             {BarChart && (
                                 <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 h-[400px]">
                                     <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -256,14 +270,13 @@
                                             <YAxis tickLine={false} axisLine={false} fontSize={12} />
                                             <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                                             <Legend iconType="circle" />
-                                            <Bar dataKey="building" name="大樓 (T)" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
+                                            <Bar dataKey="building" name="大樓 (T)" stackId="a" fill="#3b82f6" />
                                             <Bar dataKey="mall" name="商場 (M)" stackId="a" fill="#f97316" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             )}
 
-                            {/* 交易搜尋 */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                                 <div className="p-6 bg-gray-50 border-b border-gray-100">
                                     <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest">交易明細過濾</h3>
@@ -292,37 +305,49 @@
                                     </div>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-gray-50 text-gray-400 uppercase text-[10px] font-black">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-black border-b">
                                             <tr>
-                                                <th className="px-6 py-4">時間</th>
-                                                <th className="px-6 py-4">機號 / 租戶</th>
-                                                <th className="px-6 py-4">支付方式</th>
-                                                <th className="px-6 py-4 text-right">交易金額</th>
-                                                <th className="px-6 py-4">卡別</th>
+                                                <th className="px-6 py-5">時間 (最新在前)</th>
+                                                <th className="px-6 py-5">機號 / 租戶</th>
+                                                <th className="px-6 py-5">支付方式</th>
+                                                <th className="px-6 py-5 text-right">交易金額</th>
+                                                <th className="px-6 py-5">卡別</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                             {searchResults === null ? (
-                                                <tr><td colSpan="5" className="py-12 text-center text-gray-400 italic">請輸入篩選條件並點擊搜尋</td></tr>
+                                                <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic text-lg">請輸入篩選條件並點擊搜尋按鈕</td></tr>
                                             ) : paginatedResults.length > 0 ? (
                                                 paginatedResults.map(t => (
-                                                    <tr key={t.id} className="hover:bg-blue-50/40 transition-colors">
-                                                        <td className="px-6 py-4">
-                                                            <div className="font-bold text-gray-800">{t.date}</div>
-                                                            <div className="text-[10px] text-gray-400">{t.time}</div>
+                                                    <tr key={t.id} className="hover:bg-blue-50/50 transition-colors border-b last:border-0">
+                                                        <td className="px-6 py-5">
+                                                            <div className="font-black text-gray-900 text-lg">{t.date}</div>
+                                                            <div className="text-sm text-blue-500 font-bold">{t.time}</div>
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="font-mono text-blue-600 font-bold">{t.posId}</div>
-                                                            <div className="text-[10px] text-gray-400 truncate max-w-[150px]">{t.tenant}</div>
+                                                        <td className="px-6 py-5">
+                                                            <div className="font-mono text-gray-900 font-black text-xl mb-1 tracking-tight">{t.posId}</div>
+                                                            <div className="text-xs text-gray-500 truncate max-w-[200px] font-medium">{t.tenant}</div>
                                                         </td>
-                                                        <td className="px-6 py-4 font-medium text-gray-700">{t.paymentType}</td>
-                                                        <td className="px-6 py-4 text-right font-black text-gray-900">${t.amount.toLocaleString()}</td>
-                                                        <td className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase">{t.cardType || '-'}</td>
+                                                        <td className="px-6 py-5">
+                                                            <span className="inline-block px-3 py-1 rounded-lg bg-gray-100 text-gray-800 font-bold text-base">
+                                                                {t.paymentType}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-5 text-right">
+                                                            <div className="font-black text-gray-900 text-2xl tabular-nums">
+                                                                ${t.amount.toLocaleString()}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-5">
+                                                            <span className={`text-xs font-black px-2 py-1 rounded uppercase ${t.cardType ? 'bg-orange-100 text-orange-700' : 'text-gray-300'}`}>
+                                                                {t.cardType || '-'}
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 ))
                                             ) : (
-                                                <tr><td colSpan="5" className="py-12 text-center text-gray-400">查無資料</td></tr>
+                                                <tr><td colSpan="5" className="py-20 text-center text-gray-400 text-xl">未找到符合條件的交易紀錄</td></tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -332,10 +357,13 @@
                     )}
                 </div>
             );
-        }
+        };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // 核心修復：確保 window 載入完成才初始化 React
+        window.addEventListener('load', () => {
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+        });
     </script>
 </body>
 </html>
