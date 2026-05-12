@@ -133,6 +133,8 @@
 
   /* ── TABLE ── */
   .timeline{width:100%;border-collapse:collapse;font-size:.9rem;}
+  .tl-col-header{background:var(--surface2);border-bottom:2px solid var(--border);}
+  .tl-col-header td{padding:8px 12px;font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
   .tl-hour-header{background:var(--hour-bg);border-top:1px solid var(--hour-bd);border-bottom:1px solid var(--hour-bd);}
   .tl-hour-header td{padding:6px 20px;font-size:.86rem;font-weight:700;color:var(--hour-text);letter-spacing:.04em;}
   .tl-hour-header.peak{background:var(--peak-bg);border-top:1px solid var(--peak-bd);border-bottom:1px solid var(--peak-bd);}
@@ -492,7 +494,7 @@ function renderChart() {
           const cc2 = CAT_COLOR[item.cat] || CAT_COLOR['人員操作'];
           return `<div class="ttip-group">
             <span class="ttip cat" style="border-left-color:${cc2.bar}">${item.cat} ×${item.catCount}</span>
-            ${item.topSub ? `<span class="ttip child">└ ${item.topSub} ×${item.topSubCount}</span>` : ''}
+            ${item.topSub ? `<span class="ttip child">${item.topSub} ×${item.topSubCount}</span>` : ''}
           </div>`;
         }).join('')}
       </div>
@@ -567,7 +569,20 @@ function renderDetail(date) {
         <button class="close-btn" onclick="closeDetail()">✕ 收起</button>
       </div>
       <div style="overflow-x:auto;">
-        <table class="timeline"><tbody>${rows}</tbody></table>
+        <table class="timeline">
+          <thead>
+            <tr class="tl-col-header">
+              <td class="tl-time">時間</td>
+              <td class="tl-store">店名</td>
+              <td>問題分類</td>
+              <td class="tl-sub">次分類</td>
+              <td class="tl-model">機型</td>
+              <td class="tl-desc">問題敘述</td>
+              <td class="tl-solution">處理方式</td>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>
     </div>`;
 }
