@@ -84,7 +84,21 @@
   .li3{background:var(--c3-bg);border-color:var(--c3-bd);color:var(--c3);}
   .li4{background:var(--c4-bg);border-color:var(--c4-bd);color:var(--c4);}
 
-  /* ── EMPTY STATE ── */
+  /* ── TREND SPARKLINE ── */
+  .trend-box{
+    margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+    min-width:200px;
+  }
+  .trend-title{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-align:right;}
+  .trend-svg-wrap{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;}
+  .trend-svg line{stroke:var(--border2);}
+  .trend-svg polyline{fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+  .trend-svg circle{fill:var(--c1);stroke:#fff;stroke-width:1.5;}
+  .trend-svg circle.peak{fill:var(--c2);}
+  .trend-svg text{font-family:'Microsoft JhengHei','微軟正黑體',Arial,sans-serif;font-size:9px;fill:var(--muted);}
+  .trend-svg text.val{font-size:8.5px;fill:var(--c1);font-weight:700;}
+  .trend-svg text.val.peak{fill:var(--c2);}
+
   .empty-state{
     margin:20px 20px 0;border:2px dashed var(--border);border-radius:10px;
     padding:48px 24px;text-align:center;background:var(--surface);
@@ -182,6 +196,12 @@
     <div class="header-total">
       <div class="num" id="totalNum">—</div>
       <div class="lbl">總叫修件數</div>
+    </div>
+    <div class="trend-box" id="trendBox" style="display:none;">
+      <div class="trend-title" id="trendTitle"></div>
+      <div class="trend-svg-wrap">
+        <svg class="trend-svg" id="trendSvg" width="220" height="72"></svg>
+      </div>
     </div>
   </div>
 
@@ -425,6 +445,7 @@ function doReset() {
   document.getElementById('resetBtn').disabled = true;
   document.getElementById('totalNum').textContent = '—';
   document.getElementById('headerSub').textContent = '尚未載入資料';
+  document.getElementById('trendBox').style.display = 'none';
   renderAll();
 }
 
@@ -447,6 +468,99 @@ function updateHeader() {
     document.getElementById('headerSub').textContent =
       `統計區間：${dates[0].slice(0,4)} / ${fmt(dates[0])} \u2013 ${fmt(dates[dates.length-1])}`;
   }
+  renderTrend();
+}
+
+// ── Trend sparkline ────────────────────────────────────────────────
+function renderTrend() {
+  const box   = document.getElementById('trendBox');
+  const title = document.getElementById('trendTitle');
+  const svg   = document.getElementById('trendSvg');
+  const dates = Object.keys(DATA).sort();
+
+  if (dates.length <= 1) { box.style.display = 'none'; return; }
+
+  // Determine mode
+  // "超過一個月" = span from first to last date > 31 days
+  const msPerDay = 86400000;
+  const d0 = new Date(dates[0]), d1 = new Date(dates[dates.length-1]);
+  const spanDays = (d1 - d0) / msPerDay;
+  const useMonthly = spanDays > 31;
+
+  let points = []; // [{label, avg}]
+
+  if (useMonthly) {
+    // Group by YYYY-MM, compute avg daily count per month
+    const byMonth = {};
+    dates.forEach(date => {
+      const key = date.slice(0,7); // YYYY-MM
+      if (!byMonth[key]) byMonth[key] = [];
+      byMonth[key].push(DATA[date].total);
+    });
+    const months = Object.keys(byMonth).sort();
+    points = months.map(m => {
+      const vals = byMonth[m];
+      const avg = vals.reduce((s,v)=>s+v,0) / vals.length;
+      const [y, mo] = m.split('-');
+      return { label: `${mo}月`, avg: +avg.toFixed(1) };
+    });
+    title.textContent = '每月平均叫修數量趨勢';
+  } else {
+    // Daily: each date's total
+    points = dates.map(date => {
+      const mm = date.slice(5,10).replace('-','/');
+      return { label: mm, avg: DATA[date].total };
+    });
+    title.textContent = '每日叫修數量趨勢';
+  }
+
+  // Draw SVG
+  const W = 220, H = 72;
+  const padL = 10, padR = 10, padT = 18, padB = 16;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+  const n = points.length;
+  const vals = points.map(p => p.avg);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+
+  const xOf = i => padL + (n === 1 ? chartW/2 : i * chartW / (n-1));
+  const yOf = v => padT + chartH - ((v - minV) / range) * chartH;
+
+  // Build polyline points string
+  const ptStr = points.map((p,i) => `${xOf(i)},${yOf(p.avg)}`).join(' ');
+
+  // X-axis labels: show max ~6 evenly spaced
+  const step = Math.max(1, Math.floor(n / 6));
+  let labels = '';
+  points.forEach((p,i) => {
+    if (i === 0 || i === n-1 || i % step === 0) {
+      labels += `<text x="${xOf(i)}" y="${H-2}" text-anchor="middle">${p.label}</text>`;
+    }
+  });
+
+  // Dots + value labels (show min, max, first, last)
+  const peakIdx = vals.indexOf(maxV);
+  let dots = '';
+  points.forEach((p,i) => {
+    const isPeak = i === peakIdx;
+    const showVal = i === 0 || i === n-1 || isPeak;
+    dots += `<circle cx="${xOf(i)}" cy="${yOf(p.avg)}" r="${isPeak?4:2.5}" class="${isPeak?'peak':''}"/>`;
+    if (showVal) {
+      const anchor = i === 0 ? 'start' : i === n-1 ? 'end' : 'middle';
+      dots += `<text x="${xOf(i)}" y="${yOf(p.avg)-6}" text-anchor="${anchor}" class="val${isPeak?' peak':''}">${p.avg}</text>`;
+    }
+  });
+
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.innerHTML = `
+    <line x1="${padL}" y1="${padT+chartH}" x2="${W-padR}" y2="${padT+chartH}" stroke-width="1"/>
+    <polyline points="${ptStr}"/>
+    ${dots}
+    ${labels}`;
+
+  box.style.display = 'flex';
 }
 
 // ── Render chart ───────────────────────────────────────────────────
