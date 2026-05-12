@@ -521,8 +521,9 @@ function renderTrend() {
   const chartH = H - padT - padB;
   const n = points.length;
   const vals = points.map(p => p.avg);
-  const minV = Math.min(...vals), maxV = Math.max(...vals);
-  const range = maxV - minV || 1;
+  const minV = 0;
+  const maxV = Math.max(...vals);
+  const range = maxV || 1;
 
   const xOf = i => padL + (n === 1 ? chartW/2 : i * chartW / (n-1));
   const yOf = v => padT + chartH - ((v - minV) / range) * chartH;
@@ -539,17 +540,14 @@ function renderTrend() {
     }
   });
 
-  // Dots + value labels (show min, max, first, last)
+  // Dots + value labels — show ALL points
   const peakIdx = vals.indexOf(maxV);
   let dots = '';
   points.forEach((p,i) => {
     const isPeak = i === peakIdx;
-    const showVal = i === 0 || i === n-1 || isPeak;
+    const anchor = i === 0 ? 'start' : i === n-1 ? 'end' : 'middle';
     dots += `<circle cx="${xOf(i)}" cy="${yOf(p.avg)}" r="${isPeak?4:2.5}" class="${isPeak?'peak':''}"/>`;
-    if (showVal) {
-      const anchor = i === 0 ? 'start' : i === n-1 ? 'end' : 'middle';
-      dots += `<text x="${xOf(i)}" y="${yOf(p.avg)-6}" text-anchor="${anchor}" class="val${isPeak?' peak':''}">${p.avg}</text>`;
-    }
+    dots += `<text x="${xOf(i)}" y="${yOf(p.avg)-6}" text-anchor="${anchor}" class="val${isPeak?' peak':''}">${p.avg}</text>`;
   });
 
   svg.setAttribute('width', W);
