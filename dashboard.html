@@ -105,11 +105,7 @@
   .bar-num{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:.85rem;font-weight:700;color:var(--text);white-space:nowrap;}
   .bar-date{font-size:.8rem;color:var(--muted);white-space:nowrap;font-weight:500;}
   .bar-col.active .bar-date{color:var(--c1);font-weight:700;}
-  .bar-tags{display:flex;flex-direction:column;gap:3px;position:absolute;bottom:calc(100% + 28px);left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;opacity:0;transition:opacity .18s;min-width:130px;align-items:center;}
-  .bar-col:hover .bar-tags,.bar-col.active .bar-tags{opacity:1;}
-  .ttip{font-size:.76rem;padding:3px 8px;border-radius:3px;white-space:nowrap;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--text2);box-shadow:0 2px 8px rgba(0,0,0,.1);}
-  .ttip.cat{border-left:3px solid var(--c1);}
-  .ttip.sub{border-left:3px solid var(--c3);}
+  /* tooltip and detail tag styles — see below */
 
   /* ── DETAIL ── */
   .detail-panel{margin:12px 20px 24px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);animation:slideDown .2s ease;}
@@ -117,7 +113,21 @@
   .detail-header{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface2);flex-wrap:wrap;}
   .detail-date{font-size:1.05rem;font-weight:700;color:var(--c1);}
   .detail-count{font-size:.88rem;color:var(--muted);font-weight:500;}
-  .detail-cats{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;}
+  /* detail-cats parent-child groups */
+  .detail-cats{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:flex-start;}
+  .cat-group{display:inline-flex;flex-direction:column;gap:3px;align-items:flex-end;}
+  .cat-parent{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:4px;font-size:.82rem;font-weight:700;border:1px solid;white-space:nowrap;}
+  .cat-child{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 18px;border-radius:3px;font-size:.76rem;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border2);white-space:nowrap;position:relative;}
+  .cat-child::before{content:'└';position:absolute;left:6px;font-size:.72rem;color:var(--border);}
+
+  /* tooltip parent-child groups */
+  .bar-tags{display:flex;flex-direction:column;gap:4px;position:absolute;bottom:calc(100% + 28px);left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;opacity:0;transition:opacity .18s;min-width:140px;align-items:flex-end;}
+  .bar-col:hover .bar-tags,.bar-col.active .bar-tags{opacity:1;}
+  .ttip-group{display:flex;flex-direction:column;gap:2px;align-items:flex-end;}
+  .ttip{font-size:.76rem;padding:3px 8px;border-radius:3px;white-space:nowrap;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--text2);box-shadow:0 2px 6px rgba(0,0,0,.1);}
+  .ttip.cat{border-left:3px solid var(--c1);}
+  .ttip.child{font-size:.72rem;font-weight:500;color:var(--muted);background:var(--surface2);padding:2px 8px 2px 16px;position:relative;border-left:2px solid var(--border2);box-shadow:none;}
+  .ttip.child::before{content:'└ ';font-size:.68rem;}
   .close-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:.84rem;font-family:inherit;padding:4px 12px;cursor:pointer;transition:color .1s,border-color .1s,background .1s;}
   .close-btn:hover{color:var(--text);border-color:var(--text2);background:var(--surface2);}
 
@@ -137,6 +147,7 @@
   .tl-store{font-weight:700;width:148px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .tl-cat{font-size:.82rem;padding:2px 8px;border-radius:3px;white-space:nowrap;font-weight:700;border:1px solid;display:inline-block;}
   .tl-sub{font-size:.86rem;color:var(--text2);white-space:nowrap;font-weight:500;}
+  .tl-model{font-size:.84rem;color:var(--muted);white-space:nowrap;font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;}
   .tl-desc{font-size:.87rem;color:var(--text2);max-width:220px;}
   .tl-solution{font-size:.84rem;color:var(--muted);max-width:260px;line-height:1.5;}
   .c1{background:var(--c1-bg);border-color:var(--c1-bd);color:var(--c1);}
@@ -194,7 +205,7 @@
 
   <!-- column mapping hint -->
   <div class="parse-hint" id="parseHint">
-    📌 上傳格式提示：檔案需包含欄位 <b>叫修日期、叫修時間、店名、問題分類、次分類、問題敘述、處理方式</b>
+    📌 上傳格式提示：檔案需包含欄位 <b>叫修日期、叫修時間、店名、問題分類、次分類、機型、問題敘述、處理方式</b>
   </div>
 
   <!-- legend -->
@@ -243,9 +254,9 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
   const reader = new FileReader();
   reader.onload = function(ev) {
     try {
-      const wb = XLSX.read(ev.target.result, { type: 'binary', cellDates: true });
+      const wb = XLSX.read(ev.target.result, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
       const parsed = parseRows(rows, file.name);
       if (!parsed) return;
       DATA = parsed;
@@ -275,6 +286,7 @@ function parseRows(rows, filename) {
   const COL_STORE = find(['店名','門市','store','Store','專櫃']);
   const COL_CAT   = find(['問題分類','分類','category','Category']);
   const COL_SUB   = find(['次分類','sub','Sub']);
+  const COL_MODEL = find(['機型','型號','model','Model','設備型號','機器型號']);
   const COL_DESC  = find(['問題敘述','敘述','描述','desc','Desc','description']);
   const COL_SOL   = find(['處理方式','處理','solution','Solution','Solution']);
 
@@ -295,13 +307,12 @@ function parseRows(rows, filename) {
     let rawDate = row[COL_DATE];
     let dateStr = '';
     if (rawDate instanceof Date) {
-      // SheetJS cellDates:true gives a UTC midnight Date — format in UTC to avoid timezone shift
-      const y = rawDate.getUTCFullYear(), m = rawDate.getUTCMonth()+1, dd = rawDate.getUTCDate();
+      // 不應出現（已關閉 cellDates），保留為 fallback
+      const y = rawDate.getFullYear(), m = rawDate.getMonth()+1, dd = rawDate.getDate();
       dateStr = `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-    } else if (typeof rawDate === 'number') {
-      // Excel serial: day 1 = 1900-01-01, but Excel wrongly treats 1900 as leap year (+1 offset)
-      // Correct formula: subtract 25568 days from Unix epoch (not 25569)
-      const d = new Date(Date.UTC(1899,11,30) + rawDate * 86400000);
+    } else if (typeof rawDate === 'number' && rawDate > 0) {
+      // 正確公式：1899-12-30 為 day 0（修正 Excel 1900 閏年 bug，與 LibreOffice/Google Sheets 相同）
+      const d = new Date(Date.UTC(1899, 11, 30) + rawDate * 86400000);
       dateStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
     } else {
       rawDate = String(rawDate).trim();
@@ -339,30 +350,39 @@ function parseRows(rows, filename) {
     const cat = String(row[COL_CAT] || '').trim();
     const sub = String(row[COL_SUB] || (COL_SUB ? row[COL_SUB] : '')).trim();
     const store = String(row[COL_STORE] || '').trim();
+    const model = String(row[COL_MODEL] || '').trim();
     const desc = String(row[COL_DESC] || '').trim();
     const sol  = String(row[COL_SOL]  || '').trim();
 
     if (!dateStr || dateStr === 'unknown' || !store) return;
 
     if (!result[dateStr]) result[dateStr] = [];
-    result[dateStr].push({ time: timeStr, hour, store, category: cat, subcategory: sub, description: desc, solution: sol });
+    result[dateStr].push({ time: timeStr, hour, store, category: cat, subcategory: sub, model, description: desc, solution: sol });
   });
 
   // Build structured DATA
   const structured = {};
   Object.keys(result).sort().forEach(date => {
     const recs = result[date].sort((a,b) => a.time.localeCompare(b.time));
-    const catCount = {}, subCount = {}, hc = {};
+    const catCount = {}, hc = {};
+    // subCount per category
+    const catSubCount = {}; // { cat: { sub: count } }
     recs.forEach(r => {
       catCount[r.category] = (catCount[r.category]||0)+1;
-      subCount[r.subcategory] = (subCount[r.subcategory]||0)+1;
       hc[r.hour] = (hc[r.hour]||0)+1;
+      if (!catSubCount[r.category]) catSubCount[r.category] = {};
+      catSubCount[r.category][r.subcategory] = (catSubCount[r.category][r.subcategory]||0)+1;
     });
     const sortObj = obj => Object.entries(obj).sort((a,b)=>b[1]-a[1]);
+    // Top 2 categories, each with top 1 sub-category from within that category
+    const top2 = sortObj(catCount).slice(0,2).map(([cat, n]) => {
+      const subs = sortObj(catSubCount[cat]||{}).slice(0,1);
+      return { cat, catCount: n, topSub: subs[0] ? subs[0][0] : '', topSubCount: subs[0] ? subs[0][1] : 0 };
+    });
     structured[date] = {
       total: recs.length,
-      top_categories: sortObj(catCount).slice(0,2),
-      top_subcategories: sortObj(subCount).slice(0,2),
+      top_categories: sortObj(catCount).slice(0,2),   // kept for bar color logic
+      top2_with_subs: top2,
       hour_counts: hc,
       records: recs
     };
@@ -468,8 +488,13 @@ function renderChart() {
     col.className = 'bar-col' + (date === activeDate ? ' active' : '');
     col.innerHTML = `
       <div class="bar-tags">
-        ${d.top_categories.map(([c,n])=>`<span class="ttip cat">${c} ×${n}</span>`).join('')}
-        ${d.top_subcategories.map(([s,n])=>`<span class="ttip sub">${s} ×${n}</span>`).join('')}
+        ${(d.top2_with_subs||[]).map(item => {
+          const cc2 = CAT_COLOR[item.cat] || CAT_COLOR['人員操作'];
+          return `<div class="ttip-group">
+            <span class="ttip cat" style="border-left-color:${cc2.bar}">${item.cat} ×${item.catCount}</span>
+            ${item.topSub ? `<span class="ttip child">└ ${item.topSub} ×${item.topSubCount}</span>` : ''}
+          </div>`;
+        }).join('')}
       </div>
       <div class="bar-outer" style="height:${maxH}px;background:${cc.bg};">
         <div class="bar-inner" style="height:${h}px;background:${cc.bar};">
@@ -508,7 +533,7 @@ function renderDetail(date) {
   let rows = '';
   hours.forEach(hr => {
     const isPeak = peakHours.has(hr);
-    rows += `<tr class="tl-hour-header${isPeak?' peak':''}"><td colspan="6">${String(hr).padStart(2,'0')}:00 時段（${byHour[hr].length} 件）</td></tr>`;
+    rows += `<tr class="tl-hour-header${isPeak?' peak':''}"><td colspan="7">${String(hr).padStart(2,'0')}:00 時段（${byHour[hr].length} 件）</td></tr>`;
     byHour[hr].forEach(r => {
       const cls = getCatCls(r.category);
       rows += `
@@ -517,6 +542,7 @@ function renderDetail(date) {
           <td class="tl-store">${r.store}</td>
           <td><span class="tl-cat ${cls}">${r.category}</span></td>
           <td class="tl-sub">${r.subcategory}</td>
+          <td class="tl-model">${r.model||'—'}</td>
           <td class="tl-desc">${(r.description||'').replace(/\n/g,'<br>')}</td>
           <td class="tl-solution">${(r.solution||'').replace(/\n/g,'<br>')}</td>
         </tr>`;
@@ -530,8 +556,13 @@ function renderDetail(date) {
         <div class="detail-date">${mmdd}</div>
         <div class="detail-count">共 ${d.total} 件叫修</div>
         <div class="detail-cats">
-          ${d.top_categories.map(([c,n])=>`<span class="tl-cat ${getCatCls(c)}">${c} ×${n}</span>`).join('')}
-          ${d.top_subcategories.map(([s,n])=>`<span class="sub-tag">${s} ×${n}</span>`).join('')}
+          ${(d.top2_with_subs||[]).map(item => {
+            const cls = getCatCls(item.cat);
+            return `<div class="cat-group">
+              <span class="cat-parent ${cls}">${item.cat} ×${item.catCount}</span>
+              ${item.topSub ? `<span class="cat-child">${item.topSub} ×${item.topSubCount}</span>` : ''}
+            </div>`;
+          }).join('')}
         </div>
         <button class="close-btn" onclick="closeDetail()">✕ 收起</button>
       </div>
