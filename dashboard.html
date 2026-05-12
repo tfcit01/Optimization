@@ -504,7 +504,7 @@ function renderTrend() {
       const [y, mo] = m.split('-');
       return { label: `${mo}月`, avg: +avg.toFixed(1) };
     });
-    title.textContent = '每月平均叫修數量趨勢';
+    title.textContent = '平均每日叫修數量趨勢';
   } else {
     // Daily: each date's total
     points = dates.map(date => {
