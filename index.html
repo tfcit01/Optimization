@@ -224,7 +224,7 @@
                         <div class="flex flex-col items-center">
                             <div class="receipt-paper p-6 text-xs text-gray-800 leading-tight shadow-xl">
                                 <div class="text-center mb-4">
-                                    <h3 class="text-sm font-bold">○○○購物中心</h3>
+                                    <h3 class="text-sm font-bold">TAIPEI101購物中心</h3>
                                     <h4 class="text-base font-bold my-1">退貨明細表</h4>
                                     <p>2026-02-02 14:30:00</p>
                                     <span class="inline-block bg-black text-white text-[10px] px-1 mt-1 font-sans">商場留存聯</span>
@@ -245,15 +245,24 @@
                                 <div class="mb-3 opacity-60">
                                     <h5 class="font-bold border-l-2 border-gray-400 pl-1 mb-1 text-[11px]">【原交易獲贈資訊】</h5>
                                     <div class="pl-2 space-y-0.5 text-[10px]">
-                                        <div class="flex justify-between"><span>會員點數:</span><span>50 點</span></div>
-                                        <div class="flex justify-between"><span class="bg-yellow-100">滿額電子抵用券:</span><span>$500 (1張)</span></div>
-                                        <div class="flex justify-between"><span>實體贈品 (服務台):</span><span>馬克杯 1個</span></div>
+                                        <div class="flex justify-between">
+                                            <span>會員點數:</span>
+                                            <span id="orig-points-val">50 點</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="bg-yellow-100">滿額電子抵用券:</span>
+                                            <span>$500 (1張)</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>實體贈品 (服務台):</span>
+                                            <span>馬克杯 1個</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="bg-gray-50 p-2 -mx-2 mb-2 border-y border-gray-200">
                                     <h5 class="font-bold border-l-4 border-orange-500 pl-1 mb-2 text-[11px]">【本次應收回明細】</h5>
                                     <div class="flex justify-between items-center mb-1">
-                                        <span>會員點數 (發票作廢全收回):</span>
+                                        <span>會員點數:</span>
                                         <span id="rec-points-val" class="font-bold font-mono">-50</span>
                                     </div>
                                     <div class="text-[10px] text-green-700 mb-2 pl-2">✓ 系統自動扣除</div>
@@ -299,7 +308,7 @@
                 <div class="space-y-3">
                     <div class="p-3 bg-blue-50 rounded border border-blue-100">
                         <p class="text-xs font-bold text-blue-800 mb-1">會員點數：</p>
-                        <p class="text-[11px] text-gray-700">屬該筆發票之回饋。不論全退或部分退貨，只要該張發票執行作廢，點數即<span class="font-bold text-blue-900">全數收回 (不按比例)</span>。</p>
+                        <p class="text-[11px] text-gray-700">屬基本消費回饋。全額退貨則全數收回；部分退貨則依購物中心基準比例 (100元=1點) <span class="font-bold text-blue-900">按退貨金額收回對應點數</span>。</p>
                     </div>
                     <div class="p-3 bg-orange-50 rounded border border-orange-100">
                         <p class="text-xs font-bold text-orange-800 mb-1">滿額累贈 (抵用券/贈品)：</p>
@@ -361,31 +370,43 @@
             const scenarioHint = document.getElementById('scenario-hint');
             const transAmt = document.getElementById('trans-amt');
             const totalRefund = document.getElementById('total-refund');
+            
+            const origPtsVal = document.getElementById('orig-points-val');
             const ptsVal = document.getElementById('rec-points-val');
+            
             const voucherVal = document.getElementById('rec-voucher-val');
             const voucherStatus = document.getElementById('rec-voucher-status');
 
-            // 統一邏輯：發票一但作廢，該筆點數 50 點全收
-            ptsVal.innerText = "-50";
-
             if (state.giftScenario === 'standard') {
-                scenarioHint.innerHTML = '<span class="font-bold block mb-1 text-gray-800">💡 全額退貨：</span>該發票完全作廢，點數與滿額贈品全數收回。';
+                scenarioHint.innerHTML = '<span class="font-bold block mb-1 text-gray-800">💡 全額退貨：</span>該發票完全作廢，系統自動全數收回點數及累贈之抵用券。';
                 transAmt.innerText = "-5,000";
                 totalRefund.innerText = "$-5,000";
+                
+                origPtsVal.innerText = "50 點"; // 全額退貨對應原始 50 點
+                ptsVal.innerText = "-50";      // 全額收回
+                
                 voucherVal.innerText = "$500 (-1張)";
                 voucherStatus.innerText = "券號: ...9901 (Void)";
                 voucherStatus.className = "text-[10px] pl-2 mb-2 text-gray-500";
             } else if (state.giftScenario === 'threshold_failed') {
-                scenarioHint.innerHTML = '<span class="font-bold block mb-1 text-red-700">💡 部分退貨 (未達標)：</span>1. 點數全額收回。2. 總金額不足門檻，<span class="font-bold underline">回收滿額贈品</span>。';
+                scenarioHint.innerHTML = '<span class="font-bold block mb-1 text-red-700">💡 部分退貨 (未達標)：</span>1. 點數依比例收回 (100元=1點)。2. 總金額不足門檻，<span class="font-bold underline">回收累贈之滿額電子抵用券</span>。';
                 transAmt.innerText = "-2,000";
                 totalRefund.innerText = "$-2,000";
+                
+                origPtsVal.innerText = "20 點"; // 部分退貨該退品項原先對應的 20 點
+                ptsVal.innerText = "-20";      // 依比例收回
+                
                 voucherVal.innerText = "$500 (-1張)";
                 voucherStatus.innerText = "門檻失效 (需追回)";
                 voucherStatus.className = "text-[10px] pl-2 mb-2 text-red-600 font-bold";
             } else if (state.giftScenario === 'threshold_met') {
-                scenarioHint.innerHTML = '<span class="font-bold block mb-1 text-green-700">💡 部分退貨 (仍達標)：</span>1. 點數全額收回。2. 總金額仍達門檻，<span class="font-bold underline text-green-700">保留滿額贈品</span>。';
+                scenarioHint.innerHTML = '<span class="font-bold block mb-1 text-green-700">💡 部分退貨 (仍達標)：</span>1. 點數依比例收回 (100元=1點)。2. 總金額仍達門檻，<span class="font-bold underline text-green-700">保留累贈之滿額電子抵用券</span>。';
                 transAmt.innerText = "-2,000";
                 totalRefund.innerText = "$-2,000";
+                
+                origPtsVal.innerText = "20 點"; // 部分退貨該退品項原先對應的 20 點
+                ptsVal.innerText = "-20";      // 依比例收回
+                
                 voucherVal.innerText = "$0 (保留)";
                 voucherStatus.innerText = "資格符合 (免回收)";
                 voucherStatus.className = "text-[10px] pl-2 mb-2 text-green-600 font-bold";
