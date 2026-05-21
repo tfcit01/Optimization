@@ -84,6 +84,27 @@
   .li3{background:var(--c3-bg);border-color:var(--c3-bd);color:var(--c3);}
   .li4{background:var(--c4-bg);border-color:var(--c4-bd);color:var(--c4);}
 
+  /* ── BUSY HOURS ── */
+  .busy-box{
+    display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+    background:var(--surface2);border:1px solid var(--border2);
+    border-radius:8px;padding:10px 14px;
+  }
+  .busy-title{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.04em;white-space:nowrap;}
+  .busy-slots{display:flex;flex-direction:row;gap:12px;align-items:stretch;flex-wrap:wrap;}
+  .busy-group{display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1;}
+  .busy-group-label{display:flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;margin-bottom:1px;}
+  .busy-slot{
+    display:flex;align-items:center;gap:8px;
+    border-radius:5px;padding:5px 10px;border:1px solid;
+  }
+  .busy-slot .bs-time{font-size:.88rem;font-weight:700;white-space:nowrap;}
+  .busy-slot .bs-meta{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;}
+  .busy-slot .bs-count{font-size:.76rem;opacity:.9;white-space:nowrap;}
+  .busy-slot .bs-peak-day{font-size:.7rem;opacity:.75;white-space:nowrap;}
+  .busy-slot .bs-bar{flex:1;height:4px;border-radius:2px;background:rgba(0,0,0,.08);overflow:hidden;min-width:30px;}
+  .busy-slot .bs-bar-fill{height:100%;border-radius:2px;}
+
   /* ── TREND SPARKLINE ── */
   .trend-box{
     margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;
@@ -93,8 +114,8 @@
   .trend-svg-wrap{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;}
   .trend-svg line{stroke:var(--border2);}
   .trend-svg polyline{fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
-  .trend-svg circle{fill:var(--c1);stroke:#fff;stroke-width:1.5;}
-  .trend-svg circle.peak{fill:var(--c2);}
+  .trend-svg > circle, svg.trend-svg circle{fill:var(--c1);stroke:#fff;stroke-width:1.5;}
+  .trend-svg > circle.peak, svg.trend-svg circle.peak{fill:var(--c2);}
   .trend-svg text{font-family:'Microsoft JhengHei','微軟正黑體',Arial,sans-serif;font-size:9px;fill:var(--muted);}
   .trend-svg text.val{font-size:8.5px;fill:var(--c1);font-weight:700;}
   .trend-svg text.val.peak{fill:var(--c2);}
@@ -107,17 +128,28 @@
   .empty-state .es-title{font-size:1.1rem;font-weight:700;color:var(--text2);margin-bottom:6px;}
   .empty-state .es-sub{font-size:.88rem;color:var(--muted);}
 
-  /* ── CHART ── */
-  .chart-section{background:var(--surface);margin:14px 20px 0;border:1px solid var(--border);border-radius:8px;padding:18px 20px 14px;}
-  .section-label{font-size:.88rem;font-weight:600;color:var(--muted);margin-bottom:14px;letter-spacing:.02em;}
-  .chart-wrap{height:200px;display:flex;align-items:flex-end;gap:8px;}
-  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;position:relative;}
+  .chart-section{background:var(--surface);margin:14px 20px 0;border:1px solid var(--border);border-radius:8px;padding:16px 20px 14px;position:relative;overflow:visible;}
+  .chart-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .section-label{font-size:.88rem;font-weight:600;color:var(--muted);letter-spacing:.02em;flex:1;}
+  .chart-nav{display:flex;align-items:center;gap:6px;}
+  .chart-nav-btn{
+    background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+    color:var(--text2);font-size:.78rem;font-family:inherit;font-weight:600;
+    padding:3px 10px;cursor:pointer;transition:background .12s,border-color .12s;white-space:nowrap;
+  }
+  .chart-nav-btn:hover{background:var(--border2);border-color:var(--muted);}
+  .chart-nav-btn.arr{padding:3px 8px;font-size:.9rem;}
+  .chart-viewport{overflow-x:auto;overflow-y:visible;padding-bottom:4px;padding-top:130px;}
+  .chart-viewport::-webkit-scrollbar{height:5px;}
+  .chart-viewport::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .chart-wrap{height:200px;display:flex;align-items:flex-end;gap:6px;width:max-content;}
+  .bar-col{width:40px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;position:relative;flex-shrink:0;}
   .bar-outer{width:100%;border-radius:4px 4px 0 0;position:relative;border:1px solid var(--border2);border-bottom:none;transition:opacity .15s;overflow:visible;background:var(--surface2);}
   .bar-inner{width:100%;border-radius:4px 4px 0 0;position:absolute;bottom:0;transition:height .35s cubic-bezier(.22,.6,.36,1);}
   .bar-col.active .bar-outer{box-shadow:0 0 0 2px var(--c1);}
   .bar-col:not(.active):hover .bar-outer{opacity:.78;}
-  .bar-num{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:.85rem;font-weight:700;color:var(--text);white-space:nowrap;}
-  .bar-date{font-size:.8rem;color:var(--muted);white-space:nowrap;font-weight:500;}
+  .bar-num{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:.8rem;font-weight:700;color:var(--text);white-space:nowrap;}
+  .bar-date{font-size:.72rem;color:var(--muted);white-space:nowrap;font-weight:500;}
   .bar-col.active .bar-date{color:var(--c1);font-weight:700;}
   /* tooltip and detail tag styles — see below */
 
@@ -135,10 +167,11 @@
   .cat-child::before{content:'└';position:absolute;left:6px;font-size:.72rem;color:var(--border);}
 
   /* tooltip parent-child groups */
-  .bar-tags{display:flex;flex-direction:column;gap:4px;position:absolute;bottom:calc(100% + 28px);left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;opacity:0;transition:opacity .18s;min-width:140px;align-items:flex-start;}
+  .bar-tags{display:flex;flex-direction:column;gap:6px;position:absolute;bottom:calc(100% + 6px);left:0;z-index:30;pointer-events:none;opacity:0;transition:opacity .18s;min-width:155px;align-items:flex-start;}
+  .bar-tags.flip-left{left:auto;right:0;}
   .bar-col:hover .bar-tags,.bar-col.active .bar-tags{opacity:1;}
   .ttip-group{display:flex;flex-direction:column;gap:2px;align-items:flex-start;}
-  .ttip{font-size:.76rem;padding:3px 8px;border-radius:3px;white-space:nowrap;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--text2);box-shadow:0 2px 6px rgba(0,0,0,.1);}
+  .ttip{font-size:.76rem;padding:3px 8px;border-radius:3px;white-space:nowrap;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--text2);box-shadow:0 2px 6px rgba(0,0,0,.12);}
   .ttip.cat{border-left:3px solid var(--c1);}
   .ttip.child{font-size:.72rem;font-weight:500;color:var(--muted);background:var(--surface2);padding:2px 8px 2px 16px;position:relative;border-left:2px solid var(--border2);box-shadow:none;}
   .ttip.child::before{content:'└ ';font-size:.68rem;}
@@ -196,6 +229,10 @@
     <div class="header-total">
       <div class="num" id="totalNum">—</div>
       <div class="lbl">總叫修件數</div>
+    </div>
+    <div class="busy-box" id="busyBox" style="display:none;">
+      <div class="busy-title">🔥 忙碌時段（平日 / 假日）</div>
+      <div class="busy-slots" id="busySlots"></div>
     </div>
     <div class="trend-box" id="trendBox" style="display:none;">
       <div class="trend-title" id="trendTitle"></div>
@@ -446,6 +483,7 @@ function doReset() {
   document.getElementById('totalNum').textContent = '—';
   document.getElementById('headerSub').textContent = '尚未載入資料';
   document.getElementById('trendBox').style.display = 'none';
+  document.getElementById('busyBox').style.display = 'none';
   renderAll();
 }
 
@@ -468,7 +506,156 @@ function updateHeader() {
     document.getElementById('headerSub').textContent =
       `統計區間：${dates[0].slice(0,4)} / ${fmt(dates[0])} \u2013 ${fmt(dates[dates.length-1])}`;
   }
+  renderBusyHours();
   renderTrend();
+}
+
+// ── Taiwan public holidays (國定假日 + 補假 + 週六日) ──────────────
+// 假日判斷：週六、週日 OR 國定假日（含補假）
+const TW_HOLIDAYS = new Set([
+  // 2025
+  '2025-01-01','2025-01-27','2025-01-28','2025-01-29','2025-01-30','2025-01-31',
+  '2025-02-08', // 補班→不算假，排除
+  '2025-02-28',
+  '2025-04-03','2025-04-04',
+  '2025-05-01',
+  '2025-05-31', // 端午
+  '2025-10-06', // 中秋
+  '2025-09-29', // 教師節補假
+  '2025-10-10','2025-10-11',
+  '2025-10-24', // 光復節補假
+  '2025-12-25',
+  // 2026
+  '2026-01-01',
+  '2026-02-15', // 小年夜（彈性）
+  '2026-02-16', // 除夕
+  '2026-02-17','2026-02-18','2026-02-19', // 春節初一～初三
+  '2026-02-20', // 小年夜補假
+  '2026-02-27', // 和平紀念日補假
+  '2026-02-28',
+  '2026-04-03', // 兒童節補假
+  '2026-04-04', // 兒童節
+  '2026-04-05', // 清明節
+  '2026-05-01', // 勞動節
+  '2026-06-19', // 端午節
+  '2026-06-20',
+  '2026-09-28', // 孔子誕辰/教師節
+  '2026-09-27',
+  '2026-10-01', // 中秋
+  '2026-10-10', // 國慶
+  '2026-10-09',
+  '2026-10-25', // 光復節
+  '2026-10-26',
+  '2026-12-25', // 行憲紀念日
+  '2026-12-26',
+  '2026-12-27',
+]);
+
+function isHoliday(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay(); // 0=Sun, 6=Sat
+  return dow === 0 || dow === 6 || TW_HOLIDAYS.has(dateStr);
+}
+
+// ── Busy hours ─────────────────────────────────────────────────────
+function renderBusyHours() {
+  const box   = document.getElementById('busyBox');
+  const slots = document.getElementById('busySlots');
+  const dates = Object.keys(DATA);
+  if (!dates.length) { box.style.display = 'none'; return; }
+
+  // Separate weekday vs holiday hour counts
+  const weekdayHC = {}, holidayHC = {};
+  dates.forEach(date => {
+    const target = isHoliday(date) ? holidayHC : weekdayHC;
+    const hc = DATA[date].hour_counts;
+    Object.keys(hc).forEach(h => {
+      target[h] = (target[h] || 0) + hc[h];
+    });
+  });
+
+  // Also build per-day hour_counts split by weekday/holiday (for peak-day lookup)
+  const wdDayHC = {}, hdDayHC = {}; // { date: { hour: cnt } }
+  dates.forEach(date => {
+    const target = isHoliday(date) ? hdDayHC : wdDayHC;
+    target[date] = DATA[date].hour_counts;
+  });
+
+  function getPeaks(hc, dayCount, dayHC) {
+    if (!Object.keys(hc).length) return [];
+    // Sliding 2-hour windows across all days combined
+    const windows = Array.from({length: 24}, (_, h) => ({
+      startHour: h,
+      cnt: (hc[h] || 0) + (hc[h+1] || 0)
+    })).filter(w => w.cnt > 0);
+    if (!windows.length) return [];
+    windows.sort((a, b) => b.cnt - a.cnt);
+    const best = windows[0];
+    const avg = dayCount > 0 ? (best.cnt / dayCount).toFixed(1) : best.cnt;
+
+    // Find the single day with the highest count in this 2-hour window
+    let peakDate = '', peakDayCnt = 0;
+    Object.keys(dayHC).forEach(date => {
+      const hcDay = dayHC[date];
+      const dayCnt = (hcDay[best.startHour] || 0) + (hcDay[best.startHour + 1] || 0);
+      if (dayCnt > peakDayCnt) { peakDayCnt = dayCnt; peakDate = date; }
+    });
+
+    return [{ ...best, avg, peakDate, peakDayCnt }];
+  }
+
+  // Count distinct weekday/holiday days for averaging
+  let wdDays = 0, hdDays = 0;
+  dates.forEach(date => {
+    if (isHoliday(date)) hdDays++; else wdDays++;
+  });
+
+  const wdPeaks = getPeaks(weekdayHC, wdDays, wdDayHC);
+  const hdPeaks = getPeaks(holidayHC, hdDays, hdDayHC);
+
+  // Overall max for bar scaling
+  const allMax = Math.max(
+    ...[...wdPeaks, ...hdPeaks].map(p => p.cnt), 1
+  );
+
+  function renderSlots(peaks, color) {
+    if (!peaks.length) return `<span style="font-size:.78rem;color:var(--muted);">無資料</span>`;
+    return peaks.map(p => {
+      const pct  = Math.round((p.cnt / allMax) * 100);
+      const s    = String(p.startHour).padStart(2,'0');
+      const e    = String(p.startHour + 2).padStart(2,'0');
+      const mmdd = p.peakDate ? p.peakDate.slice(5).replace('-','/') : '';
+      return `<div class="busy-slot" style="border-color:${color.bd};background:${color.bg};">
+        <span class="bs-time" style="color:${color.text};">${s}:00－${e}:00</span>
+        <div class="bs-bar"><div class="bs-bar-fill" style="width:${pct}%;background:${color.text};"></div></div>
+        <div class="bs-meta">
+          <span class="bs-count" style="color:${color.text};">均 ${p.avg} 件/日</span>
+          ${mmdd ? `<span class="bs-peak-day" style="color:${color.text};">最高：${mmdd} 共 ${p.peakDayCnt} 件</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const WD_COLOR = { bg:'#edf2fa', bd:'#b8ccec', text:'#1a4f96' };
+  const HD_COLOR = { bg:'#fff8ec', bd:'#e8c46a', text:'#8c4e00' };
+
+  slots.innerHTML = `
+    <div class="busy-group">
+      <div class="busy-group-label" style="color:${WD_COLOR.text};">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${WD_COLOR.text};flex-shrink:0;"></span>
+        平日
+      </div>
+      ${renderSlots(wdPeaks, WD_COLOR)}
+    </div>
+    <div class="busy-group" style="margin-top:8px;">
+      <div class="busy-group-label" style="color:${HD_COLOR.text};">
+        <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${HD_COLOR.text};flex-shrink:0;"></span>
+        假日
+      </div>
+      ${renderSlots(hdPeaks, HD_COLOR)}
+    </div>`;
+
+  box.style.display = 'flex';
 }
 
 // ── Trend sparkline ────────────────────────────────────────────────
@@ -577,10 +764,31 @@ function renderAll() {
   }
   document.getElementById('mainContent').innerHTML = `
     <div class="chart-section">
-      <div class="section-label">每日叫修件數（點擊日期展開 / 收起細項）</div>
-      <div class="chart-wrap" id="chartWrap"></div>
+      <div class="chart-top">
+        <div class="section-label">每日叫修件數（點擊日期展開 / 收起細項）</div>
+        <div class="chart-nav">
+          <button class="chart-nav-btn arr" onclick="chartScroll(-1)" title="往前">&#8249;</button>
+          <button class="chart-nav-btn" onclick="chartScrollTo('start')">最早</button>
+          <button class="chart-nav-btn" onclick="chartScrollTo('end')">最新</button>
+          <button class="chart-nav-btn arr" onclick="chartScroll(1)" title="往後">&#8250;</button>
+        </div>
+      </div>
+      <div class="chart-viewport" id="chartViewport">
+        <div class="chart-wrap" id="chartWrap"></div>
+      </div>
     </div>`;
   renderChart();
+}
+
+function chartScroll(dir) {
+  const vp = document.getElementById('chartViewport');
+  if (vp) vp.scrollBy({ left: dir * 200, behavior: 'smooth' });
+}
+function chartScrollTo(pos) {
+  const vp = document.getElementById('chartViewport');
+  if (!vp) return;
+  if (pos === 'end') vp.scrollTo({ left: vp.scrollWidth, behavior: 'smooth' });
+  else vp.scrollTo({ left: 0, behavior: 'smooth' });
 }
 
 function renderChart() {
@@ -617,7 +825,21 @@ function renderChart() {
       </div>
       <div class="bar-date">${mm}</div>`;
     col.addEventListener('click', () => toggleDetail(date, col));
+
+    // Smart tooltip: flip to right-anchor for bars in the last 30% of total
+    const totalDates = dates.length;
+    const barIndex = dates.indexOf(date);
+    if (barIndex >= totalDates * 0.7) {
+      col.querySelector('.bar-tags').classList.add('flip-left');
+    }
+
     wrap.appendChild(col);
+  });
+
+  // Auto scroll to the rightmost (latest) date
+  requestAnimationFrame(() => {
+    const vp = document.getElementById('chartViewport');
+    if (vp) vp.scrollLeft = vp.scrollWidth;
   });
 }
 
