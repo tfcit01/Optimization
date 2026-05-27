@@ -107,6 +107,40 @@
     background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;
   }
   .search-select:focus{border-color:var(--c1);}
+  .multi-select-wrap{position:relative;min-width:160px;max-width:220px;}
+  .multi-select-trigger{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:5px 10px;border:1.5px solid var(--border);border-radius:5px;
+    background:var(--surface);cursor:pointer;font-size:.88rem;color:var(--text);
+    transition:border-color .15s;user-select:none;white-space:nowrap;min-height:33px;
+  }
+  .multi-select-trigger:hover,.multi-select-trigger.open{border-color:var(--c1);}
+  .multi-select-trigger span{overflow:hidden;text-overflow:ellipsis;max-width:140px;}
+  .multi-select-dropdown{
+    position:absolute;top:calc(100% + 4px);left:0;z-index:50;
+    background:var(--surface);border:1.5px solid var(--c1-bd);border-radius:6px;
+    box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:180px;max-width:260px;
+    overflow:hidden;
+  }
+  .ms-actions{display:flex;gap:6px;padding:7px 10px;border-bottom:1px solid var(--border2);}
+  .ms-action-btn{
+    font-family:inherit;font-size:.76rem;font-weight:600;padding:2px 8px;
+    border-radius:3px;border:1px solid var(--border);background:var(--surface2);
+    color:var(--muted);cursor:pointer;transition:color .12s,border-color .12s;
+  }
+  .ms-action-btn:hover{color:var(--c1);border-color:var(--c1-bd);}
+  .ms-list{max-height:200px;overflow-y:auto;padding:4px 0;}
+  .ms-list::-webkit-scrollbar{width:4px;}
+  .ms-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .ms-item{
+    display:flex;align-items:center;gap:8px;padding:5px 12px;
+    cursor:pointer;font-size:.86rem;color:var(--text2);transition:background .1s;
+  }
+  .ms-item:hover{background:var(--c1-bg);}
+  .ms-item.checked{color:var(--c1);}
+  .ms-item input[type=checkbox]{
+    accent-color:var(--c1);width:14px;height:14px;cursor:pointer;flex-shrink:0;
+  }
   .search-result-panel{
     margin:12px 20px 0;border:1px solid var(--c1-bd);border-radius:8px;
     overflow:hidden;background:var(--surface);animation:slideDown .2s ease;
@@ -326,11 +360,21 @@
         <option value="">全部</option>
       </select>
     </div>
-    <div class="search-field-group">
-      <span class="search-field-label">次分類</span>
-      <select id="subSearchSelect" class="search-select">
-        <option value="">全部</option>
-      </select>
+    <div class="search-field-group" style="position:relative;">
+      <span class="search-field-label">次分類（可多選）</span>
+      <div class="multi-select-wrap" id="subMultiWrap">
+        <div class="multi-select-trigger" id="subMultiTrigger" onclick="toggleSubDropdown()">
+          <span id="subMultiLabel">全部</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="multi-select-dropdown" id="subMultiDropdown" style="display:none;">
+          <div class="ms-actions">
+            <button class="ms-action-btn" onclick="subSelectAll(true)">全選</button>
+            <button class="ms-action-btn" onclick="subSelectAll(false)">清除</button>
+          </div>
+          <div class="ms-list" id="subMultiList"></div>
+        </div>
+      </div>
     </div>
     <button class="search-btn" onclick="runPosSearch()">查詢</button>
     <button class="search-clear-btn" id="searchClearBtn" onclick="clearPosSearch()" style="display:none;">✕ 清除結果</button>
@@ -636,40 +680,79 @@ function isHoliday(dateStr) {
 
 // ── POS / Category Search ──────────────────────────────────────────
 function populateSearchDropdowns() {
-  const cats = new Set(), subs = new Set();
-  Object.values(DATA).forEach(d => {
-    d.records.forEach(r => {
-      if (r.category) cats.add(r.category);
-      if (r.subcategory) subs.add(r.subcategory);
-    });
-  });
+  const cats = new Set();
+  Object.values(DATA).forEach(d => d.records.forEach(r => { if (r.category) cats.add(r.category); }));
+
   const catSel = document.getElementById('catSearchSelect');
-  const subSel = document.getElementById('subSearchSelect');
   catSel.innerHTML = '<option value="">全部</option>' +
     [...cats].sort().map(c => `<option value="${c}">${c}</option>`).join('');
-  subSel.innerHTML = '<option value="">全部</option>' +
-    [...subs].sort().map(s => `<option value="${s}">${s}</option>`).join('');
 
-  // When cat changes, filter sub options to only those that appear in that cat
+  // Build sub multiselect from all subs
+  buildSubList(null);
+
+  // When cat changes, rebuild sub list filtered to that cat
   catSel.addEventListener('change', () => {
-    const selCat = catSel.value;
-    const filteredSubs = new Set();
-    Object.values(DATA).forEach(d => {
-      d.records.forEach(r => {
-        if ((!selCat || r.category === selCat) && r.subcategory) filteredSubs.add(r.subcategory);
-      });
-    });
-    const prevSub = subSel.value;
-    subSel.innerHTML = '<option value="">全部</option>' +
-      [...filteredSubs].sort().map(s => `<option value="${s}">${s}</option>`).join('');
-    if ([...filteredSubs].includes(prevSub)) subSel.value = prevSub;
+    buildSubList(catSel.value || null);
+    updateSubLabel();
   });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('subMultiWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      const dd = document.getElementById('subMultiDropdown');
+      if (dd) { dd.style.display = 'none'; document.getElementById('subMultiTrigger').classList.remove('open'); }
+    }
+  });
+}
+
+function buildSubList(filterCat) {
+  const subs = new Set();
+  Object.values(DATA).forEach(d => d.records.forEach(r => {
+    if ((!filterCat || r.category === filterCat) && r.subcategory) subs.add(r.subcategory);
+  }));
+  const list = document.getElementById('subMultiList');
+  list.innerHTML = [...subs].sort().map(s => `
+    <label class="ms-item">
+      <input type="checkbox" value="${s}" onchange="updateSubLabel()">
+      ${s}
+    </label>`).join('');
+}
+
+function toggleSubDropdown() {
+  const dd = document.getElementById('subMultiDropdown');
+  const trigger = document.getElementById('subMultiTrigger');
+  const isOpen = dd.style.display !== 'none';
+  dd.style.display = isOpen ? 'none' : 'block';
+  trigger.classList.toggle('open', !isOpen);
+}
+
+function subSelectAll(check) {
+  document.querySelectorAll('#subMultiList input[type=checkbox]').forEach(cb => cb.checked = check);
+  updateSubLabel();
+}
+
+function updateSubLabel() {
+  const checked = [...document.querySelectorAll('#subMultiList input[type=checkbox]:checked')].map(cb => cb.value);
+  const label = document.getElementById('subMultiLabel');
+  // Also update ms-item checked class for styling
+  document.querySelectorAll('#subMultiList .ms-item').forEach(item => {
+    const cb = item.querySelector('input');
+    item.classList.toggle('checked', cb && cb.checked);
+  });
+  if (checked.length === 0) label.textContent = '全部';
+  else if (checked.length === 1) label.textContent = checked[0];
+  else label.textContent = `已選 ${checked.length} 項`;
+}
+
+function getSelectedSubs() {
+  return [...document.querySelectorAll('#subMultiList input[type=checkbox]:checked')].map(cb => cb.value);
 }
 
 function runPosSearch() {
   const posQuery = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
   const catQuery = (document.getElementById('catSearchSelect').value || '').trim();
-  const subQuery = (document.getElementById('subSearchSelect').value || '').trim();
+  const selectedSubs = getSelectedSubs(); // empty array = no filter
   const mount = document.getElementById('searchResultMount');
 
   // Require at least one filter
@@ -685,7 +768,7 @@ function runPosSearch() {
     DATA[date].records.forEach(r => {
       const posMatch = !posQuery || (r.posno||'').toUpperCase().includes(posQuery);
       const catMatch = !catQuery || r.category === catQuery;
-      const subMatch = !subQuery || r.subcategory === subQuery;
+      const subMatch = selectedSubs.length === 0 || selectedSubs.includes(r.subcategory);
       if (posMatch && catMatch && subMatch) hits.push({ date, ...r });
     });
   });
@@ -696,7 +779,7 @@ function runPosSearch() {
   const filters = [];
   if (posQuery) filters.push(`機號：${posQuery}`);
   if (catQuery) filters.push(`問題分類：${catQuery}`);
-  if (subQuery) filters.push(`次分類：${subQuery}`);
+  if (selectedSubs.length > 0) filters.push(`次分類：${selectedSubs.length === 1 ? selectedSubs[0] : selectedSubs.join('、')}`);
   const filterLabel = filters.join('　');
 
   if (!hits.length) {
@@ -762,7 +845,7 @@ function runPosSearch() {
 function clearPosSearch() {
   document.getElementById('posSearchInput').value = '';
   if (document.getElementById('catSearchSelect')) document.getElementById('catSearchSelect').value = '';
-  if (document.getElementById('subSearchSelect')) document.getElementById('subSearchSelect').value = '';
+  subSelectAll(false); updateSubLabel();
   document.getElementById('searchResultMount').innerHTML = '';
   document.getElementById('searchClearBtn').style.display = 'none';
 }
