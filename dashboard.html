@@ -74,6 +74,40 @@
   }
   .parse-hint b{color:var(--text2);}
 
+  /* ── POS SEARCH ── */
+  .search-bar{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .search-label{font-size:.84rem;font-weight:600;color:var(--text2);white-space:nowrap;}
+  .search-input{
+    font-family:inherit;font-size:.88rem;padding:5px 10px;
+    border:1.5px solid var(--border);border-radius:5px;
+    color:var(--text);background:var(--surface);
+    width:200px;transition:border-color .15s;outline:none;
+  }
+  .search-input:focus{border-color:var(--c1);}
+  .search-btn{
+    padding:5px 16px;border-radius:5px;border:1.5px solid var(--c1-bd);
+    background:var(--c1-bg);color:var(--c1);font-size:.88rem;font-weight:700;
+    font-family:inherit;cursor:pointer;transition:background .12s;white-space:nowrap;
+  }
+  .search-btn:hover{background:#ccddf5;}
+  .search-clear-btn{
+    padding:5px 12px;border-radius:5px;border:1px solid var(--border);
+    background:none;color:var(--muted);font-size:.84rem;font-family:inherit;
+    cursor:pointer;transition:color .12s;white-space:nowrap;
+  }
+  .search-clear-btn:hover{color:var(--danger);}
+  .search-result-panel{
+    margin:12px 20px 0;border:1px solid var(--c1-bd);border-radius:8px;
+    overflow:hidden;background:var(--surface);animation:slideDown .2s ease;
+  }
+  .search-result-header{
+    display:flex;align-items:center;gap:12px;padding:11px 20px;
+    background:var(--c1-bg);border-bottom:1px solid var(--c1-bd);
+  }
+  .sr-title{font-size:1rem;font-weight:700;color:var(--c1);}
+  .sr-count{font-size:.85rem;color:var(--muted);}
+  .sr-empty{padding:28px 24px;text-align:center;font-size:.9rem;color:var(--muted);}
+
   /* ── LEGEND ── */
   .legend-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .legend-title{font-size:.84rem;font-weight:600;color:var(--muted);margin-right:2px;}
@@ -267,6 +301,15 @@
     📌 上傳格式提示：檔案需包含欄位 <b>叫修日期、叫修時間、店名、問題分類、次分類、機型、問題敘述、處理方式</b>
   </div>
 
+  <!-- POS 機號查詢 -->
+  <div class="search-bar" id="searchBar" style="display:none;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="search-label">POS 機號查詢：</span>
+    <input type="text" id="posSearchInput" class="search-input" placeholder="輸入機號，如 B14246…" autocomplete="off">
+    <button class="search-btn" onclick="runPosSearch()">查詢</button>
+    <button class="search-clear-btn" id="searchClearBtn" onclick="clearPosSearch()" style="display:none;">✕ 清除結果</button>
+  </div>
+
   <!-- legend -->
   <div class="legend-row" style="margin-top:12px;">
     <span class="legend-title">問題分類代表色：</span>
@@ -278,6 +321,7 @@
 </header>
 
 <div id="mainContent"></div>
+<div id="searchResultMount"></div>
 <div id="detailMount"></div>
 <div id="modalMount"></div>
 
@@ -322,6 +366,8 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       isDefault = false;
       activeDate = null;
       setStatus('loaded', `✅ 已載入：${file.name}（${getTotalCount(DATA)} 件）`);
+      document.getElementById('searchBar').style.display = 'flex';
+      clearPosSearch();
       updateHeader();
       renderAll();
     } catch(err) {
@@ -345,9 +391,10 @@ function parseRows(rows, filename) {
   const COL_STORE = find(['店名','門市','store','Store','專櫃']);
   const COL_CAT   = find(['問題分類','分類','category','Category']);
   const COL_SUB   = find(['次分類','sub','Sub']);
+  const COL_POSNO = find(['機號','POS機號','pos_no','posno','機器編號','設備編號']);
   const COL_MODEL = find(['機型','型號','model','Model','設備型號','機器型號']);
   const COL_DESC  = find(['問題敘述','敘述','描述','desc','Desc','description']);
-  const COL_SOL   = find(['處理方式','處理','solution','Solution','Solution']);
+  const COL_SOL   = find(['處理方式','處理','solution','Solution']);
 
   const missing = [
     !COL_DATE && '叫修日期', !COL_TIME && '叫修時間',
@@ -406,17 +453,18 @@ function parseRows(rows, filename) {
       }
     }
 
-    const cat = String(row[COL_CAT] || '').trim();
-    const sub = String(row[COL_SUB] || (COL_SUB ? row[COL_SUB] : '')).trim();
+    const cat   = String(row[COL_CAT]   || '').trim();
+    const sub   = String(row[COL_SUB]   || '').trim();
     const store = String(row[COL_STORE] || '').trim();
+    const posno = String(row[COL_POSNO] || '').trim();
     const model = String(row[COL_MODEL] || '').trim();
-    const desc = String(row[COL_DESC] || '').trim();
-    const sol  = String(row[COL_SOL]  || '').trim();
+    const desc  = String(row[COL_DESC]  || '').trim();
+    const sol   = String(row[COL_SOL]   || '').trim();
 
     if (!dateStr || dateStr === 'unknown' || !store) return;
 
     if (!result[dateStr]) result[dateStr] = [];
-    result[dateStr].push({ time: timeStr, hour, store, category: cat, subcategory: sub, model, description: desc, solution: sol });
+    result[dateStr].push({ time: timeStr, hour, store, category: cat, subcategory: sub, posno, model, description: desc, solution: sol });
   });
 
   // Build structured DATA
@@ -484,6 +532,8 @@ function doReset() {
   document.getElementById('headerSub').textContent = '尚未載入資料';
   document.getElementById('trendBox').style.display = 'none';
   document.getElementById('busyBox').style.display = 'none';
+  document.getElementById('searchBar').style.display = 'none';
+  clearPosSearch();
   renderAll();
 }
 
@@ -555,6 +605,90 @@ function isHoliday(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   const dow = d.getDay(); // 0=Sun, 6=Sat
   return dow === 0 || dow === 6 || TW_HOLIDAYS.has(dateStr);
+}
+
+// ── POS Search ─────────────────────────────────────────────────────
+function runPosSearch() {
+  const query = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
+  const mount = document.getElementById('searchResultMount');
+  if (!query) { mount.innerHTML = ''; document.getElementById('searchClearBtn').style.display='none'; return; }
+
+  // Collect all matching records across all dates
+  const hits = [];
+  Object.keys(DATA).sort().forEach(date => {
+    DATA[date].records.forEach(r => {
+      if ((r.posno||'').toUpperCase().includes(query)) {
+        hits.push({ date, ...r });
+      }
+    });
+  });
+
+  document.getElementById('searchClearBtn').style.display = hits.length >= 0 ? 'inline-block' : 'none';
+
+  if (!hits.length) {
+    mount.innerHTML = `
+      <div class="search-result-panel">
+        <div class="search-result-header">
+          <span class="sr-title">🔍 機號查詢：${query}</span>
+        </div>
+        <div class="sr-empty">查無符合「${query}」的叫修紀錄</div>
+      </div>`;
+    return;
+  }
+
+  // Build table rows grouped by date
+  const byDate = {};
+  hits.forEach(h => { (byDate[h.date] = byDate[h.date]||[]).push(h); });
+
+  let rows = '';
+  Object.keys(byDate).sort().forEach(date => {
+    const mmdd = date.slice(5).replace('-','/');
+    rows += `<tr class="tl-hour-header"><td colspan="8">${mmdd}（${byDate[date].length} 件）</td></tr>`;
+    byDate[date].forEach(r => {
+      const cls = getCatCls(r.category);
+      rows += `<tr class="tl-row">
+        <td class="tl-time">${r.time}</td>
+        <td class="tl-store">${r.store}</td>
+        <td style="font-family:monospace;font-size:.84rem;font-weight:700;color:var(--c1);white-space:nowrap;">${r.posno||'—'}</td>
+        <td><span class="tl-cat ${cls}">${r.category}</span></td>
+        <td class="tl-sub">${r.subcategory}</td>
+        <td class="tl-model">${r.model||'—'}</td>
+        <td class="tl-desc">${(r.description||'').replace(/\n/g,'<br>')}</td>
+        <td class="tl-solution">${(r.solution||'').replace(/\n/g,'<br>')}</td>
+      </tr>`;
+    });
+  });
+
+  mount.innerHTML = `
+    <div class="search-result-panel">
+      <div class="search-result-header">
+        <span class="sr-title">🔍 機號查詢：${query}</span>
+        <span class="sr-count">共 ${hits.length} 筆紀錄 ／ ${Object.keys(byDate).length} 天</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="timeline">
+          <thead><tr class="tl-col-header">
+            <td class="tl-time">時間</td>
+            <td class="tl-store">店名</td>
+            <td style="white-space:nowrap;">機號</td>
+            <td>問題分類</td>
+            <td class="tl-sub">次分類</td>
+            <td class="tl-model">機型</td>
+            <td class="tl-desc">問題敘述</td>
+            <td class="tl-solution">處理方式</td>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  mount.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function clearPosSearch() {
+  document.getElementById('posSearchInput').value = '';
+  document.getElementById('searchResultMount').innerHTML = '';
+  document.getElementById('searchClearBtn').style.display = 'none';
 }
 
 // ── Busy hours ─────────────────────────────────────────────────────
@@ -932,6 +1066,9 @@ document.getElementById('resetBtn').disabled = true;
 document.getElementById('totalNum').textContent = '—';
 document.getElementById('headerSub').textContent = '尚未載入資料，請上傳叫修紀錄檔案';
 setStatus('', '📋 尚未載入資料，請上傳叫修紀錄檔案');
+document.getElementById('posSearchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runPosSearch();
+});
 renderAll();
 </script>
 </body>
