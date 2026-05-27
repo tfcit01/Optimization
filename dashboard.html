@@ -75,8 +75,8 @@
   .parse-hint b{color:var(--text2);}
 
   /* ── POS SEARCH ── */
-  .search-bar{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
-  .search-label{font-size:.84rem;font-weight:600;color:var(--text2);white-space:nowrap;}
+  .search-bar{display:flex;align-items:flex-end;gap:10px;margin-top:8px;flex-wrap:wrap;}
+  .search-label{font-size:.84rem;font-weight:600;color:var(--text2);white-space:nowrap;align-self:flex-end;padding-bottom:2px;}
   .search-input{
     font-family:inherit;font-size:.88rem;padding:5px 10px;
     border:1.5px solid var(--border);border-radius:5px;
@@ -96,6 +96,17 @@
     cursor:pointer;transition:color .12s;white-space:nowrap;
   }
   .search-clear-btn:hover{color:var(--danger);}
+  .search-field-group{display:inline-flex;flex-direction:column;gap:2px;}
+  .search-field-label{font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.04em;}
+  .search-select{
+    font-family:inherit;font-size:.88rem;padding:5px 28px 5px 10px;
+    border:1.5px solid var(--border);border-radius:5px;
+    color:var(--text);background:var(--surface);
+    min-width:130px;max-width:200px;transition:border-color .15s;outline:none;
+    appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a869a' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;
+  }
+  .search-select:focus{border-color:var(--c1);}
   .search-result-panel{
     margin:12px 20px 0;border:1px solid var(--c1-bd);border-radius:8px;
     overflow:hidden;background:var(--surface);animation:slideDown .2s ease;
@@ -301,11 +312,26 @@
     📌 上傳格式提示：檔案需包含欄位 <b>叫修日期、叫修時間、店名、問題分類、次分類、機型、問題敘述、處理方式</b>
   </div>
 
-  <!-- POS 機號查詢 -->
+  <!-- 查詢列 -->
   <div class="search-bar" id="searchBar" style="display:none;">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <span class="search-label">POS 機號查詢：</span>
-    <input type="text" id="posSearchInput" class="search-input" placeholder="輸入機號，如 B14246…" autocomplete="off">
+    <span class="search-label">查詢：</span>
+    <div class="search-field-group">
+      <span class="search-field-label">POS 機號</span>
+      <input type="text" id="posSearchInput" class="search-input" placeholder="輸入機號，如 B14246…" autocomplete="off">
+    </div>
+    <div class="search-field-group">
+      <span class="search-field-label">問題分類</span>
+      <select id="catSearchSelect" class="search-select">
+        <option value="">全部</option>
+      </select>
+    </div>
+    <div class="search-field-group">
+      <span class="search-field-label">次分類</span>
+      <select id="subSearchSelect" class="search-select">
+        <option value="">全部</option>
+      </select>
+    </div>
     <button class="search-btn" onclick="runPosSearch()">查詢</button>
     <button class="search-clear-btn" id="searchClearBtn" onclick="clearPosSearch()" style="display:none;">✕ 清除結果</button>
   </div>
@@ -368,6 +394,7 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       setStatus('loaded', `✅ 已載入：${file.name}（${getTotalCount(DATA)} 件）`);
       document.getElementById('searchBar').style.display = 'flex';
       clearPosSearch();
+      populateSearchDropdowns();
       updateHeader();
       renderAll();
     } catch(err) {
@@ -607,36 +634,83 @@ function isHoliday(dateStr) {
   return dow === 0 || dow === 6 || TW_HOLIDAYS.has(dateStr);
 }
 
-// ── POS Search ─────────────────────────────────────────────────────
-function runPosSearch() {
-  const query = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
-  const mount = document.getElementById('searchResultMount');
-  if (!query) { mount.innerHTML = ''; document.getElementById('searchClearBtn').style.display='none'; return; }
+// ── POS / Category Search ──────────────────────────────────────────
+function populateSearchDropdowns() {
+  const cats = new Set(), subs = new Set();
+  Object.values(DATA).forEach(d => {
+    d.records.forEach(r => {
+      if (r.category) cats.add(r.category);
+      if (r.subcategory) subs.add(r.subcategory);
+    });
+  });
+  const catSel = document.getElementById('catSearchSelect');
+  const subSel = document.getElementById('subSearchSelect');
+  catSel.innerHTML = '<option value="">全部</option>' +
+    [...cats].sort().map(c => `<option value="${c}">${c}</option>`).join('');
+  subSel.innerHTML = '<option value="">全部</option>' +
+    [...subs].sort().map(s => `<option value="${s}">${s}</option>`).join('');
 
-  // Collect all matching records across all dates
+  // When cat changes, filter sub options to only those that appear in that cat
+  catSel.addEventListener('change', () => {
+    const selCat = catSel.value;
+    const filteredSubs = new Set();
+    Object.values(DATA).forEach(d => {
+      d.records.forEach(r => {
+        if ((!selCat || r.category === selCat) && r.subcategory) filteredSubs.add(r.subcategory);
+      });
+    });
+    const prevSub = subSel.value;
+    subSel.innerHTML = '<option value="">全部</option>' +
+      [...filteredSubs].sort().map(s => `<option value="${s}">${s}</option>`).join('');
+    if ([...filteredSubs].includes(prevSub)) subSel.value = prevSub;
+  });
+}
+
+function runPosSearch() {
+  const posQuery = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
+  const catQuery = (document.getElementById('catSearchSelect').value || '').trim();
+  const subQuery = (document.getElementById('subSearchSelect').value || '').trim();
+  const mount = document.getElementById('searchResultMount');
+
+  // Require at least one filter
+  if (!posQuery && !catQuery && !subQuery) {
+    mount.innerHTML = '';
+    document.getElementById('searchClearBtn').style.display = 'none';
+    return;
+  }
+
+  // Collect matching records
   const hits = [];
   Object.keys(DATA).sort().forEach(date => {
     DATA[date].records.forEach(r => {
-      if ((r.posno||'').toUpperCase().includes(query)) {
-        hits.push({ date, ...r });
-      }
+      const posMatch = !posQuery || (r.posno||'').toUpperCase().includes(posQuery);
+      const catMatch = !catQuery || r.category === catQuery;
+      const subMatch = !subQuery || r.subcategory === subQuery;
+      if (posMatch && catMatch && subMatch) hits.push({ date, ...r });
     });
   });
 
-  document.getElementById('searchClearBtn').style.display = hits.length >= 0 ? 'inline-block' : 'none';
+  document.getElementById('searchClearBtn').style.display = 'inline-block';
+
+  // Build label string for header
+  const filters = [];
+  if (posQuery) filters.push(`機號：${posQuery}`);
+  if (catQuery) filters.push(`問題分類：${catQuery}`);
+  if (subQuery) filters.push(`次分類：${subQuery}`);
+  const filterLabel = filters.join('　');
 
   if (!hits.length) {
     mount.innerHTML = `
       <div class="search-result-panel">
         <div class="search-result-header">
-          <span class="sr-title">🔍 機號查詢：${query}</span>
+          <span class="sr-title">🔍 ${filterLabel}</span>
         </div>
-        <div class="sr-empty">查無符合「${query}」的叫修紀錄</div>
+        <div class="sr-empty">查無符合條件的叫修紀錄</div>
       </div>`;
+    mount.scrollIntoView({ behavior:'smooth', block:'start' });
     return;
   }
 
-  // Build table rows grouped by date
   const byDate = {};
   hits.forEach(h => { (byDate[h.date] = byDate[h.date]||[]).push(h); });
 
@@ -662,7 +736,7 @@ function runPosSearch() {
   mount.innerHTML = `
     <div class="search-result-panel">
       <div class="search-result-header">
-        <span class="sr-title">🔍 機號查詢：${query}</span>
+        <span class="sr-title">🔍 ${filterLabel}</span>
         <span class="sr-count">共 ${hits.length} 筆紀錄 ／ ${Object.keys(byDate).length} 天</span>
       </div>
       <div style="overflow-x:auto;">
@@ -687,6 +761,8 @@ function runPosSearch() {
 
 function clearPosSearch() {
   document.getElementById('posSearchInput').value = '';
+  if (document.getElementById('catSearchSelect')) document.getElementById('catSearchSelect').value = '';
+  if (document.getElementById('subSearchSelect')) document.getElementById('subSearchSelect').value = '';
   document.getElementById('searchResultMount').innerHTML = '';
   document.getElementById('searchClearBtn').style.display = 'none';
 }
