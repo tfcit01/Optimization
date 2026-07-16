@@ -376,6 +376,10 @@
         </div>
       </div>
     </div>
+    <div class="search-field-group">
+      <span class="search-field-label">錯誤代碼</span>
+      <input type="text" id="errCodeInput" class="search-input" placeholder="如 E1192、96…" autocomplete="off">
+    </div>
     <button class="search-btn" onclick="runPosSearch()">查詢</button>
     <button class="search-clear-btn" id="searchClearBtn" onclick="clearPosSearch()" style="display:none;">✕ 清除結果</button>
   </div>
@@ -749,14 +753,22 @@ function getSelectedSubs() {
   return [...document.querySelectorAll('#subMultiList input[type=checkbox]:checked')].map(cb => cb.value);
 }
 
+function highlightErr(text, query) {
+  const escaped = (text||'').replace(/\n/g,'<br>');
+  if (!query) return escaped;
+  const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return escaped.replace(re, '<mark style="background:#fff176;padding:0 2px;border-radius:2px;font-weight:700;">$1</mark>');
+}
+
 function runPosSearch() {
-  const posQuery = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
-  const catQuery = (document.getElementById('catSearchSelect').value || '').trim();
+  const posQuery  = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
+  const catQuery  = (document.getElementById('catSearchSelect').value || '').trim();
   const selectedSubs = getSelectedSubs(); // empty array = no filter
+  const errQuery  = (document.getElementById('errCodeInput').value || '').trim().toUpperCase();
   const mount = document.getElementById('searchResultMount');
 
   // Require at least one filter
-  if (!posQuery && !catQuery && !subQuery) {
+  if (!posQuery && !catQuery && selectedSubs.length === 0 && !errQuery) {
     mount.innerHTML = '';
     document.getElementById('searchClearBtn').style.display = 'none';
     return;
@@ -769,7 +781,8 @@ function runPosSearch() {
       const posMatch = !posQuery || (r.posno||'').toUpperCase().includes(posQuery);
       const catMatch = !catQuery || r.category === catQuery;
       const subMatch = selectedSubs.length === 0 || selectedSubs.includes(r.subcategory);
-      if (posMatch && catMatch && subMatch) hits.push({ date, ...r });
+      const errMatch = !errQuery || (r.description||'').toUpperCase().includes(errQuery);
+      if (posMatch && catMatch && subMatch && errMatch) hits.push({ date, ...r });
     });
   });
 
@@ -780,6 +793,7 @@ function runPosSearch() {
   if (posQuery) filters.push(`機號：${posQuery}`);
   if (catQuery) filters.push(`問題分類：${catQuery}`);
   if (selectedSubs.length > 0) filters.push(`次分類：${selectedSubs.length === 1 ? selectedSubs[0] : selectedSubs.join('、')}`);
+  if (errQuery) filters.push(`錯誤代碼：${errQuery}`);
   const filterLabel = filters.join('　');
 
   if (!hits.length) {
@@ -810,7 +824,7 @@ function runPosSearch() {
         <td><span class="tl-cat ${cls}">${r.category}</span></td>
         <td class="tl-sub">${r.subcategory}</td>
         <td class="tl-model">${r.model||'—'}</td>
-        <td class="tl-desc">${(r.description||'').replace(/\n/g,'<br>')}</td>
+        <td class="tl-desc">${highlightErr(r.description||'', errQuery)}</td>
         <td class="tl-solution">${(r.solution||'').replace(/\n/g,'<br>')}</td>
       </tr>`;
     });
@@ -844,6 +858,7 @@ function runPosSearch() {
 
 function clearPosSearch() {
   document.getElementById('posSearchInput').value = '';
+  document.getElementById('errCodeInput').value = '';
   if (document.getElementById('catSearchSelect')) document.getElementById('catSearchSelect').value = '';
   subSelectAll(false); updateSubLabel();
   document.getElementById('searchResultMount').innerHTML = '';
@@ -1225,9 +1240,8 @@ document.getElementById('resetBtn').disabled = true;
 document.getElementById('totalNum').textContent = '—';
 document.getElementById('headerSub').textContent = '尚未載入資料，請上傳叫修紀錄檔案';
 setStatus('', '📋 尚未載入資料，請上傳叫修紀錄檔案');
-document.getElementById('posSearchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') runPosSearch();
-});
+document.getElementById('posSearchInput').addEventListener('keydown', e => { if (e.key === 'Enter') runPosSearch(); });
+document.getElementById('errCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') runPosSearch(); });
 renderAll();
 </script>
 </body>
