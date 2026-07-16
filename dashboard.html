@@ -153,6 +153,25 @@
   .sr-count{font-size:.85rem;color:var(--muted);}
   .sr-empty{padding:28px 24px;text-align:center;font-size:.9rem;color:var(--muted);}
 
+  /* ── ERROR ANALYSIS PANEL ── */
+  .err-analysis{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+    border-bottom:1px solid var(--border2);
+  }
+  .err-analysis-block{padding:14px 18px;border-right:1px solid var(--border2);}
+  .err-analysis-block:last-child{border-right:none;}
+  .ea-title{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:10px;}
+  .ea-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .ea-bar-label{font-size:.76rem;color:var(--text2);white-space:nowrap;min-width:38px;text-align:right;}
+  .ea-bar-label.wide{min-width:26px;}
+  .ea-bar-label.date{min-width:50px;text-align:left;}
+  .ea-bar-wrap{flex:1;height:10px;border-radius:3px;background:var(--surface2);overflow:hidden;}
+  .ea-bar-fill{height:100%;border-radius:3px;background:var(--c1);transition:width .4s ease;}
+  .ea-bar-fill.dow{background:var(--c3);}
+  .ea-bar-fill.date{background:var(--c2);}
+  .ea-bar-count{font-size:.75rem;font-weight:700;color:var(--text2);white-space:nowrap;min-width:28px;}
+  @media(max-width:700px){.err-analysis{grid-template-columns:1fr;}}
+
   /* ── LEGEND ── */
   .legend-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .legend-title{font-size:.84rem;font-weight:600;color:var(--muted);margin-right:2px;}
@@ -830,12 +849,69 @@ function runPosSearch() {
     });
   });
 
+  // ── Analysis (only when errQuery is present) ──
+  let analysisHtml = '';
+  if (errQuery && hits.length > 0) {
+    // Hour distribution
+    const hourCnt = {};
+    hits.forEach(h => { hourCnt[h.hour] = (hourCnt[h.hour]||0)+1; });
+    const hourEntries = Object.entries(hourCnt).sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+    const maxHour = Math.max(...Object.values(hourCnt));
+    const hourBars = hourEntries.map(([h,n]) => `
+      <div class="ea-bar-row">
+        <span class="ea-bar-label wide">${String(h).padStart(2,'0')}時</span>
+        <div class="ea-bar-wrap"><div class="ea-bar-fill" style="width:${Math.round(n/maxHour*100)}%"></div></div>
+        <span class="ea-bar-count">${n}</span>
+      </div>`).join('');
+
+    // Day-of-week distribution
+    const DOW_LABEL = ['日','一','二','三','四','五','六'];
+    const dowCnt = {0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+    hits.forEach(h => { const dow = new Date(h.date+'T00:00:00').getDay(); dowCnt[dow]++; });
+    const maxDow = Math.max(...Object.values(dowCnt));
+    const dowBars = DOW_LABEL.map((lbl,i) => `
+      <div class="ea-bar-row">
+        <span class="ea-bar-label wide">週${lbl}</span>
+        <div class="ea-bar-wrap"><div class="ea-bar-fill dow" style="width:${maxDow>0?Math.round(dowCnt[i]/maxDow*100):0}%"></div></div>
+        <span class="ea-bar-count">${dowCnt[i]||0}</span>
+      </div>`).join('');
+
+    // Top 5 dates
+    const dateEntries = Object.entries(byDate)
+      .map(([d,arr])=>([d,arr.length]))
+      .sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxDate = dateEntries[0]?.[1]||1;
+    const dateBars = dateEntries.map(([d,n]) => `
+      <div class="ea-bar-row">
+        <span class="ea-bar-label date">${d.slice(5).replace('-','/')}</span>
+        <div class="ea-bar-wrap"><div class="ea-bar-fill date" style="width:${Math.round(n/maxDate*100)}%"></div></div>
+        <span class="ea-bar-count">${n}</span>
+      </div>`).join('');
+
+    analysisHtml = `
+      <div class="err-analysis">
+        <div class="err-analysis-block">
+          <div class="ea-title">⏰ 好發時段（小時）</div>
+          ${hourBars}
+        </div>
+        <div class="err-analysis-block">
+          <div class="ea-title">📅 好發星期</div>
+          ${dowBars}
+        </div>
+        <div class="err-analysis-block">
+          <div class="ea-title">📌 發生件數最多日期 Top 5</div>
+          ${dateBars}
+        </div>
+      </div>`;
+  }
+
   mount.innerHTML = `
     <div class="search-result-panel">
       <div class="search-result-header">
         <span class="sr-title">🔍 ${filterLabel}</span>
         <span class="sr-count">共 ${hits.length} 筆紀錄 ／ ${Object.keys(byDate).length} 天</span>
       </div>
+      ${analysisHtml}
       <div style="overflow-x:auto;">
         <table class="timeline">
           <thead><tr class="tl-col-header">
