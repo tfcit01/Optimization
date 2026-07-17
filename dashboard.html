@@ -158,6 +158,17 @@
     display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
     border-bottom:1px solid var(--border2);
   }
+  .err-trend-block{
+    padding:14px 18px;border-bottom:1px solid var(--border2);
+    grid-column:1 / -1;border-right:none;
+  }
+  .ea-trend-svg line{stroke:var(--border2);}
+  .ea-trend-svg polyline{fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+  .ea-trend-svg circle{fill:var(--c1);stroke:#fff;stroke-width:1.5;}
+  .ea-trend-svg circle.pk{fill:var(--c2);}
+  .ea-trend-svg text{font-size:9px;fill:var(--muted);font-family:"Microsoft JhengHei",Arial,sans-serif;}
+  .ea-trend-svg text.vl{font-size:8.5px;fill:var(--c1);font-weight:700;}
+  .ea-trend-svg text.vl.pk{fill:var(--c2);}
   .err-analysis-block{padding:14px 18px;border-right:1px solid var(--border2);}
   .err-analysis-block:last-child{border-right:none;}
   .ea-title{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:10px;}
@@ -894,8 +905,75 @@ function runPosSearch() {
         <span class="ea-bar-count">${n}</span>
       </div>`).join('');
 
+    // ── Trend sparkline ──
+    const allDates = Object.keys(DATA).sort();
+    const firstDate = new Date(allDates[0]+'T00:00:00');
+    const lastDate  = new Date(allDates[allDates.length-1]+'T00:00:00');
+    const spanDays  = (lastDate - firstDate) / 86400000;
+    const useMonth  = spanDays > 31;
+
+    let trendPoints = [];
+    if (useMonth) {
+      // Group hits by YYYY-MM
+      const mCnt = {};
+      hits.forEach(h => { const m = h.date.slice(0,7); mCnt[m]=(mCnt[m]||0)+1; });
+      // Fill every month in range
+      const allMonths = new Set(allDates.map(d=>d.slice(0,7)));
+      [...allMonths].sort().forEach(m => {
+        const [y,mo] = m.split('-');
+        trendPoints.push({ label:`${mo}月`, val: mCnt[m]||0 });
+      });
+    } else {
+      // Per-day
+      const dCnt = {};
+      hits.forEach(h => { dCnt[h.date]=(dCnt[h.date]||0)+1; });
+      allDates.forEach(d => {
+        trendPoints.push({ label: d.slice(5).replace('-','/'), val: dCnt[d]||0 });
+      });
+    }
+
+    // Draw SVG trend line
+    const TW=680, TH=72, PL=10, PR=10, PT=18, PB=16;
+    const cW=TW-PL-PR, cH=TH-PT-PB, n=trendPoints.length;
+    const vals=trendPoints.map(p=>p.val);
+    const maxV=Math.max(...vals,1);
+    const xOf=i=>PL+(n===1?cW/2:i*cW/(n-1));
+    const yOf=v=>PT+cH-(v/maxV)*cH;
+    const ptStr=trendPoints.map((p,i)=>`${xOf(i)},${yOf(p.val)}`).join(' ');
+    const peakIdx=vals.indexOf(maxV);
+
+    // X-axis labels: at most 10 evenly spaced
+    const step=Math.max(1,Math.floor(n/10));
+    let xlabels='';
+    trendPoints.forEach((p,i)=>{
+      if(i===0||i===n-1||i%step===0)
+        xlabels+=`<text x="${xOf(i)}" y="${TH-2}" text-anchor="${i===0?'start':i===n-1?'end':'middle'}">${p.label}</text>`;
+    });
+
+    // Dots + value labels: all points
+    let dots='';
+    trendPoints.forEach((p,i)=>{
+      const isPk=i===peakIdx;
+      const anc=i===0?'start':i===n-1?'end':'middle';
+      dots+=`<circle cx="${xOf(i)}" cy="${yOf(p.val)}" r="${isPk?4:2.5}" class="${isPk?'pk':''}"/>`;
+      if(p.val>0||isPk)
+        dots+=`<text x="${xOf(i)}" y="${yOf(p.val)-6}" text-anchor="${anc}" class="vl${isPk?' pk':''}">${p.val}</text>`;
+    });
+
+    const trendLabel = useMonth ? '📈 每月次數走勢' : '📈 每日次數走勢';
+    const trendSvg = `<svg class="ea-trend-svg" width="${TW}" height="${TH}" style="width:100%;height:${TH}px;">
+      <line x1="${PL}" y1="${PT+cH}" x2="${TW-PR}" y2="${PT+cH}" stroke-width="1"/>
+      <polyline points="${ptStr}"/>
+      ${dots}
+      ${xlabels}
+    </svg>`;
+
     analysisHtml = `
       <div class="err-analysis">
+        <div class="err-trend-block">
+          <div class="ea-title">${trendLabel}（共 ${hits.length} 件）</div>
+          <div style="overflow-x:auto;">${trendSvg}</div>
+        </div>
         <div class="err-analysis-block">
           <div class="ea-title">⏰ 好發時段（小時）</div>
           ${hourBars}
