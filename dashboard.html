@@ -794,6 +794,9 @@ function highlightErr(text, tokens) {
 }
 
 function runPosSearch() {
+  // Close any open daily detail panel first
+  closeDetail();
+
   const posQuery  = (document.getElementById('posSearchInput').value || '').trim().toUpperCase();
   const catQuery  = (document.getElementById('catSearchSelect').value || '').trim();
   const selectedSubs = getSelectedSubs(); // empty array = no filter
@@ -1318,6 +1321,10 @@ function toggleDetail(date, col) {
     document.querySelectorAll('.bar-col').forEach(c => c.classList.remove('active'));
     return;
   }
+  // Clear any existing search results first
+  document.getElementById('searchResultMount').innerHTML = '';
+  document.getElementById('searchClearBtn').style.display = 'none';
+
   activeDate = date;
   document.querySelectorAll('.bar-col').forEach(c => c.classList.remove('active'));
   col.classList.add('active');
