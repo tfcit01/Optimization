@@ -1336,13 +1336,14 @@ function renderDetail(date) {
   let rows = '';
   hours.forEach(hr => {
     const isPeak = peakHours.has(hr);
-    rows += `<tr class="tl-hour-header${isPeak?' peak':''}"><td colspan="7">${String(hr).padStart(2,'0')}:00 時段（${byHour[hr].length} 件）</td></tr>`;
+    rows += `<tr class="tl-hour-header${isPeak?' peak':''}"><td colspan="8">${String(hr).padStart(2,'0')}:00 時段（${byHour[hr].length} 件）</td></tr>`;
     byHour[hr].forEach(r => {
       const cls = getCatCls(r.category);
       rows += `
         <tr class="tl-row${isPeak?' peak-row':''}">
           <td class="tl-time">${r.time}</td>
           <td class="tl-store">${r.store}</td>
+          <td style="font-family:monospace;font-size:.84rem;font-weight:700;color:var(--c1);white-space:nowrap;">${r.posno||'—'}</td>
           <td><span class="tl-cat ${cls}">${r.category}</span></td>
           <td class="tl-sub">${r.subcategory}</td>
           <td class="tl-model">${r.model||'—'}</td>
@@ -1375,6 +1376,7 @@ function renderDetail(date) {
             <tr class="tl-col-header">
               <td class="tl-time">時間</td>
               <td class="tl-store">店名</td>
+              <td style="white-space:nowrap;">POS機號</td>
               <td>問題分類</td>
               <td class="tl-sub">次分類</td>
               <td class="tl-model">機型</td>
