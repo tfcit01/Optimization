@@ -155,12 +155,11 @@
 
   /* ── ERROR ANALYSIS PANEL ── */
   .err-analysis{
-    display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+    display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;
     border-bottom:1px solid var(--border2);
   }
   .err-trend-block{
-    padding:14px 18px;border-bottom:1px solid var(--border2);
-    grid-column:1 / -1;border-right:none;
+    padding:14px 18px;border-right:1px solid var(--border2);
   }
   .ea-trend-svg line{stroke:var(--border2);}
   .ea-trend-svg polyline{fill:none;stroke:var(--c1);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
@@ -248,7 +247,7 @@
   }
   .chart-nav-btn:hover{background:var(--border2);border-color:var(--muted);}
   .chart-nav-btn.arr{padding:3px 8px;font-size:.9rem;}
-  .chart-viewport{overflow-x:auto;overflow-y:visible;padding-bottom:4px;padding-top:130px;}
+  .chart-viewport{overflow-x:auto;overflow-y:visible;padding-bottom:4px;padding-top:90px;}
   .chart-viewport::-webkit-scrollbar{height:5px;}
   .chart-viewport::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
   .chart-wrap{height:200px;display:flex;align-items:flex-end;gap:6px;width:max-content;}
@@ -933,7 +932,7 @@ function runPosSearch() {
     }
 
     // Draw SVG trend line
-    const TW=680, TH=72, PL=10, PR=10, PT=18, PB=16;
+    const TW=260, TH=120, PL=8, PR=8, PT=22, PB=18;
     const cW=TW-PL-PR, cH=TH-PT-PB, n=trendPoints.length;
     const vals=trendPoints.map(p=>p.val);
     const maxV=Math.max(...vals,1);
@@ -943,7 +942,7 @@ function runPosSearch() {
     const peakIdx=vals.indexOf(maxV);
 
     // X-axis labels: at most 10 evenly spaced
-    const step=Math.max(1,Math.floor(n/10));
+    const step=Math.max(1,Math.floor(n/5));
     let xlabels='';
     trendPoints.forEach((p,i)=>{
       if(i===0||i===n-1||i%step===0)
@@ -971,8 +970,8 @@ function runPosSearch() {
     analysisHtml = `
       <div class="err-analysis">
         <div class="err-trend-block">
-          <div class="ea-title">${trendLabel}（共 ${hits.length} 件）</div>
-          <div style="overflow-x:auto;">${trendSvg}</div>
+          <div class="ea-title">${trendLabel}</div>
+          <div style="overflow:hidden;">${trendSvg}</div>
         </div>
         <div class="err-analysis-block">
           <div class="ea-title">⏰ 好發時段（小時）</div>
