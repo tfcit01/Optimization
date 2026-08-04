@@ -223,7 +223,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="row" style="margin-bottom:14px;">
       <button class="btn-ghost" id="reclassifyBtn">↻ 依規則重新自動分類</button>
       <button class="btn-accent" id="aiBtn">✨ AI 智慧優化彙整</button>
-      <span style="font-size:12px;color:#8b8168;">（可直接點兩下欄位內文字進行編輯／新增／刪除項目）</span>
+      <span style="font-size:12px;color:#8b8168;">（可修改上方「週別」欄位後按左側按鈕套用該週資料；欄位內文字可直接點擊編輯／新增／刪除項目）</span>
     </div>
     <div class="weekrange-line" id="weekRangeDisplay">週別：--</div>
     <table class="report" id="reportTable">
@@ -378,16 +378,20 @@ fileInput.addEventListener('change', (e)=>{
   const reader = new FileReader();
   reader.onload = (evt)=>{
     try{
+      const t0 = performance.now();
       const data = new Uint8Array(evt.target.result);
       const wb = XLSX.read(data, {type:'array', cellDates:true});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
-      rawEntries = parseLog(rows);
+      const { allEntries, scannedSheets, matchedSheets } = parseWorkbook(wb);
+      const elapsedMs = Math.round(performance.now() - t0);
+      rawEntries = allEntries;
       if(rawEntries.length === 0){
-        setStatus('未能從檔案中解析出任何紀錄，請確認欄位名稱是否包含「日期」「執行內容」。', 'err');
+        setStatus(`已掃描全部 ${scannedSheets.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
         return;
       }
-      setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄，已自動略過例行事項並完成初步分類。`, 'ok');
+      const sheetNote = matchedSheets.length < scannedSheets.length
+        ? `（共 ${scannedSheets.length} 個分頁，其中 ${matchedSheets.length} 個含日誌欄位：${matchedSheets.join('、')}）`
+        : `（共 ${scannedSheets.length} 個分頁皆已解析）`;
+      setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄 ${sheetNote}，耗時 ${elapsedMs} 毫秒。已自動略過例行事項並完成初步分類。`, 'ok');
       autoDetectWeekRange();
       renderRawTable();
       runRuleClassification();
@@ -424,10 +428,28 @@ function fmtDate(d){
   return `${y}.${String(m).padStart(2,'0')}.${String(day).padStart(2,'0')}`;
 }
 
-function parseLog(rows){
-  if(!rows || rows.length === 0) return [];
-  let headerIdx = rows.findIndex(r => r.includes('日期') && r.includes('執行內容'));
-  if(headerIdx === -1) headerIdx = 0;
+// 掃描整本活頁簿的「每一個分頁」，只有欄位標題含「日期」與「執行內容」的分頁才會被解析，
+// 其餘分頁（例如其他用途的頁籤）會被快速略過，不會浪費運算資源。
+// 每個分頁的解析都只是一次性的陣列掃描（時間複雜度 O(列數)），
+// 對瀏覽器來說即使上千列、數十個分頁，通常也是毫秒等級即可完成，不需擔心效能問題。
+function parseWorkbook(wb){
+  const allEntries = [];
+  const scannedSheets = [];
+  const matchedSheets = [];
+  wb.SheetNames.forEach(sheetName=>{
+    scannedSheets.push(sheetName);
+    const ws = wb.Sheets[sheetName];
+    if(!ws) return;
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:'' });
+    const headerIdx = rows.findIndex(r => Array.isArray(r) && r.includes('日期') && r.includes('執行內容'));
+    if(headerIdx === -1) return; // 此分頁沒有符合的日誌欄位，略過（不列入解析）
+    matchedSheets.push(sheetName);
+    allEntries.push(...parseSheetRows(rows, headerIdx, sheetName));
+  });
+  return { allEntries, scannedSheets, matchedSheets };
+}
+
+function parseSheetRows(rows, headerIdx, sheetName){
   const header = rows[headerIdx];
   const idxDate    = header.indexOf('日期');
   const idxContent = header.indexOf('執行內容');
@@ -448,16 +470,19 @@ function parseLog(rows){
     if(!content) continue;
     const note   = idxNote   >= 0 ? String(r[idxNote]   || '').trim() : '';
     const status = idxStatus >= 0 ? String(r[idxStatus] || '').trim() : '';
-    entries.push({ date:lastDate, dateLabel: fmtDate(lastDate), content, note, status });
+    entries.push({ date:lastDate, dateLabel: fmtDate(lastDate), content, note, status, sheetName });
   }
   return entries;
 }
 
+// 預設抓「所有分頁中最新一筆紀錄」往前推 7 天，做為預設週別範圍
+// （多分頁常見於「一分頁一個月/一年」的日誌型式，因此不能直接取整體最早~最晚日期）。
 function autoDetectWeekRange(){
   const dates = rawEntries.map(e=>e.date).filter(Boolean);
   if(dates.length === 0) return;
-  const min = new Date(Math.min(...dates));
-  const max = new Date(Math.max(...dates));
+  const maxTime = Math.max(...dates.map(d=>d.getTime()));
+  const max = new Date(maxTime);
+  const min = new Date(maxTime - 6 * 86400000);
   const range = `${fmtDate(min)}-${fmtDate(max)}`;
   weekRangeInput.value = range;
   weekRangeDisplay.textContent = '週別：' + range;
@@ -466,22 +491,46 @@ weekRangeInput.addEventListener('input', ()=>{
   weekRangeDisplay.textContent = '週別：' + (weekRangeInput.value || '--');
 });
 
+function parseWeekRangeInput(str){
+  if(!str) return null;
+  const m = str.match(/(\d{4})\.(\d{1,2})\.(\d{1,2})\s*-\s*(\d{4})\.(\d{1,2})\.(\d{1,2})/);
+  if(!m) return null;
+  const start = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], 0, 0, 0));
+  const end   = new Date(Date.UTC(+m[4], +m[5]-1, +m[6], 23, 59, 59));
+  if(isNaN(start) || isNaN(end)) return null;
+  return { start, end };
+}
+
+// 依目前「週別」輸入框的日期範圍，從全部已解析紀錄中篩選出本次要彙整的資料。
+// 若輸入框格式無法辨識，則退回使用全部紀錄（並提示使用者確認週別格式）。
+function getEntriesInSelectedRange(){
+  const range = parseWeekRangeInput(weekRangeInput.value);
+  if(!range) return rawEntries;
+  return rawEntries.filter(e => e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
+}
+
 function isNoise(content){
   return NOISE_PATTERNS.some(p => p.test(content));
 }
 
 function renderRawTable(){
-  let html = '<tr><th>日期</th><th>執行內容</th><th>備註</th><th>狀態</th><th>自動分類</th></tr>';
+  const range = parseWeekRangeInput(weekRangeInput.value);
+  let html = '<tr><th>分頁</th><th>日期</th><th>執行內容</th><th>備註</th><th>狀態</th><th>自動分類</th></tr>';
   rawEntries.forEach(e=>{
+    const inRange = !range || (e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
     const noise = isNoise(e.content);
-    const cls = noise ? ' class="noise"' : '';
-    const tag = noise ? '略過（例行事項）' : (CATEGORIES.find(c=>c.key===classify(e).cat)||{}).label || '';
+    const cls = (noise || !inRange) ? ' class="noise"' : '';
+    let tag = '';
+    if(!inRange) tag = '不在所選週別';
+    else if(noise) tag = '略過（例行事項）';
+    else tag = '<span class="tag">' + escapeHtml((CATEGORIES.find(c=>c.key===classify(e).cat)||{}).label || '') + '</span>';
     html += `<tr>
+      <td${cls}>${escapeHtml(e.sheetName || '')}</td>
       <td${cls}>${escapeHtml(e.dateLabel)}</td>
       <td${cls}>${escapeHtml(e.content)}</td>
       <td${cls}>${escapeHtml(e.note)}</td>
       <td${cls}>${escapeHtml(e.status)}</td>
-      <td>${noise ? '' : '<span class="tag">'+escapeHtml(tag)+'</span>'}</td>
+      <td>${tag}</td>
     </tr>`;
   });
   rawTable.innerHTML = html;
@@ -518,7 +567,8 @@ function runRuleClassification(){
   const topicIndex = {}; // cat+topic -> node ref (this week)
   const nextTopicSeen = {}; // avoid duplicate next-week suggestions per topic
 
-  rawEntries.forEach(e=>{
+  const entries = getEntriesInSelectedRange();
+  entries.forEach(e=>{
     if(isNoise(e.content)) return;
     const { cat, topic } = classify(e);
     const bulletText = e.content + (e.note ? `（${e.note}）` : '');
@@ -548,7 +598,10 @@ function runRuleClassification(){
 
   renderReport(thisWeek, nextWeek);
 }
-reclassifyBtn.addEventListener('click', runRuleClassification);
+reclassifyBtn.addEventListener('click', ()=>{
+  renderRawTable();
+  runRuleClassification();
+});
 
 /* ---------------------------------------------------------------------
    6. 週報表格渲染（contenteditable）
@@ -597,7 +650,7 @@ aiBtn.addEventListener('click', async ()=>{
   const originalText = aiBtn.textContent;
   aiBtn.textContent = '分析中...';
   try{
-    const payload = rawEntries
+    const payload = getEntriesInSelectedRange()
       .filter(e=>!isNoise(e.content))
       .map(e=>({ 日期:e.dateLabel, 執行內容:e.content, 備註:e.note, 是否完成:e.status }));
 
