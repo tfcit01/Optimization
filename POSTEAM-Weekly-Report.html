@@ -162,17 +162,28 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     align-items:center;justify-content:center;z-index:50;
   }
   .modal-overlay.show{display:flex;}
-  .modal{background:#fff;border-radius:8px;padding:26px;max-width:480px;width:92%;}
+  .modal{background:#fff;border-radius:8px;padding:26px;max-width:520px;width:92%;max-height:85vh;overflow-y:auto;}
   .modal h3{margin:0 0 10px;font-size:16px;color:var(--navy-deep);}
   .modal p{font-size:13px;color:#6b6250;margin:0 0 14px;}
-  .modal input[type=password]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:4px;font-size:13px;margin-bottom:14px;}
-  .modal .modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+  .modal .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
 
-  .gear{
-    width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex:none;
+  .kwgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:18px;}
+  .kwfield{display:flex;flex-direction:column;gap:4px;}
+  .kwfield label{font-size:12.5px;color:var(--navy-deep);font-weight:600;}
+  .kwfield textarea{
+    border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;
+    font-family:inherit;resize:vertical;min-height:52px;line-height:1.5;
   }
-  .gear:hover{background:var(--teal-soft);}
+  .kwtopics{margin-bottom:6px;}
+  .kwtopics > label{font-size:12.5px;color:var(--navy-deep);font-weight:600;display:block;margin-bottom:8px;}
+  .topic-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+  .topic-row input[type=text]{
+    border:1px solid var(--line);border-radius:4px;padding:7px 9px;font-size:13px;font-family:inherit;
+  }
+  .topic-row .topic-kw{flex:1;min-width:0;}
+  .topic-row .topic-label{flex:1.4;min-width:0;}
+  .topic-row .remove-topic{flex:none;padding:6px 10px;font-size:12px;}
+  .kw-hint{font-size:12px;color:#8b8168;margin:-6px 0 16px;}
 
   footer{text-align:center;color:#8b8168;font-size:11.5px;margin-top:30px;}
 
@@ -190,8 +201,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <p>從「工作日誌」自動彙整週報 · 場域：台北101購物中心</p>
     </div>
     <div class="row">
-      <span class="badge">v1.0</span>
-      <div class="gear" id="settingsBtn" title="AI 分析設定">⚙</div>
+      <span class="badge">v2.0</span>
     </div>
   </header>
 
@@ -217,12 +227,63 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </details>
   </section>
 
-  <!-- STEP 2: preview & edit -->
+  <!-- STEP 2: keyword rules -->
+  <section class="panel" id="keywordPanel">
+    <h2><span class="num">2</span>自訂分類關鍵字設定（選填）</h2>
+    <p class="kw-hint">
+      每個欄位以逗號分隔多個關鍵字；只要「執行內容」或「備註」內含有任一關鍵字即符合該規則。
+      規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥依序比對，最先命中的規則生效，
+      皆未命中則歸為「其他配合事項」。修改後請按下方「套用設定並重新分類」。
+    </p>
+    <div class="kwgrid">
+      <div class="kwfield">
+        <label>① 例行事項（略過，不列入週報）</label>
+        <textarea id="kwNoise" rows="3"></textarea>
+      </div>
+      <div class="kwfield">
+        <label>② 其他配合事項（優先判斷，避免被下方規則誤判）</label>
+        <textarea id="kwOther" rows="3"></textarea>
+      </div>
+      <div class="kwfield">
+        <label>③ pos異動及設備整理</label>
+        <textarea id="kwPosMove" rows="3"></textarea>
+      </div>
+      <div class="kwfield">
+        <label>④ 近期專案相關（一般關鍵字）</label>
+        <textarea id="kwProject" rows="3"></textarea>
+      </div>
+      <div class="kwfield">
+        <label>⑤ 處理問題及系統設定</label>
+        <textarea id="kwIssue" rows="3"></textarea>
+      </div>
+      <div class="kwfield">
+        <label>⑥ 行政</label>
+        <textarea id="kwAdmin" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="kwtopics">
+      <label>⑦ 具名專案主題（關鍵字 → 週報顯示名稱；命中時歸為「近期專案相關」，並自動合併同主題的多筆紀錄為子項目）</label>
+      <div id="topicRows"></div>
+      <button class="btn-ghost" id="addTopicRow" type="button">+ 新增專案主題</button>
+    </div>
+
+    <div class="row" style="margin-top:18px;">
+      <button class="btn-primary" id="applyConfigBtn">套用設定並重新分類</button>
+      <button class="btn-ghost" id="resetConfigBtn">恢復預設關鍵字</button>
+      <button class="btn-ghost" id="exportConfigBtn">⬇ 匯出關鍵字設定</button>
+      <label class="btn-ghost" style="cursor:pointer;margin:0;">
+        ⬆ 匯入關鍵字設定
+        <input type="file" id="importConfigInput" accept=".json" style="display:none;">
+      </label>
+    </div>
+  </section>
+
+  <!-- STEP 3: preview & edit -->
   <section class="panel" id="previewPanel" style="display:none;">
-    <h2><span class="num">2</span>週報預覽與編輯工作區</h2>
+    <h2><span class="num">3</span>週報預覽與編輯工作區</h2>
     <div class="row" style="margin-bottom:14px;">
-      <button class="btn-ghost" id="reclassifyBtn">↻ 依規則重新自動分類</button>
-      <button class="btn-accent" id="aiBtn">✨ AI 智慧優化彙整</button>
+      <button class="btn-ghost" id="reclassifyBtn">↻ 依目前關鍵字重新分類</button>
       <span style="font-size:12px;color:#8b8168;">（可修改上方「週別」欄位後按左側按鈕套用該週資料；欄位內文字可直接點擊編輯／新增／刪除項目）</span>
     </div>
     <div class="weekrange-line" id="weekRangeDisplay">週別：--</div>
@@ -234,9 +295,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </table>
   </section>
 
-  <!-- STEP 3: finalize -->
+  <!-- STEP 4: finalize -->
   <section class="panel" id="exportPanel" style="display:none;">
-    <h2><span class="num">3</span>定稿與匯出</h2>
+    <h2><span class="num">4</span>定稿與匯出</h2>
     <div class="row">
       <button class="btn-primary" id="exportWordBtn">⬇ 匯出 Word (.doc)</button>
       <button class="btn-primary" id="exportPdfBtn">⬇ 匯出 PDF</button>
@@ -244,24 +305,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div id="exportStatus" style="font-size:12.5px;color:#6b6250;margin-top:10px;"></div>
   </section>
 
-  <footer>本工具於瀏覽器端執行，工作日誌資料不會上傳至任何伺服器（AI 優化功能除外，需另行確認 API 設定）。</footer>
-</div>
-
-<!-- settings modal -->
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <h3>AI 智慧優化設定</h3>
-    <p>
-      在 Claude.ai 對話中預覽本頁面時，AI 優化功能可直接使用，不需填寫金鑰。<br>
-      若本頁面已部署於 GitHub Pages 等外部網站，需在此提供您自己的 Anthropic API Key，
-      系統會直接從瀏覽器呼叫 api.anthropic.com（金鑰僅存於本次瀏覽階段，不會被儲存或送往第三方）。
-    </p>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-...（選填）">
-    <div class="modal-actions">
-      <button class="btn-ghost" id="settingsCancel">關閉</button>
-      <button class="btn-primary" id="settingsSave">儲存</button>
-    </div>
-  </div>
+  <footer>本工具完全於瀏覽器端執行，不會將工作日誌資料上傳或傳送至任何伺服器。</footer>
 </div>
 
 <!-- hidden clean copy used for Word / PDF export (shown briefly on top during PDF capture) -->
@@ -279,70 +323,38 @@ const CATEGORIES = [
   { key:'other',    label:'其他配合事項' },
 ];
 
-// 例行性事項，預設不列入週報（可於原始日誌檢視表看到，但不會出現在彙整結果）
-const NOISE_PATTERNS = [
-  /^值手機/, /^寄報表/, /^欠落檢查/, /^巡視MDF/, /查看信件/,
-  /^101\s*pay/i, /^101PAY/i,
-];
+// 預設分類關鍵字設定（使用者可於「自訂分類關鍵字設定」面板調整，
+// 或匯出/匯入 JSON 設定檔以長期保存自己的關鍵字庫）。
+const DEFAULT_CONFIG = {
+  // ① 例行性事項，預設不列入週報
+  noise: ['值手機','寄報表','欠落檢查','巡視MDF','查看信件','101pay','101PAY'],
+  // ② 跨部門／現場支援類關鍵字：優先歸類為「其他配合事項」，避免被「測試」「安裝」等字誤判
+  otherHints: ['電信訊號','大哥大','訊號狀況','印表機','帳務','T70印表機','開發票','開立發票','PT教學','教學指導','網路(正常)','網路正常'],
+  // ⑦ 具名專案關鍵字：命中時歸類為「近期專案相關」，並以此關鍵字做子項目分組
+  projectTopics: [
+    { keyword:'紀念品館外販售', label:'紀念品館外販售 (MPOS)' },
+    { keyword:'中信刷卡機',     label:'中信刷卡機汰換案' },
+    { keyword:'中信無線刷卡機', label:'中信刷卡機汰換案' },
+    { keyword:'聯信刷卡機',     label:'聯信刷卡機汰換案' },
+    { keyword:'果汁熊',         label:'35F 果汁熊快閃 mPos' },
+  ],
+  // ③～⑥ 一般分類規則，依序比對，第一個命中者採用
+  rules: [
+    { cat:'pos_move', keywords:['安裝','裝機','撤收','撤櫃','換POS','換螢幕','裝箱','備妥POS機','換機'] },
+    { cat:'project',  keywords:['汰換案','商品類別轉入','中分類','建立商品','Demo'] },
+    { cat:'issue',    keywords:['異常','排除','設定','更版','過版','測試','Log','條碼','轉入OMS','死當','缺號','填單','填處理單','RQ2026','驅動程式'] },
+    { cat:'admin',    keywords:['資產','PCIDSS','請購','進撤櫃單','送修','網路線','雙週會','盤點刷卡機','收回刷卡機'] },
+  ],
+};
 
-// 具名專案關鍵字：命中時歸類為「近期專案相關」，並以此關鍵字做子項目分組
-const PROJECT_TOPICS = [
-  { key:'紀念品館外販售', label:'紀念品館外販售 (MPOS)' },
-  { key:'中信刷卡機',     label:'中信刷卡機汰換案' },
-  { key:'中信無線刷卡機', label:'中信刷卡機汰換案' },
-  { key:'聯信刷卡機',     label:'聯信刷卡機汰換案' },
-  { key:'果汁熊',         label:'35F 果汁熊快閃 mPos' },
-];
-
-// 跨部門／現場支援類關鍵字：優先歸類為「其他配合事項」，避免被「測試」「安裝」等字誤判
-const OTHER_HINTS = [
-  /電信訊號|大哥大.*訊號|訊號狀況/,
-  /印表機.*(帳務|T70)|安裝.*帳務.*印表機/,
-  /開發票並結賬|協助.*開立?發票/,
-  /PT教學|教學指導/,
-  /確認.*網路.*正常|網路.*\(正常\)/,
-];
-
-// 一般分類規則，依序比對，第一個命中者採用
-const RULES = [
-  [/安裝|裝機|撤收|撤櫃|換.*(POS|螢幕)|裝箱|備妥?POS機/, 'pos_move'],
-  [/汰換案|商品類別轉入|中分類|建立.*商品|Demo/, 'project'],
-  [/異常|排除|設定|更版|過版|測試|Log|條碼|轉入OMS|死當|缺號|填單|填處理單|RQ2026|驅動程式/, 'issue'],
-  [/資產|PCIDSS|請購|進撤櫃單|送修|網路線|雙週會|盤點.*刷卡機|收回.*刷卡機/, 'admin'],
-];
-
-const SYSTEM_PROMPT = `你是台北101購物中心資訊部門的資深分析師，專精POS收銀系統、EDC刷卡機、行動支付(MPOS)及零售場域IT維運。
-你的任務：閱讀使用者提供的「工作日誌」逐筆紀錄（欄位：日期、執行內容、備註、是否完成），將其彙整為一份符合以下五大類別的週報：
-1. pos異動及設備整理（POS/MPOS/EDC 的安裝、撤收、換機、硬體整理）
-2. 近期專案相關（具名的進行中專案，例如刷卡機汰換案、新據點外販售導入等，需持續追蹤數週）
-3. 處理問題及系統設定（單次性的異常排除、系統設定、版本更新、程式問題填單）
-4. 行政（資產盤點、法規配合如PCIDSS、請購、送修、會議等行政事務）
-5. 其他配合事項（不屬於IT系統本身，但仍需支援的臨櫃/跨部門協助事項）
-
-規則：
-- 值班、寄送固定報表、巡邏機房、日常退款等純例行事項，一律略過不列入週報。
-- 同一專案/主題的多筆紀錄，應合併為一個主要條列項目，底下用編號子項目呈現進度（例如「紀念品館外販售(MPOS)」下列出多個子步驟）。
-- 文字需精簡為週報用語，去除口語贅字與時間戳記，但保留機號、單號、版本號等關鍵資訊。
-- 「下週工作」需根據「是否完成」為「進行中」的項目，以及備註中提到「下週」「明日」等待辦線索，合理推斷後續動作；若某類別本週或下週沒有對應事項，回傳空陣列即可，不要硬湊。
-- 僅根據使用者提供的資料進行彙整與合理延伸推論，不要編造未提及的事實。
-
-請務必只回傳單一個 JSON 物件，不要有任何前後說明文字、不要使用 Markdown code fence。JSON 結構如下：
-{
-  "本週工作": {
-    "pos_move": [ {"title": null, "items": ["單一條列文字"]} | {"title":"主題名稱", "items":["子項目1","子項目2"]} , ... ],
-    "project": [...],
-    "issue": [...],
-    "admin": [...],
-    "other": [...]
-  },
-  "下週工作": { 同上結構 }
-}`;
+// CONFIG 為目前生效中的設定（深複製自 DEFAULT_CONFIG，使用者可在畫面上修改，
+// 或透過匯入 JSON 檔覆蓋，皆不影響 DEFAULT_CONFIG 本身，方便隨時「恢復預設」）。
+let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
 /* ---------------------------------------------------------------------
    2. 全域狀態
 --------------------------------------------------------------------- */
-let rawEntries = [];      // {date:Date|null, dateLabel:string, content, note, status}
-let apiKey = '';
+let rawEntries = [];      // {date:Date|null, dateLabel:string, content, note, status, sheetName}
 
 /* ---------------------------------------------------------------------
    3. DOM 參照
@@ -358,15 +370,21 @@ const reportBody      = document.getElementById('reportBody');
 const rawLogDetails   = document.getElementById('rawLogDetails');
 const rawTable        = document.getElementById('rawTable');
 const reclassifyBtn   = document.getElementById('reclassifyBtn');
-const aiBtn           = document.getElementById('aiBtn');
 const exportWordBtn   = document.getElementById('exportWordBtn');
 const exportPdfBtn    = document.getElementById('exportPdfBtn');
 const exportStatus    = document.getElementById('exportStatus');
-const settingsBtn     = document.getElementById('settingsBtn');
-const settingsModal   = document.getElementById('settingsModal');
-const settingsCancel  = document.getElementById('settingsCancel');
-const settingsSave    = document.getElementById('settingsSave');
-const apiKeyInput     = document.getElementById('apiKeyInput');
+const kwNoise         = document.getElementById('kwNoise');
+const kwOther         = document.getElementById('kwOther');
+const kwPosMove       = document.getElementById('kwPosMove');
+const kwProject       = document.getElementById('kwProject');
+const kwIssue         = document.getElementById('kwIssue');
+const kwAdmin         = document.getElementById('kwAdmin');
+const topicRowsWrap   = document.getElementById('topicRows');
+const addTopicRowBtn  = document.getElementById('addTopicRow');
+const applyConfigBtn  = document.getElementById('applyConfigBtn');
+const resetConfigBtn  = document.getElementById('resetConfigBtn');
+const exportConfigBtn = document.getElementById('exportConfigBtn');
+const importConfigInput = document.getElementById('importConfigInput');
 
 /* ---------------------------------------------------------------------
    4. 檔案上傳與解析
@@ -510,7 +528,7 @@ function getEntriesInSelectedRange(){
 }
 
 function isNoise(content){
-  return NOISE_PATTERNS.some(p => p.test(content));
+  return CONFIG.noise.some(k => k && content.includes(k));
 }
 
 function renderRawTable(){
@@ -546,14 +564,14 @@ function escapeHtml(s){
 --------------------------------------------------------------------- */
 function classify(entry){
   const text = entry.content + ' ' + entry.note;
-  for(const t of PROJECT_TOPICS){
-    if(text.includes(t.key)) return { cat:'project', topic:t.label };
+  for(const t of CONFIG.projectTopics){
+    if(t.keyword && text.includes(t.keyword)) return { cat:'project', topic:t.label };
   }
-  if(OTHER_HINTS.some(re => re.test(text))){
+  if(CONFIG.otherHints.some(k => k && text.includes(k))){
     return { cat:'other', topic:null };
   }
-  for(const [re, cat] of RULES){
-    if(re.test(text)) return { cat, topic:null };
+  for(const rule of CONFIG.rules){
+    if(rule.keywords.some(k => k && text.includes(k))) return { cat:rule.cat, topic:null };
   }
   return { cat:'other', topic:null };
 }
@@ -635,66 +653,121 @@ function renderReport(thisWeek, nextWeek){
 }
 
 /* ---------------------------------------------------------------------
-   7. AI 智慧優化（呼叫 Claude API）
+   7. 自訂分類關鍵字設定面板
 --------------------------------------------------------------------- */
-settingsBtn.addEventListener('click', ()=> settingsModal.classList.add('show'));
-settingsCancel.addEventListener('click', ()=> settingsModal.classList.remove('show'));
-settingsSave.addEventListener('click', ()=>{
-  apiKey = apiKeyInput.value.trim();
-  settingsModal.classList.remove('show');
-  setStatus(apiKey ? 'API 金鑰已設定（僅本次瀏覽階段有效）。' : 'API 金鑰已清除。', 'ok');
+function ruleKeywords(cat){
+  const r = CONFIG.rules.find(r => r.cat === cat);
+  return r ? r.keywords : [];
+}
+function setRuleKeywords(cat, keywords){
+  const r = CONFIG.rules.find(r => r.cat === cat);
+  if(r) r.keywords = keywords;
+}
+function parseKeywordList(str){
+  return (str || '').split(/[,，、\n]/).map(s => s.trim()).filter(Boolean);
+}
+
+function buildTopicRow(keyword, label){
+  const div = document.createElement('div');
+  div.className = 'topic-row';
+  const kwInput = document.createElement('input');
+  kwInput.type = 'text'; kwInput.className = 'topic-kw';
+  kwInput.placeholder = '關鍵字，例如：中信刷卡機'; kwInput.value = keyword || '';
+  const labelInput = document.createElement('input');
+  labelInput.type = 'text'; labelInput.className = 'topic-label';
+  labelInput.placeholder = '週報顯示名稱，例如：中信刷卡機汰換案'; labelInput.value = label || '';
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button'; removeBtn.className = 'btn-danger remove-topic';
+  removeBtn.textContent = '刪除';
+  removeBtn.addEventListener('click', () => div.remove());
+  div.appendChild(kwInput); div.appendChild(labelInput); div.appendChild(removeBtn);
+  return div;
+}
+function renderTopicRows(){
+  topicRowsWrap.innerHTML = '';
+  CONFIG.projectTopics.forEach(t => topicRowsWrap.appendChild(buildTopicRow(t.keyword, t.label)));
+}
+addTopicRowBtn.addEventListener('click', () => {
+  topicRowsWrap.appendChild(buildTopicRow('', ''));
 });
 
-aiBtn.addEventListener('click', async ()=>{
-  aiBtn.disabled = true;
-  const originalText = aiBtn.textContent;
-  aiBtn.textContent = '分析中...';
-  try{
-    const payload = getEntriesInSelectedRange()
-      .filter(e=>!isNoise(e.content))
-      .map(e=>({ 日期:e.dateLabel, 執行內容:e.content, 備註:e.note, 是否完成:e.status }));
+function renderKeywordPanel(){
+  kwNoise.value   = CONFIG.noise.join(', ');
+  kwOther.value   = CONFIG.otherHints.join(', ');
+  kwPosMove.value = ruleKeywords('pos_move').join(', ');
+  kwProject.value = ruleKeywords('project').join(', ');
+  kwIssue.value   = ruleKeywords('issue').join(', ');
+  kwAdmin.value   = ruleKeywords('admin').join(', ');
+  renderTopicRows();
+}
 
-    const userPrompt = `以下是本週工作日誌紀錄（JSON陣列），請依系統指示彙整為週報 JSON：\n${JSON.stringify(payload, null, 0)}`;
+applyConfigBtn.addEventListener('click', () => {
+  CONFIG.noise      = parseKeywordList(kwNoise.value);
+  CONFIG.otherHints = parseKeywordList(kwOther.value);
+  setRuleKeywords('pos_move', parseKeywordList(kwPosMove.value));
+  setRuleKeywords('project',  parseKeywordList(kwProject.value));
+  setRuleKeywords('issue',    parseKeywordList(kwIssue.value));
+  setRuleKeywords('admin',    parseKeywordList(kwAdmin.value));
+  CONFIG.projectTopics = Array.from(topicRowsWrap.querySelectorAll('.topic-row')).map(row => ({
+    keyword: row.querySelector('.topic-kw').value.trim(),
+    label:   row.querySelector('.topic-label').value.trim(),
+  })).filter(t => t.keyword && t.label);
 
-    const headers = { 'Content-Type':'application/json' };
-    if(apiKey){
-      headers['x-api-key'] = apiKey;
-      headers['anthropic-dangerous-direct-browser-access'] = 'true';
-    }
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers,
-      body: JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:2000,
-        system: SYSTEM_PROMPT,
-        messages:[{ role:'user', content:userPrompt }]
-      })
-    });
-    if(!resp.ok){
-      throw new Error('API 回應錯誤（狀態碼 ' + resp.status + '）。若此頁面已部署於 GitHub Pages，請點右上角齒輪圖示設定您自己的 API Key。');
-    }
-    const data = await resp.json();
-    const textBlocks = (data.content || []).filter(b=>b.type === 'text').map(b=>b.text).join('');
-    const cleaned = textBlocks.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleaned);
-
-    const thisWeek = {}; const nextWeek = {};
-    CATEGORIES.forEach(c=>{
-      thisWeek[c.key] = (parsed['本週工作'] && parsed['本週工作'][c.key]) || [];
-      nextWeek[c.key] = (parsed['下週工作'] && parsed['下週工作'][c.key]) || [];
-    });
-    renderReport(thisWeek, nextWeek);
-    setStatus('AI 已完成彙整優化，請於下方檢視並視需要調整。', 'ok');
-  }catch(err){
-    console.error(err);
-    setStatus('AI 優化失敗：' + err.message + '（已保留目前的規則式分類結果，可直接手動編輯）', 'err');
-  }finally{
-    aiBtn.disabled = false;
-    aiBtn.textContent = originalText;
+  if(rawEntries.length === 0){
+    setStatus('關鍵字設定已更新，待上傳工作日誌後即會套用。', 'ok');
+    return;
   }
+  renderRawTable();
+  runRuleClassification();
+  setStatus('已套用自訂關鍵字設定並重新分類。', 'ok');
 });
+
+resetConfigBtn.addEventListener('click', () => {
+  CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  renderKeywordPanel();
+  if(rawEntries.length > 0){
+    renderRawTable();
+    runRuleClassification();
+  }
+  setStatus('已恢復為預設關鍵字設定。', 'ok');
+});
+
+exportConfigBtn.addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(CONFIG, null, 2)], { type:'application/json' });
+  downloadBlob(blob, 'posteam-keyword-config.json');
+});
+
+importConfigInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try{
+      const imported = JSON.parse(evt.target.result);
+      CONFIG = {
+        noise: Array.isArray(imported.noise) ? imported.noise : DEFAULT_CONFIG.noise.slice(),
+        otherHints: Array.isArray(imported.otherHints) ? imported.otherHints : DEFAULT_CONFIG.otherHints.slice(),
+        projectTopics: Array.isArray(imported.projectTopics) ? imported.projectTopics : JSON.parse(JSON.stringify(DEFAULT_CONFIG.projectTopics)),
+        rules: Array.isArray(imported.rules) && imported.rules.length
+          ? imported.rules
+          : JSON.parse(JSON.stringify(DEFAULT_CONFIG.rules)),
+      };
+      renderKeywordPanel();
+      if(rawEntries.length > 0){
+        renderRawTable();
+        runRuleClassification();
+      }
+      setStatus('已匯入關鍵字設定並套用。', 'ok');
+    }catch(err){
+      setStatus('匯入失敗，請確認為本工具匯出的 JSON 設定檔：' + err.message, 'err');
+    }finally{
+      importConfigInput.value = '';
+    }
+  };
+  reader.readAsText(f);
+});
+
+renderKeywordPanel(); // 頁面載入時先以預設關鍵字顯示設定面板
 
 /* ---------------------------------------------------------------------
    8. 匯出 Word / PDF
