@@ -101,6 +101,24 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .upload-box input{display:none;}
   .upload-box .icon{font-size:26px;margin-bottom:6px;display:block;}
   .upload-box .fname{font-size:13px;color:var(--teal);margin-top:6px;font-weight:600;}
+  .upload-box.processing{
+    opacity:.7;pointer-events:none;position:relative;overflow:hidden;
+  }
+  .upload-box.processing::after{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(45deg, rgba(15,118,110,.10) 0 12px, rgba(15,118,110,.18) 12px 24px);
+    background-size:200% 200%;
+    animation:stripes-move 1s linear infinite;
+  }
+  @keyframes stripes-move{ from{ background-position:0 0; } to{ background-position:34px 0; } }
+
+  .spinner{
+    display:inline-block;width:13px;height:13px;
+    border:2px solid var(--line);border-top-color:var(--teal);border-radius:50%;
+    animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  #statusLine.loading{color:var(--teal);font-weight:600;}
 
   .field{display:flex;flex-direction:column;gap:4px;}
   .field label{font-size:12px;color:#6b6250;}
@@ -360,6 +378,7 @@ let rawEntries = [];      // {date:Date|null, dateLabel:string, content, note, s
    3. DOM 參照
 --------------------------------------------------------------------- */
 const fileInput       = document.getElementById('fileInput');
+const uploadBox       = document.getElementById('uploadBox');
 const fnameEl         = document.getElementById('fname');
 const statusLine      = document.getElementById('statusLine');
 const weekRangeInput  = document.getElementById('weekRangeInput');
@@ -393,35 +412,58 @@ fileInput.addEventListener('change', (e)=>{
   const f = e.target.files[0];
   if(!f) return;
   fnameEl.textContent = f.name;
+  showLoading(f.name);
   const reader = new FileReader();
   reader.onload = (evt)=>{
-    try{
-      const t0 = performance.now();
-      const data = new Uint8Array(evt.target.result);
-      const wb = XLSX.read(data, {type:'array', cellDates:true});
-      const { allEntries, scannedSheets, matchedSheets } = parseWorkbook(wb);
-      const elapsedMs = Math.round(performance.now() - t0);
-      rawEntries = allEntries;
-      if(rawEntries.length === 0){
-        setStatus(`已掃描全部 ${scannedSheets.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
-        return;
+    // 用一個極短的延遲，讓瀏覽器先把上面「處理中」的提示畫面畫出來，
+    // 再開始執行可能較耗時的同步解析運算（大型檔案／多分頁時解析本身會卡住主執行緒，
+    // 若不延遲，畫面會直接卡住、看不到任何提示就跳到結果，等於沒有效果）。
+    setTimeout(()=>{
+      try{
+        const t0 = performance.now();
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, {type:'array', cellDates:true});
+        const { allEntries, scannedSheets, matchedSheets } = parseWorkbook(wb);
+        const elapsedMs = Math.round(performance.now() - t0);
+        rawEntries = allEntries;
+        if(rawEntries.length === 0){
+          setStatus(`已掃描全部 ${scannedSheets.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
+          return;
+        }
+        const sheetNote = matchedSheets.length < scannedSheets.length
+          ? `（共 ${scannedSheets.length} 個分頁，其中 ${matchedSheets.length} 個含日誌欄位：${matchedSheets.join('、')}）`
+          : `（共 ${scannedSheets.length} 個分頁皆已解析）`;
+        setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄 ${sheetNote}，耗時 ${elapsedMs} 毫秒。已自動略過例行事項並完成初步分類。`, 'ok');
+        autoDetectWeekRange();
+        renderRawTable();
+        runRuleClassification();
+        previewPanel.style.display = '';
+        exportPanel.style.display = '';
+      }catch(err){
+        console.error(err);
+        setStatus('檔案解析失敗：' + err.message, 'err');
+      }finally{
+        hideLoading();
       }
-      const sheetNote = matchedSheets.length < scannedSheets.length
-        ? `（共 ${scannedSheets.length} 個分頁，其中 ${matchedSheets.length} 個含日誌欄位：${matchedSheets.join('、')}）`
-        : `（共 ${scannedSheets.length} 個分頁皆已解析）`;
-      setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄 ${sheetNote}，耗時 ${elapsedMs} 毫秒。已自動略過例行事項並完成初步分類。`, 'ok');
-      autoDetectWeekRange();
-      renderRawTable();
-      runRuleClassification();
-      previewPanel.style.display = '';
-      exportPanel.style.display = '';
-    }catch(err){
-      console.error(err);
-      setStatus('檔案解析失敗：' + err.message, 'err');
-    }
+    }, 30);
+  };
+  reader.onerror = ()=>{
+    hideLoading();
+    setStatus('檔案讀取失敗，請確認檔案是否毀損或格式是否正確。', 'err');
   };
   reader.readAsArrayBuffer(f);
 });
+
+function showLoading(filename){
+  fileInput.disabled = true;
+  uploadBox.classList.add('processing');
+  statusLine.innerHTML = '<span class="spinner"></span>正在讀取並解析「' + escapeHtml(filename) + '」，請稍候…';
+  statusLine.className = 'loading';
+}
+function hideLoading(){
+  fileInput.disabled = false;
+  uploadBox.classList.remove('processing');
+}
 
 function setStatus(msg, type){
   statusLine.textContent = msg;
