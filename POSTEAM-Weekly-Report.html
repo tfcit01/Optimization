@@ -609,12 +609,85 @@ function runRuleClassification(){
       const seenKey = cat + '::' + label;
       if(!nextTopicSeen[seenKey]){
         nextTopicSeen[seenKey] = true;
-        nextWeek[cat].push({ title:null, items:[ label + '（後續追蹤/完成測試）' ] });
+        nextWeek[cat].push({ title:null, items:[ label ] });
       }
     }
   });
 
+  CATEGORIES.forEach(c=>{
+    thisWeek[c.key] = mergeNearDuplicateNodes(thisWeek[c.key]);
+    nextWeek[c.key] = mergeNearDuplicateNodes(nextWeek[c.key]);
+  });
+
   renderReport(thisWeek, nextWeek);
+}
+
+// 合併「內容極度相近」的項目：
+// 僅針對「具名專案主題」（title不為null）底下的子項目做近似重複合併 —
+// 這類子項目通常是同一件事在不同天被記錄、文字略有出入（例如錯別字、多寫少寫幾個字）。
+// 刻意「不」對沒有主題的獨立條列項目做此合併，因為那些通常是各自獨立的單一事件
+// （例如「安裝5F_韓團 MPOS」與「安裝5F_韓團 POS」雖然文字很像，但其實是兩台不同設備，
+// 不應被誤判為重複而合併遺失資訊）。
+// 判斷方式為 Levenshtein 編輯距離 ÷ 較長字串長度 ≤ 0.3（差異在30%以內視為相近重複），
+// 合併時保留較完整（較長）的那一版文字。
+function mergeNearDuplicateNodes(nodes){
+  const topicMerged = nodes.map(n => n.title
+    ? { title:n.title, items: mergeSimilarTexts(n.items) }
+    : n
+  );
+  // 完全相同文字的獨立項目（非近似、100%一致）可安全地去除重複，不影響任何資訊完整性
+  const seenExact = new Set();
+  return topicMerged.filter(n=>{
+    if(n.title) return true;
+    const text = (n.items && n.items[0]) || '';
+    const norm = text.replace(/\s+/g, '');
+    if(seenExact.has(norm)) return false;
+    seenExact.add(norm);
+    return true;
+  });
+}
+
+function mergeSimilarTexts(texts){
+  const kept = [];
+  (texts || []).forEach(text=>{
+    if(!text) return;
+    let matchIdx = -1;
+    for(let i = 0; i < kept.length; i++){
+      if(isNearDuplicateText(kept[i], text)){ matchIdx = i; break; }
+    }
+    if(matchIdx === -1){
+      kept.push(text);
+    } else if(text.length > kept[matchIdx].length){
+      kept[matchIdx] = text; // 保留較完整（較長）的版本
+    }
+  });
+  return kept;
+}
+
+function isNearDuplicateText(a, b){
+  const na = a.replace(/\s+/g, '');
+  const nb = b.replace(/\s+/g, '');
+  if(na === nb) return true;
+  if(na.length === 0 || nb.length === 0) return false;
+  const dist = levenshteinDistance(na, nb);
+  const maxLen = Math.max(na.length, nb.length);
+  return (dist / maxLen) <= 0.3;
+}
+
+function levenshteinDistance(a, b){
+  const m = a.length, n = b.length;
+  const dp = new Array(m + 1);
+  for(let i = 0; i <= m; i++) dp[i] = new Array(n + 1).fill(0);
+  for(let i = 0; i <= m; i++) dp[i][0] = i;
+  for(let j = 0; j <= n; j++) dp[0][j] = j;
+  for(let i = 1; i <= m; i++){
+    for(let j = 1; j <= n; j++){
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
 }
 reclassifyBtn.addEventListener('click', ()=>{
   renderRawTable();
