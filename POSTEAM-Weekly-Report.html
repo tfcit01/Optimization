@@ -203,6 +203,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .topic-row .remove-topic{flex:none;padding:6px 10px;font-size:12px;}
   .kw-hint{font-size:12px;color:#8b8168;margin:-6px 0 16px;}
 
+  .conflict-row{
+    display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
+    border:1px solid #e3c3ba;background:#fff8f5;border-radius:6px;
+    padding:12px 14px;margin-bottom:10px;
+  }
+  .conflict-text{flex:1;min-width:240px;font-size:13.5px;line-height:1.6;}
+  .conflict-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;}
+  .conflict-tags .tag{background:var(--danger);}
+  .conflict-actions{display:flex;gap:8px;align-items:center;flex:none;}
+  .conflict-actions select{
+    border:1px solid var(--line);border-radius:4px;padding:7px 8px;font-size:13px;font-family:inherit;
+  }
+
   footer{text-align:center;color:#8b8168;font-size:11.5px;margin-top:30px;}
 
   @media print{
@@ -316,6 +329,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </table>
   </section>
 
+  <!-- 分類衝突待確認 -->
+  <section class="panel" id="conflictPanel" style="display:none;">
+    <h2><span class="num">!</span>分類衝突待確認 <span id="conflictCount" style="font-weight:400;color:#8b8168;font-size:13px;"></span></h2>
+    <p class="kw-hint">
+      以下項目同時符合③～⑥兩個以上類別的關鍵字（不分先後、同時比對），系統無法自動判斷歸屬，
+      請手動選擇正確類別，選定後會自動加入下方「本週工作」對應欄位，此清單也會移除該項目。
+    </p>
+    <div id="conflictList"></div>
+  </section>
+
   <!-- STEP 4: finalize -->
   <section class="panel" id="exportPanel" style="display:none;">
     <h2><span class="num">4</span>定稿與匯出</h2>
@@ -395,6 +418,9 @@ const reclassifyBtn   = document.getElementById('reclassifyBtn');
 const exportWordBtn   = document.getElementById('exportWordBtn');
 const exportPdfBtn    = document.getElementById('exportPdfBtn');
 const exportStatus    = document.getElementById('exportStatus');
+const conflictPanel   = document.getElementById('conflictPanel');
+const conflictList    = document.getElementById('conflictList');
+const conflictCount   = document.getElementById('conflictCount');
 const kwNoise         = document.getElementById('kwNoise');
 const kwOther         = document.getElementById('kwOther');
 const kwPosMove       = document.getElementById('kwPosMove');
@@ -612,25 +638,42 @@ function escapeHtml(s){
 /* ---------------------------------------------------------------------
    5. 規則式自動分類
 --------------------------------------------------------------------- */
+// 回傳格式： { cat, topic, conflict }
+// - 命中具名專案主題（⑦）或其他配合事項優先字（②）：直接回傳結果，這兩層仍保留優先順序。
+// - ③～⑥（pos_move/project/issue/admin）不分先後，同時比對所有類別：
+//   - 只命中 1 個類別 → 正常回傳該類別
+//   - 命中 0 個類別 → 歸為「其他配合事項」（沒有規則命中的預設值）
+//   - 命中 2 個以上類別 → 視為「分類衝突」，cat 回傳 null、conflict 帶出所有命中的類別，
+//     交由「分類衝突待確認」區塊讓使用者手動選擇正確類別。
 function classify(entry){
   const text = entry.content + ' ' + entry.note;
   for(const t of CONFIG.projectTopics){
-    if(t.keyword && text.includes(t.keyword)) return { cat:'project', topic:t.label };
+    if(t.keyword && text.includes(t.keyword)) return { cat:'project', topic:t.label, conflict:null };
   }
   if(CONFIG.otherHints.some(k => k && text.includes(k))){
-    return { cat:'other', topic:null };
+    return { cat:'other', topic:null, conflict:null };
   }
-  for(const rule of CONFIG.rules){
-    if(rule.keywords.some(k => k && text.includes(k))) return { cat:rule.cat, topic:null };
+  const matchedCats = [];
+  CONFIG.rules.forEach(rule=>{
+    if(rule.keywords.some(k => k && text.includes(k))) matchedCats.push(rule.cat);
+  });
+  if(matchedCats.length === 0){
+    return { cat:'other', topic:null, conflict:null };
   }
-  return { cat:'other', topic:null };
+  if(matchedCats.length === 1){
+    return { cat:matchedCats[0], topic:null, conflict:null };
+  }
+  return { cat:null, topic:null, conflict:matchedCats };
 }
 
 // 統一資料模型： { pos_move:[node,...], project:[...], ... }
 // node = { title: string|null, items: [string,...] }
+let conflictItems = []; // 待人工確認的分類衝突項目： { entry, matchedCats }
+
 function runRuleClassification(){
   const thisWeek = {}; const nextWeek = {};
   CATEGORIES.forEach(c=>{ thisWeek[c.key] = []; nextWeek[c.key] = []; });
+  conflictItems = [];
 
   const topicIndex = {}; // cat+topic -> node ref (this week)
   const nextTopicSeen = {}; // avoid duplicate next-week suggestions per topic
@@ -638,7 +681,13 @@ function runRuleClassification(){
   const entries = getEntriesInSelectedRange();
   entries.forEach(e=>{
     if(isNoise(e.content)) return;
-    const { cat, topic } = classify(e);
+    const { cat, topic, conflict } = classify(e);
+
+    if(conflict){
+      conflictItems.push({ entry:e, matchedCats:conflict });
+      return; // 衝突項目先不放進週報，等使用者手動指派
+    }
+
     const bulletText = e.content + (e.note ? `（${e.note}）` : '');
 
     if(topic){
@@ -670,6 +719,7 @@ function runRuleClassification(){
   });
 
   renderReport(thisWeek, nextWeek);
+  renderConflictPanel();
 }
 
 // 合併「內容極度相近」的項目：
@@ -773,6 +823,75 @@ function renderReport(thisWeek, nextWeek){
     </tr>`;
   });
   reportBody.innerHTML = html;
+}
+
+// 渲染「分類衝突待確認」清單：每一列顯示衝突項目的內容、命中的類別，
+// 並提供下拉選單讓使用者手動選擇正確類別，選定後直接寫入週報預覽表格。
+function renderConflictPanel(){
+  if(conflictItems.length === 0){
+    conflictPanel.style.display = 'none';
+    conflictList.innerHTML = '';
+    return;
+  }
+  conflictPanel.style.display = '';
+  conflictCount.textContent = `（共 ${conflictItems.length} 筆）`;
+
+  const optionsHtml = CATEGORIES.map(c => `<option value="${c.key}">${escapeHtml(c.label)}</option>`).join('');
+
+  conflictList.innerHTML = conflictItems.map((item, idx) => {
+    const text = item.entry.content + (item.entry.note ? `（${item.entry.note}）` : '');
+    const matchedLabels = item.matchedCats.map(k => (CATEGORIES.find(c => c.key === k) || {}).label || k);
+    const tagsHtml = matchedLabels.map(l => `<span class="tag">${escapeHtml(l)}</span>`).join('');
+    return `
+      <div class="conflict-row" data-idx="${idx}">
+        <div>
+          <div class="conflict-text">${escapeHtml(text)}</div>
+          <div class="conflict-tags">符合：${tagsHtml}</div>
+        </div>
+        <div class="conflict-actions">
+          <select class="conflict-select">
+            <option value="">請選擇正確類別…</option>
+            ${optionsHtml}
+          </select>
+          <button class="btn-primary conflict-assign-btn" type="button">加入週報</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  conflictList.querySelectorAll('.conflict-assign-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.conflict-row');
+      const idx = Number(row.dataset.idx);
+      const select = row.querySelector('.conflict-select');
+      const cat = select.value;
+      if(!cat){
+        select.focus();
+        return;
+      }
+      assignConflictItem(conflictItems[idx], cat);
+      conflictItems.splice(idx, 1);
+      renderConflictPanel();
+    });
+  });
+}
+
+// 將使用者手動指派的衝突項目，直接加進週報預覽表格「本週工作」對應類別欄位的最後一項。
+function assignConflictItem(item, cat){
+  const text = item.entry.content + (item.entry.note ? `（${item.entry.note}）` : '');
+  const cell = reportBody.querySelector(`td.edit-cell[data-cat="${cat}"][data-week="this"]`);
+  if(!cell) return;
+  let ul = cell.querySelector('ul');
+  if(!ul){
+    ul = document.createElement('ul');
+    cell.appendChild(ul);
+  }
+  // 若目前是空清單佔位的 <li><br></li>，先移除佔位項目
+  if(ul.children.length === 1 && ul.children[0].innerHTML.trim() === '<br>'){
+    ul.innerHTML = '';
+  }
+  const li = document.createElement('li');
+  li.textContent = text;
+  ul.appendChild(li);
 }
 
 /* ---------------------------------------------------------------------
@@ -916,7 +1035,15 @@ function buildStaticTableHtml(){
   return html;
 }
 
+function hasUnresolvedConflicts(){
+  return conflictItems.length > 0;
+}
+
 exportWordBtn.addEventListener('click', ()=>{
+  if(hasUnresolvedConflicts()){
+    const proceed = confirm(`目前還有 ${conflictItems.length} 筆「分類衝突待確認」尚未指派類別，這些項目不會出現在匯出的週報中。要先不管它們、直接匯出嗎？`);
+    if(!proceed) return;
+  }
   const range = weekRangeInput.value || '未設定週別';
   const tableHtml = buildStaticTableHtml();
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -940,6 +1067,10 @@ exportWordBtn.addEventListener('click', ()=>{
 });
 
 exportPdfBtn.addEventListener('click', ()=>{
+  if(hasUnresolvedConflicts()){
+    const proceed = confirm(`目前還有 ${conflictItems.length} 筆「分類衝突待確認」尚未指派類別，這些項目不會出現在匯出的週報中。要先不管它們、直接匯出嗎？`);
+    if(!proceed) return;
+  }
   window.scrollTo(0, 0);
   const range = weekRangeInput.value || '未設定週別';
   const printArea = document.getElementById('printArea');
