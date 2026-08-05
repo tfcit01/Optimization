@@ -239,6 +239,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       </div>
     </div>
     <div id="statusLine">請上傳 .xlsx 檔案，欄位需包含「日期」「執行內容」「備註」（選填：是否完成）。</div>
+    <div style="font-size:11.5px;color:#8b8168;margin-top:4px;">
+      💡 若使用 Chrome 瀏覽器，選好檔案後需等待數秒才出現「處理中」提示，通常是公司電腦的資安防護軟體正在背景掃描檔案，與本工具無關；可改用 Edge 瀏覽器或耐心等候即可。
+    </div>
     <details class="raw-log" id="rawLogDetails" style="display:none;">
       <summary>展開檢視解析後的原始日誌（灰底刪除線＝已自動略過的例行事項）</summary>
       <table class="rawtable" id="rawTable"></table>
@@ -413,45 +416,50 @@ fileInput.addEventListener('change', (e)=>{
   if(!f) return;
   fnameEl.textContent = f.name;
   showLoading(f.name);
-  const reader = new FileReader();
-  reader.onload = (evt)=>{
-    // 用一個極短的延遲，讓瀏覽器先把上面「處理中」的提示畫面畫出來，
-    // 再開始執行可能較耗時的同步解析運算（大型檔案／多分頁時解析本身會卡住主執行緒，
-    // 若不延遲，畫面會直接卡住、看不到任何提示就跳到結果，等於沒有效果）。
-    setTimeout(()=>{
-      try{
-        const t0 = performance.now();
-        const data = new Uint8Array(evt.target.result);
-        const wb = XLSX.read(data, {type:'array', cellDates:true});
-        const { allEntries, scannedSheets, matchedSheets } = parseWorkbook(wb);
-        const elapsedMs = Math.round(performance.now() - t0);
-        rawEntries = allEntries;
-        if(rawEntries.length === 0){
-          setStatus(`已掃描全部 ${scannedSheets.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
-          return;
+  // 用雙重 requestAnimationFrame，強制瀏覽器先把上面的「處理中」畫面畫出來，
+  // 才開始建立 FileReader 並讀取檔案。單靠「同步程式碼執行完會自動讓瀏覽器去畫面」
+  // 這件事在某些瀏覽器/機器環境下可能不夠可靠，這裡用雙重 rAF 是更保險的做法。
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+    const reader = new FileReader();
+    reader.onload = (evt)=>{
+      // 用一個極短的延遲，讓瀏覽器再次確認畫面已更新，
+      // 再開始執行可能較耗時的同步解析運算（大型檔案／多分頁時解析本身會卡住主執行緒，
+      // 若不延遲，畫面會直接卡住、看不到任何提示就跳到結果，等於沒有效果）。
+      setTimeout(()=>{
+        try{
+          const t0 = performance.now();
+          const data = new Uint8Array(evt.target.result);
+          const wb = XLSX.read(data, {type:'array', cellDates:true});
+          const { allEntries, scannedSheets, matchedSheets } = parseWorkbook(wb);
+          const elapsedMs = Math.round(performance.now() - t0);
+          rawEntries = allEntries;
+          if(rawEntries.length === 0){
+            setStatus(`已掃描全部 ${scannedSheets.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
+            return;
+          }
+          const sheetNote = matchedSheets.length < scannedSheets.length
+            ? `（共 ${scannedSheets.length} 個分頁，其中 ${matchedSheets.length} 個含日誌欄位：${matchedSheets.join('、')}）`
+            : `（共 ${scannedSheets.length} 個分頁皆已解析）`;
+          setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄 ${sheetNote}，耗時 ${elapsedMs} 毫秒。已自動略過例行事項並完成初步分類。`, 'ok');
+          autoDetectWeekRange();
+          renderRawTable();
+          runRuleClassification();
+          previewPanel.style.display = '';
+          exportPanel.style.display = '';
+        }catch(err){
+          console.error(err);
+          setStatus('檔案解析失敗：' + err.message, 'err');
+        }finally{
+          hideLoading();
         }
-        const sheetNote = matchedSheets.length < scannedSheets.length
-          ? `（共 ${scannedSheets.length} 個分頁，其中 ${matchedSheets.length} 個含日誌欄位：${matchedSheets.join('、')}）`
-          : `（共 ${scannedSheets.length} 個分頁皆已解析）`;
-        setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄 ${sheetNote}，耗時 ${elapsedMs} 毫秒。已自動略過例行事項並完成初步分類。`, 'ok');
-        autoDetectWeekRange();
-        renderRawTable();
-        runRuleClassification();
-        previewPanel.style.display = '';
-        exportPanel.style.display = '';
-      }catch(err){
-        console.error(err);
-        setStatus('檔案解析失敗：' + err.message, 'err');
-      }finally{
-        hideLoading();
-      }
-    }, 30);
-  };
-  reader.onerror = ()=>{
-    hideLoading();
-    setStatus('檔案讀取失敗，請確認檔案是否毀損或格式是否正確。', 'err');
-  };
-  reader.readAsArrayBuffer(f);
+      }, 30);
+    };
+    reader.onerror = ()=>{
+      hideLoading();
+      setStatus('檔案讀取失敗，請確認檔案是否毀損或格式是否正確。', 'err');
+    };
+    reader.readAsArrayBuffer(f);
+  });});
 });
 
 function showLoading(filename){
