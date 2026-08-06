@@ -269,7 +269,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       每個欄位以逗號分隔多個關鍵字；只要「執行內容」或「備註」內含有任一關鍵字即符合該規則。
       規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥不分先後、同時比對，
       若同時符合兩個以上類別會列入下方「分類衝突待確認」讓您手動選擇→皆未命中則歸為「其他配合事項」。
-      關鍵字可使用萬用字元 <code>*</code> 代表任意文字，例如「與*討論」可比對到「與哈利討論...」「與經理和雅竹討論...」等各種句型。
+      關鍵字可使用萬用字元 <code>*</code>（半形或全形＊皆可）代表任意文字，例如「與*討論」可比對到「與哈利討論...」「與經理和雅竹討論...」等各種句型。
       修改後請按下方「套用設定並重新分類」。
     </p>
     <div id="configMetaLine" class="kw-hint" style="margin-top:-10px;"></div>
@@ -608,19 +608,22 @@ function getEntriesInSelectedRange(){
   return rawEntries.filter(e => e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
 }
 
-// 關鍵字比對，支援萬用字元 *（代表任意字數的任意文字）。
+// 關鍵字比對，支援萬用字元 * 或 ＊（半形／全形皆可，代表任意字數的任意文字）。
 // 例如關鍵字「與*討論」可以比對到「與哈利和ERIC討論...」「與經理討論...」等各種「與○○○討論」的句型，
-// 不含 * 的關鍵字則維持原本單純的「文字內是否包含此關鍵字」比對方式。
+// 不含 */＊ 的關鍵字則維持原本單純的「文字內是否包含此關鍵字」比對方式。
+// 特別支援全形星號 ＊：中文輸入法習慣下很容易打成全形符號，若只認半形 * 會讓萬用字元完全失效
+// （變成去比對一個不可能出現在日誌內容裡的星號字元，導致規則安靜地失效、卻沒有任何錯誤訊息）。
+const WILDCARD_CHARS = /[*＊]/;
 const wildcardRegexCache = {};
 function keywordMatches(keyword, text){
   if(!keyword) return false;
-  if(!keyword.includes('*')){
+  if(!WILDCARD_CHARS.test(keyword)){
     return text.includes(keyword);
   }
   let re = wildcardRegexCache[keyword];
   if(!re){
     const escapeRegexChar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = keyword.split('*').map(escapeRegexChar).join('.*');
+    const pattern = keyword.split(WILDCARD_CHARS).map(escapeRegexChar).join('.*');
     re = new RegExp(pattern);
     wildcardRegexCache[keyword] = re;
   }
@@ -639,9 +642,18 @@ function renderRawTable(){
     const noise = isNoise(e.content);
     const cls = (noise || !inRange) ? ' class="noise"' : '';
     let tag = '';
-    if(!inRange) tag = '不在所選週別';
-    else if(noise) tag = '略過（例行事項）';
-    else tag = '<span class="tag">' + escapeHtml((CATEGORIES.find(c=>c.key===classify(e).cat)||{}).label || '') + '</span>';
+    if(!inRange){
+      tag = '不在所選週別';
+    } else if(noise){
+      tag = '略過（例行事項）';
+    } else {
+      const result = classify(e);
+      if(result.conflict){
+        tag = '<span class="tag" style="background:var(--danger);">⚠️ 分類衝突待確認</span>';
+      } else {
+        tag = '<span class="tag">' + escapeHtml((CATEGORIES.find(c=>c.key===result.cat)||{}).label || '') + '</span>';
+      }
+    }
     html += `<tr>
       <td${cls}>${escapeHtml(e.sheetName || '')}</td>
       <td${cls}>${escapeHtml(e.dateLabel)}</td>
