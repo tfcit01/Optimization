@@ -202,6 +202,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .topic-row .topic-label{flex:1.4;min-width:0;}
   .topic-row .remove-topic{flex:none;padding:6px 10px;font-size:12px;}
   .kw-hint{font-size:12px;color:#8b8168;margin:-6px 0 16px;}
+  .kw-hint code{background:var(--teal-soft);color:var(--navy-deep);padding:1px 5px;border-radius:3px;font-size:11.5px;}
 
   .conflict-row{
     display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
@@ -266,9 +267,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <h2><span class="num">2</span>自訂分類關鍵字設定（選填）</h2>
     <p class="kw-hint">
       每個欄位以逗號分隔多個關鍵字；只要「執行內容」或「備註」內含有任一關鍵字即符合該規則。
-      規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥依序比對，最先命中的規則生效，
-      皆未命中則歸為「其他配合事項」。修改後請按下方「套用設定並重新分類」。
+      規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥不分先後、同時比對，
+      若同時符合兩個以上類別會列入下方「分類衝突待確認」讓您手動選擇→皆未命中則歸為「其他配合事項」。
+      關鍵字可使用萬用字元 <code>*</code> 代表任意文字，例如「與*討論」可比對到「與哈利討論...」「與經理和雅竹討論...」等各種句型。
+      修改後請按下方「套用設定並重新分類」。
     </p>
+    <div id="configMetaLine" class="kw-hint" style="margin-top:-10px;"></div>
     <div class="kwgrid">
       <div class="kwfield">
         <label>① 例行事項（略過，不列入週報）</label>
@@ -369,11 +373,11 @@ const CATEGORIES = [
 
 // 預設分類關鍵字設定（使用者可於「自訂分類關鍵字設定」面板調整，
 // 或匯出/匯入 JSON 設定檔以長期保存自己的關鍵字庫）。
-const DEFAULT_CONFIG = {
+let DEFAULT_CONFIG = {
   // ① 例行性事項，預設不列入週報
   noise: ['值手機','寄報表','欠落檢查','巡視MDF','查看信件','101pay','101PAY'],
   // ② 跨部門／現場支援類關鍵字：優先歸類為「其他配合事項」，避免被「測試」「安裝」等字誤判
-  otherHints: ['電信訊號','大哥大','訊號狀況','印表機','帳務','T70印表機','開發票','開立發票','PT教學','教學指導','網路(正常)','網路正常'],
+  otherHints: ['電信訊號','大哥大','訊號狀況','印表機','帳務','T70印表機','開發票','開立發票','PT教學','教學指導','網路(正常)','網路正常','與*討論','與*確認'],
   // ⑦ 具名專案關鍵字：命中時歸類為「近期專案相關」，並以此關鍵字做子項目分組
   projectTopics: [
     { keyword:'紀念品館外販售', label:'紀念品館外販售 (MPOS)' },
@@ -433,6 +437,7 @@ const applyConfigBtn  = document.getElementById('applyConfigBtn');
 const resetConfigBtn  = document.getElementById('resetConfigBtn');
 const exportConfigBtn = document.getElementById('exportConfigBtn');
 const importConfigInput = document.getElementById('importConfigInput');
+const configMetaLine  = document.getElementById('configMetaLine');
 
 /* ---------------------------------------------------------------------
    4. 檔案上傳與解析
@@ -603,8 +608,27 @@ function getEntriesInSelectedRange(){
   return rawEntries.filter(e => e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
 }
 
+// 關鍵字比對，支援萬用字元 *（代表任意字數的任意文字）。
+// 例如關鍵字「與*討論」可以比對到「與哈利和ERIC討論...」「與經理討論...」等各種「與○○○討論」的句型，
+// 不含 * 的關鍵字則維持原本單純的「文字內是否包含此關鍵字」比對方式。
+const wildcardRegexCache = {};
+function keywordMatches(keyword, text){
+  if(!keyword) return false;
+  if(!keyword.includes('*')){
+    return text.includes(keyword);
+  }
+  let re = wildcardRegexCache[keyword];
+  if(!re){
+    const escapeRegexChar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = keyword.split('*').map(escapeRegexChar).join('.*');
+    re = new RegExp(pattern);
+    wildcardRegexCache[keyword] = re;
+  }
+  return re.test(text);
+}
+
 function isNoise(content){
-  return CONFIG.noise.some(k => k && content.includes(k));
+  return CONFIG.noise.some(k => keywordMatches(k, content));
 }
 
 function renderRawTable(){
@@ -648,14 +672,14 @@ function escapeHtml(s){
 function classify(entry){
   const text = entry.content + ' ' + entry.note;
   for(const t of CONFIG.projectTopics){
-    if(t.keyword && text.includes(t.keyword)) return { cat:'project', topic:t.label, conflict:null };
+    if(t.keyword && keywordMatches(t.keyword, text)) return { cat:'project', topic:t.label, conflict:null };
   }
-  if(CONFIG.otherHints.some(k => k && text.includes(k))){
+  if(CONFIG.otherHints.some(k => keywordMatches(k, text))){
     return { cat:'other', topic:null, conflict:null };
   }
   const matchedCats = [];
   CONFIG.rules.forEach(rule=>{
-    if(rule.keywords.some(k => k && text.includes(k))) matchedCats.push(rule.cat);
+    if(rule.keywords.some(k => keywordMatches(k, text))) matchedCats.push(rule.cat);
   });
   if(matchedCats.length === 0){
     return { cat:'other', topic:null, conflict:null };
@@ -943,6 +967,29 @@ function renderKeywordPanel(){
   renderTopicRows();
 }
 
+// 追蹤目前關鍵字設定的來源／版本資訊。
+// 注意：這些資訊只存在於「本次瀏覽階段」的記憶體中——網頁重新整理或關閉分頁後就會消失，
+// 並不會真的寫回硬碟或跨裝置同步；下次使用建議直接匯入您上次匯出的 JSON 設定檔即可延續版本號。
+let configMeta = { importedAt:null, version:null, savedAt:null, modifiedSinceImport:false };
+
+function pad2(n){ return String(n).padStart(2, '0'); }
+function formatDateTime(d){
+  if(!d) return '';
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function renderConfigMetaLine(){
+  if(!configMeta.version && !configMeta.importedAt){
+    configMetaLine.textContent = '目前使用本工具內建的預設關鍵字設定（尚未匯入或匯出過設定檔）。';
+    return;
+  }
+  const bits = [];
+  if(configMeta.version) bits.push(`版本 v${configMeta.version}`);
+  if(configMeta.savedAt) bits.push(`檔案建立於 ${configMeta.savedAt}`);
+  if(configMeta.importedAt) bits.push(`匯入時間 ${formatDateTime(configMeta.importedAt)}`);
+  const modifiedStr = configMeta.modifiedSinceImport ? '　⚠️ 已手動修改，尚未存成新版本' : '';
+  configMetaLine.textContent = `✓ 已設為本次瀏覽階段的預設值（${bits.join('，')}）${modifiedStr}`;
+}
+
 applyConfigBtn.addEventListener('click', () => {
   CONFIG.noise      = parseKeywordList(kwNoise.value);
   CONFIG.otherHints = parseKeywordList(kwOther.value);
@@ -955,6 +1002,11 @@ applyConfigBtn.addEventListener('click', () => {
     label:   row.querySelector('.topic-label').value.trim(),
   })).filter(t => t.keyword && t.label);
 
+  if(configMeta.version || configMeta.importedAt){
+    configMeta.modifiedSinceImport = true;
+  }
+  renderConfigMetaLine();
+
   if(rawEntries.length === 0){
     setStatus('關鍵字設定已更新，待上傳工作日誌後即會套用。', 'ok');
     return;
@@ -966,7 +1018,9 @@ applyConfigBtn.addEventListener('click', () => {
 
 resetConfigBtn.addEventListener('click', () => {
   CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  configMeta.modifiedSinceImport = false;
   renderKeywordPanel();
+  renderConfigMetaLine();
   if(rawEntries.length > 0){
     renderRawTable();
     runRuleClassification();
@@ -975,8 +1029,19 @@ resetConfigBtn.addEventListener('click', () => {
 });
 
 exportConfigBtn.addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(CONFIG, null, 2)], { type:'application/json' });
+  const nextVersion = (configMeta.version || 0) + 1;
+  const now = new Date();
+  const savedAtStr = formatDateTime(now);
+  const payload = Object.assign({}, CONFIG, { version: nextVersion, savedAt: savedAtStr });
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   downloadBlob(blob, 'posteam-keyword-config.json');
+
+  // 匯出的當下也一併設為本次瀏覽階段的新預設值，這樣按「恢復預設關鍵字」會回到剛存出的這一版
+  DEFAULT_CONFIG = JSON.parse(JSON.stringify(CONFIG));
+  configMeta.version = nextVersion;
+  configMeta.savedAt = savedAtStr;
+  configMeta.modifiedSinceImport = false;
+  renderConfigMetaLine();
 });
 
 importConfigInput.addEventListener('change', (e) => {
@@ -994,12 +1059,21 @@ importConfigInput.addEventListener('change', (e) => {
           ? imported.rules
           : JSON.parse(JSON.stringify(DEFAULT_CONFIG.rules)),
       };
+      // 匯入的設定檔即設為本次瀏覽階段的新預設值：按「恢復預設關鍵字」會回到這一版，而非工具出廠時內建的初始值
+      DEFAULT_CONFIG = JSON.parse(JSON.stringify(CONFIG));
+      configMeta = {
+        importedAt: new Date(),
+        version: typeof imported.version === 'number' ? imported.version : null,
+        savedAt: typeof imported.savedAt === 'string' ? imported.savedAt : null,
+        modifiedSinceImport: false,
+      };
       renderKeywordPanel();
+      renderConfigMetaLine();
       if(rawEntries.length > 0){
         renderRawTable();
         runRuleClassification();
       }
-      setStatus('已匯入關鍵字設定並套用。', 'ok');
+      setStatus('已匯入關鍵字設定，並設為本次瀏覽階段的預設值。', 'ok');
     }catch(err){
       setStatus('匯入失敗，請確認為本工具匯出的 JSON 設定檔：' + err.message, 'err');
     }finally{
@@ -1010,6 +1084,7 @@ importConfigInput.addEventListener('change', (e) => {
 });
 
 renderKeywordPanel(); // 頁面載入時先以預設關鍵字顯示設定面板
+renderConfigMetaLine();
 
 /* ---------------------------------------------------------------------
    8. 匯出 Word / PDF
