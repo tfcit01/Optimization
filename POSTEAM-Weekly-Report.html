@@ -320,10 +320,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <!-- STEP 3: preview & edit -->
   <section class="panel" id="previewPanel" style="display:none;">
     <h2><span class="num">3</span>週報預覽與編輯工作區</h2>
-    <div class="row" style="margin-bottom:14px;">
+    <div class="row" style="margin-bottom:6px;">
       <button class="btn-ghost" id="reclassifyBtn">↻ 依目前關鍵字重新分類</button>
-      <span style="font-size:12px;color:#8b8168;">（可修改上方「週別」欄位後按左側按鈕套用該週資料；欄位內文字可直接點擊編輯／新增／刪除項目）</span>
+      <button class="btn-ghost" id="exportDraftBtn">⬇ 匯出編輯內容</button>
+      <label class="btn-ghost" style="cursor:pointer;margin:0;">
+        ⬆ 匯入編輯內容
+        <input type="file" id="importDraftInput" accept=".json" style="display:none;">
+      </label>
     </div>
+    <div style="font-size:12px;color:#8b8168;margin-bottom:10px;">
+      （可修改上方「週別」欄位後按「依目前關鍵字重新分類」套用該週資料；欄位內文字可直接點擊編輯／新增／刪除項目；
+      編輯到一半可先「匯出編輯內容」存檔，下次「匯入編輯內容」即可直接接續，不需重新上傳日誌、重新編輯）
+    </div>
+    <div id="draftStatus" style="font-size:12.5px;color:#6b6250;margin-bottom:10px;"></div>
     <div class="weekrange-line" id="weekRangeDisplay">週別：--</div>
     <table class="report" id="reportTable">
       <thead>
@@ -423,6 +432,9 @@ const reportBody      = document.getElementById('reportBody');
 const rawLogDetails   = document.getElementById('rawLogDetails');
 const rawTable        = document.getElementById('rawTable');
 const reclassifyBtn   = document.getElementById('reclassifyBtn');
+const exportDraftBtn  = document.getElementById('exportDraftBtn');
+const importDraftInput = document.getElementById('importDraftInput');
+const draftStatus     = document.getElementById('draftStatus');
 const exportWordBtn   = document.getElementById('exportWordBtn');
 const exportPdfBtn    = document.getElementById('exportPdfBtn');
 const exportStatus    = document.getElementById('exportStatus');
@@ -839,6 +851,88 @@ function levenshteinDistance(a, b){
 reclassifyBtn.addEventListener('click', ()=>{
   renderRawTable();
   runRuleClassification();
+});
+
+// 確保報表表格結構存在（極少數情況下 reportBody 可能是空的，例如尚未執行過任何分類）；
+// 若已有內容則不動它，只補上結構本身，實際內容交由匯入邏輯覆寫。
+function ensureReportTableExists(){
+  if(reportBody.children.length === 0){
+    const empty = {}; CATEGORIES.forEach(c => { empty[c.key] = []; });
+    renderReport(empty, empty);
+  }
+}
+
+function setDraftStatus(msg, isErr){
+  draftStatus.textContent = msg;
+  draftStatus.style.color = isErr ? 'var(--danger)' : 'var(--ok)';
+}
+
+exportDraftBtn.addEventListener('click', () => {
+  ensureReportTableExists();
+  const cells = {};
+  CATEGORIES.forEach(c => {
+    const thisCell = reportBody.querySelector(`td.edit-cell[data-cat="${c.key}"][data-week="this"]`);
+    const nextCell = reportBody.querySelector(`td.edit-cell[data-cat="${c.key}"][data-week="next"]`);
+    cells[c.key] = {
+      this: thisCell ? thisCell.innerHTML : '',
+      next: nextCell ? nextCell.innerHTML : '',
+    };
+  });
+  const now = new Date();
+  const payload = {
+    type: 'posteam-report-draft',
+    weekRange: weekRangeInput.value || '',
+    savedAt: formatDateTime(now),
+    cells,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const fname = `POSTEAM週報草稿_${(weekRangeInput.value || '未命名').replace(/\./g, '')}.json`;
+  downloadBlob(blob, fname);
+  setDraftStatus(`已匯出目前編輯內容為「${fname}」（${formatDateTime(now)}）。`, false);
+});
+
+importDraftInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try{
+      const data = JSON.parse(evt.target.result);
+      if(!data || typeof data !== 'object' || typeof data.cells !== 'object'){
+        throw new Error('檔案內容不是本工具匯出的週報草稿格式');
+      }
+      const hasExistingContent = Array.from(reportBody.querySelectorAll('td.edit-cell')).some(td => {
+        const t = td.textContent.trim();
+        return t.length > 0;
+      });
+      if(hasExistingContent){
+        const proceed = confirm('匯入草稿會覆蓋目前預覽區已有的內容，確定要繼續嗎？');
+        if(!proceed){ importDraftInput.value = ''; return; }
+      }
+
+      ensureReportTableExists();
+      CATEGORIES.forEach(c => {
+        const cellData = data.cells[c.key];
+        if(!cellData) return;
+        const thisCell = reportBody.querySelector(`td.edit-cell[data-cat="${c.key}"][data-week="this"]`);
+        const nextCell = reportBody.querySelector(`td.edit-cell[data-cat="${c.key}"][data-week="next"]`);
+        if(thisCell && typeof cellData.this === 'string') thisCell.innerHTML = cellData.this;
+        if(nextCell && typeof cellData.next === 'string') nextCell.innerHTML = cellData.next;
+      });
+      if(data.weekRange){
+        weekRangeInput.value = data.weekRange;
+        weekRangeDisplay.textContent = '週別：' + data.weekRange;
+      }
+      previewPanel.style.display = '';
+      exportPanel.style.display = '';
+      setDraftStatus(`已匯入編輯內容草稿（原儲存於 ${data.savedAt || '未知時間'}）。`, false);
+    }catch(err){
+      setDraftStatus('匯入編輯內容失敗：' + err.message, true);
+    }finally{
+      importDraftInput.value = '';
+    }
+  };
+  reader.readAsText(f);
 });
 
 /* ---------------------------------------------------------------------
