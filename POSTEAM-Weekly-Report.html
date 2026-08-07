@@ -301,7 +301,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <div class="kwtopics">
-      <label>⑦ 具名專案主題（關鍵字 → 週報顯示名稱；命中時歸為「近期專案相關」，並自動合併同主題的多筆紀錄為子項目）</label>
+      <label>⑦ 具名專案主題（關鍵字 → 週報顯示名稱；命中時歸為「近期專案相關」，並自動合併同主題的多筆紀錄為子項目；關鍵字欄位一樣可用逗號填入多個同義關鍵字，符合任一個即算命中）</label>
       <div id="topicRows"></div>
       <button class="btn-ghost" id="addTopicRow" type="button">+ 新增專案主題</button>
     </div>
@@ -684,7 +684,14 @@ function escapeHtml(s){
 function classify(entry){
   const text = entry.content + ' ' + entry.note;
   for(const t of CONFIG.projectTopics){
-    if(t.keyword && keywordMatches(t.keyword, text)) return { cat:'project', topic:t.label, conflict:null };
+    if(!t.keyword) continue;
+    // ⑦具名專案主題的關鍵字欄位，跟其他欄位一樣支援逗號分隔多個關鍵字（符合任一個即算命中），
+    // 而不是把整段（含逗號）當成一個必須整字相符的關鍵字 —— 否則像「中信*刷卡機,刷卡機測試」
+    // 這種寫法會被誤判成「文字裡要出現一個逗號」，導致永遠比對不到、規則安靜地失效。
+    const alternatives = parseKeywordList(t.keyword);
+    if(alternatives.some(alt => keywordMatches(alt, text))){
+      return { cat:'project', topic:t.label, conflict:null };
+    }
   }
   if(CONFIG.otherHints.some(k => keywordMatches(k, text))){
     return { cat:'other', topic:null, conflict:null };
@@ -950,7 +957,7 @@ function buildTopicRow(keyword, label){
   div.className = 'topic-row';
   const kwInput = document.createElement('input');
   kwInput.type = 'text'; kwInput.className = 'topic-kw';
-  kwInput.placeholder = '關鍵字，例如：中信刷卡機'; kwInput.value = keyword || '';
+  kwInput.placeholder = '關鍵字，可用逗號填多個，例如：中信刷卡機,中信*刷卡機'; kwInput.value = keyword || '';
   const labelInput = document.createElement('input');
   labelInput.type = 'text'; labelInput.className = 'topic-label';
   labelInput.placeholder = '週報顯示名稱，例如：中信刷卡機汰換案'; labelInput.value = label || '';
