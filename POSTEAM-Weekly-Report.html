@@ -127,11 +127,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     font-family:inherit;min-width:230px;
   }
 
-  button{
+  button, .btn-primary, .btn-accent, .btn-ghost, .btn-danger{
     font-family:inherit;font-size:13px;border:none;border-radius:4px;padding:9px 16px;
     cursor:pointer;font-weight:600;letter-spacing:.3px;transition:opacity .15s,transform .1s;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1.2;
   }
-  button:active{transform:translateY(1px);}
+  button:active, .btn-primary:active, .btn-accent:active, .btn-ghost:active, .btn-danger:active{transform:translateY(1px);}
   button:disabled{opacity:.45;cursor:not-allowed;}
   .btn-primary{background:var(--navy);color:#fff;}
   .btn-primary:hover:not(:disabled){opacity:.88;}
@@ -270,7 +271,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥不分先後、同時比對，
       若同時符合兩個以上類別會列入下方「分類衝突待確認」讓您手動選擇→皆未命中則歸為「其他配合事項」。
       關鍵字可使用萬用字元 <code>*</code>（半形或全形＊皆可）代表任意文字，例如「與*討論」可比對到「與哈利討論...」「與經理和雅竹討論...」等各種句型。
-      修改後請按下方「套用設定並重新分類」。
+      修改後請按下方「套用設定」。
     </p>
     <div id="configMetaLine" class="kw-hint" style="margin-top:-10px;"></div>
     <div class="kwgrid">
@@ -307,11 +308,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
 
     <div class="row" style="margin-top:18px;">
-      <button class="btn-primary" id="applyConfigBtn">套用設定並重新分類</button>
-      <button class="btn-ghost" id="resetConfigBtn">恢復預設關鍵字</button>
-      <button class="btn-ghost" id="exportConfigBtn">⬇ 匯出關鍵字設定</button>
+      <button class="btn-primary" id="applyConfigBtn">套用設定</button>
+      <button class="btn-ghost" id="resetConfigBtn">恢復預設值</button>
+      <button class="btn-ghost" id="exportConfigBtn">⬇ 匯出關鍵字</button>
       <label class="btn-ghost" style="cursor:pointer;margin:0;">
-        ⬆ 匯入關鍵字設定
+        ⬆ 匯入關鍵字
         <input type="file" id="importConfigInput" accept=".json" style="display:none;">
       </label>
     </div>
@@ -321,16 +322,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <section class="panel" id="previewPanel" style="display:none;">
     <h2><span class="num">3</span>週報預覽與編輯工作區</h2>
     <div class="row" style="margin-bottom:6px;">
-      <button class="btn-ghost" id="reclassifyBtn">↻ 依目前關鍵字重新分類</button>
-      <button class="btn-ghost" id="exportDraftBtn">⬇ 匯出編輯內容</button>
+      <button class="btn-ghost" id="reclassifyBtn">↻ 修改週別後重新分類</button>
+      <button class="btn-ghost" id="exportDraftBtn">⬇ 匯出內容</button>
       <label class="btn-ghost" style="cursor:pointer;margin:0;">
-        ⬆ 匯入編輯內容
+        ⬆ 匯入內容
         <input type="file" id="importDraftInput" accept=".json" style="display:none;">
       </label>
     </div>
     <div style="font-size:12px;color:#8b8168;margin-bottom:10px;">
-      （可修改上方「週別」欄位後按「依目前關鍵字重新分類」套用該週資料；欄位內文字可直接點擊編輯／新增／刪除項目；
-      編輯到一半可先「匯出編輯內容」存檔，下次「匯入編輯內容」即可直接接續，不需重新上傳日誌、重新編輯）
+      （可修改上方「週別」欄位後按「修改週別後重新分類」套用該週資料；欄位內文字可直接點擊編輯／新增／刪除項目；
+      編輯到一半可先「匯出內容」存檔，下次「匯入內容」即可直接接續，不需重新上傳日誌、重新編輯）
     </div>
     <div id="draftStatus" style="font-size:12.5px;color:#6b6250;margin-bottom:10px;"></div>
     <div class="weekrange-line" id="weekRangeDisplay">週別：--</div>
@@ -888,7 +889,7 @@ exportDraftBtn.addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   const fname = `POSTEAM週報草稿_${(weekRangeInput.value || '未命名').replace(/\./g, '')}.json`;
   downloadBlob(blob, fname);
-  setDraftStatus(`已匯出目前編輯內容為「${fname}」（${formatDateTime(now)}）。`, false);
+  setDraftStatus(`已匯出目前內容為「${fname}」（${formatDateTime(now)}）。`, false);
 });
 
 importDraftInput.addEventListener('change', (e) => {
@@ -925,9 +926,9 @@ importDraftInput.addEventListener('change', (e) => {
       }
       previewPanel.style.display = '';
       exportPanel.style.display = '';
-      setDraftStatus(`已匯入編輯內容草稿（原儲存於 ${data.savedAt || '未知時間'}）。`, false);
+      setDraftStatus(`已匯入內容草稿（原儲存於 ${data.savedAt || '未知時間'}）。`, false);
     }catch(err){
-      setDraftStatus('匯入編輯內容失敗：' + err.message, true);
+      setDraftStatus('匯入內容失敗：' + err.message, true);
     }finally{
       importDraftInput.value = '';
     }
@@ -1156,7 +1157,7 @@ exportConfigBtn.addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
   downloadBlob(blob, 'posteam-keyword-config.json');
 
-  // 匯出的當下也一併設為本次瀏覽階段的新預設值，這樣按「恢復預設關鍵字」會回到剛存出的這一版
+  // 匯出的當下也一併設為本次瀏覽階段的新預設值，這樣按「恢復預設值」會回到剛存出的這一版
   DEFAULT_CONFIG = JSON.parse(JSON.stringify(CONFIG));
   configMeta.version = nextVersion;
   configMeta.savedAt = savedAtStr;
@@ -1179,7 +1180,7 @@ importConfigInput.addEventListener('change', (e) => {
           ? imported.rules
           : JSON.parse(JSON.stringify(DEFAULT_CONFIG.rules)),
       };
-      // 匯入的設定檔即設為本次瀏覽階段的新預設值：按「恢復預設關鍵字」會回到這一版，而非工具出廠時內建的初始值
+      // 匯入的設定檔即設為本次瀏覽階段的新預設值：按「恢復預設值」會回到這一版，而非工具出廠時內建的初始值
       DEFAULT_CONFIG = JSON.parse(JSON.stringify(CONFIG));
       configMeta = {
         importedAt: new Date(),
