@@ -122,10 +122,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
   .field{display:flex;flex-direction:column;gap:4px;}
   .field label{font-size:12px;color:#6b6250;}
-  .field input[type=text]{
+  .field input[type=text], .field input[type=date]{
     border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:14px;
-    font-family:inherit;min-width:230px;
+    font-family:inherit;
   }
+  .field input[type=text]{min-width:230px;}
+  .field input[type=date]{min-width:150px;}
 
   button, .btn-primary, .btn-accent, .btn-ghost, .btn-danger{
     font-family:inherit;font-size:13px;border:none;border-radius:4px;padding:9px 16px;
@@ -250,7 +252,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       </label>
       <div class="field">
         <label>週別（可手動修正）</label>
-        <input type="text" id="weekRangeInput" placeholder="例：2026.06.04-2026.06.10">
+        <div class="row" style="gap:6px;flex-wrap:nowrap;">
+          <input type="date" id="weekStartInput">
+          <span style="color:#8b8168;font-size:13px;">至</span>
+          <input type="date" id="weekEndInput">
+        </div>
       </div>
     </div>
     <div id="statusLine">請上傳 .xlsx 檔案，欄位需包含「日期」「執行內容」「備註」（選填：是否完成）。</div>
@@ -425,7 +431,8 @@ const fileInput       = document.getElementById('fileInput');
 const uploadBox       = document.getElementById('uploadBox');
 const fnameEl         = document.getElementById('fname');
 const statusLine      = document.getElementById('statusLine');
-const weekRangeInput  = document.getElementById('weekRangeInput');
+const weekStartInput  = document.getElementById('weekStartInput');
+const weekEndInput    = document.getElementById('weekEndInput');
 const weekRangeDisplay= document.getElementById('weekRangeDisplay');
 const previewPanel    = document.getElementById('previewPanel');
 const exportPanel     = document.getElementById('exportPanel');
@@ -599,28 +606,47 @@ function autoDetectWeekRange(){
   const maxTime = Math.max(...dates.map(d=>d.getTime()));
   const max = new Date(maxTime);
   const min = new Date(maxTime - 6 * 86400000);
-  const range = `${fmtDate(min)}-${fmtDate(max)}`;
-  weekRangeInput.value = range;
-  weekRangeDisplay.textContent = '週別：' + range;
+  weekStartInput.value = fmtDateISO(min);
+  weekEndInput.value = fmtDateISO(max);
+  updateWeekRangeDisplay();
 }
-weekRangeInput.addEventListener('input', ()=>{
-  weekRangeDisplay.textContent = '週別：' + (weekRangeInput.value || '--');
-});
+function fmtDateISO(d){
+  if(!d) return '';
+  const y = d.getUTCFullYear ? d.getUTCFullYear() : d.getFullYear();
+  const m = (d.getUTCMonth ? d.getUTCMonth() : d.getMonth()) + 1;
+  const day = d.getUTCDate ? d.getUTCDate() : d.getDate();
+  return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+// 傳回目前週別的顯示用字串（YYYY.MM.DD-YYYY.MM.DD），供畫面顯示、匯出檔名、Word/PDF標題使用。
+// 若起訖日期未完整填寫，則回傳 null。
+function getWeekRangeLabel(){
+  if(!weekStartInput.value || !weekEndInput.value) return null;
+  const toDotFormat = iso => iso.replace(/-/g, '.');
+  return `${toDotFormat(weekStartInput.value)}-${toDotFormat(weekEndInput.value)}`;
+}
+function updateWeekRangeDisplay(){
+  const label = getWeekRangeLabel();
+  weekRangeDisplay.textContent = '週別：' + (label || '--（請選擇起訖日期）');
+}
+weekStartInput.addEventListener('change', updateWeekRangeDisplay);
+weekEndInput.addEventListener('change', updateWeekRangeDisplay);
 
-function parseWeekRangeInput(str){
-  if(!str) return null;
-  const m = str.match(/(\d{4})\.(\d{1,2})\.(\d{1,2})\s*-\s*(\d{4})\.(\d{1,2})\.(\d{1,2})/);
-  if(!m) return null;
-  const start = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], 0, 0, 0));
-  const end   = new Date(Date.UTC(+m[4], +m[5]-1, +m[6], 23, 59, 59));
+// 讀取畫面上「週別」兩個日期欄位，轉換為篩選用的起訖時間範圍。
+// 原生 date 欄位一定是 YYYY-MM-DD 格式，不需要再處理格式錯誤的問題。
+function parseWeekRangeInput(){
+  if(!weekStartInput.value || !weekEndInput.value) return null;
+  const [sy, sm, sd] = weekStartInput.value.split('-').map(Number);
+  const [ey, em, ed] = weekEndInput.value.split('-').map(Number);
+  const start = new Date(Date.UTC(sy, sm-1, sd, 0, 0, 0));
+  const end   = new Date(Date.UTC(ey, em-1, ed, 23, 59, 59));
   if(isNaN(start) || isNaN(end)) return null;
   return { start, end };
 }
 
-// 依目前「週別」輸入框的日期範圍，從全部已解析紀錄中篩選出本次要彙整的資料。
-// 若輸入框格式無法辨識，則退回使用全部紀錄（並提示使用者確認週別格式）。
+// 依目前「週別」兩個日期欄位的範圍，從全部已解析紀錄中篩選出本次要彙整的資料。
+// 若尚未選擇起訖日期，則退回使用全部紀錄。
 function getEntriesInSelectedRange(){
-  const range = parseWeekRangeInput(weekRangeInput.value);
+  const range = parseWeekRangeInput();
   if(!range) return rawEntries;
   return rawEntries.filter(e => e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
 }
@@ -652,7 +678,7 @@ function isNoise(content){
 }
 
 function renderRawTable(){
-  const range = parseWeekRangeInput(weekRangeInput.value);
+  const range = parseWeekRangeInput();
   let html = '<tr><th>分頁</th><th>日期</th><th>執行內容</th><th>備註</th><th>狀態</th><th>自動分類</th></tr>';
   rawEntries.forEach(e=>{
     const inRange = !range || (e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
@@ -882,12 +908,14 @@ exportDraftBtn.addEventListener('click', () => {
   const now = new Date();
   const payload = {
     type: 'posteam-report-draft',
-    weekRange: weekRangeInput.value || '',
+    weekStart: weekStartInput.value || '',
+    weekEnd: weekEndInput.value || '',
     savedAt: formatDateTime(now),
     cells,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
-  const fname = `POSTEAM週報草稿_${(weekRangeInput.value || '未命名').replace(/\./g, '')}.json`;
+  const labelForFname = (getWeekRangeLabel() || '未命名').replace(/\./g, '');
+  const fname = `POSTEAM週報草稿_${labelForFname}.json`;
   downloadBlob(blob, fname);
   setDraftStatus(`已匯出目前內容為「${fname}」（${formatDateTime(now)}）。`, false);
 });
@@ -920,9 +948,18 @@ importDraftInput.addEventListener('change', (e) => {
         if(thisCell && typeof cellData.this === 'string') thisCell.innerHTML = cellData.this;
         if(nextCell && typeof cellData.next === 'string') nextCell.innerHTML = cellData.next;
       });
-      if(data.weekRange){
-        weekRangeInput.value = data.weekRange;
-        weekRangeDisplay.textContent = '週別：' + data.weekRange;
+      // 相容舊版草稿檔（週別存成單一文字字串，如 "2026.06.04-2026.06.10"）
+      if(data.weekStart && data.weekEnd){
+        weekStartInput.value = data.weekStart;
+        weekEndInput.value = data.weekEnd;
+        updateWeekRangeDisplay();
+      } else if(typeof data.weekRange === 'string'){
+        const m = data.weekRange.match(/(\d{4})\.(\d{1,2})\.(\d{1,2})-(\d{4})\.(\d{1,2})\.(\d{1,2})/);
+        if(m){
+          weekStartInput.value = `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+          weekEndInput.value = `${m[4]}-${m[5].padStart(2,'0')}-${m[6].padStart(2,'0')}`;
+          updateWeekRangeDisplay();
+        }
       }
       previewPanel.style.display = '';
       exportPanel.style.display = '';
@@ -1213,7 +1250,7 @@ renderConfigMetaLine();
 function buildStaticTableHtml(){
   const rows = reportBody.querySelectorAll('tr');
   let html = '<table style="width:100%;border-collapse:collapse;">' +
-    '<tr><th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;width:110px;">類型</th>' +
+    '<tr><th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;width:110px;text-align:center;">類型</th>' +
     '<th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;">本週工作</th>' +
     '<th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;">下週工作</th></tr>';
   rows.forEach(tr=>{
@@ -1221,7 +1258,7 @@ function buildStaticTableHtml(){
     html += '<tr>';
     cells.forEach((td, idx)=>{
       const style = idx === 0
-        ? 'border:1px solid #333;background:#e6f3f1;font-weight:bold;padding:6px 8px;vertical-align:top;'
+        ? 'border:1px solid #333;background:#e6f3f1;font-weight:bold;padding:6px 8px;vertical-align:middle;text-align:center;'
         : 'border:1px solid #333;padding:6px 8px;vertical-align:top;';
       html += `<td style="${style}">${td.innerHTML}</td>`;
     });
@@ -1240,21 +1277,37 @@ exportWordBtn.addEventListener('click', ()=>{
     const proceed = confirm(`目前還有 ${conflictItems.length} 筆「分類衝突待確認」尚未指派類別，這些項目不會出現在匯出的週報中。要先不管它們、直接匯出嗎？`);
     if(!proceed) return;
   }
-  const range = weekRangeInput.value || '未設定週別';
+  const range = getWeekRangeLabel() || '未設定週別';
   const tableHtml = buildStaticTableHtml();
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8">
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
 <style>
-  body{font-family:'Microsoft JhengHei','微軟正黑體',sans-serif;font-size:11pt;color:#1c2b3a;}
+  @page WordSection1{
+    size:29.7cm 21cm;
+    mso-page-orientation:landscape;
+    margin:1cm;
+  }
+  div.WordSection1{ page:WordSection1; }
+  body{font-family:'Microsoft JhengHei','微軟正黑體',sans-serif;font-size:11pt;color:#1c2b3a;margin:0;}
   h1{font-size:15pt;margin-bottom:2pt;}
   p.sub{font-size:10.5pt;color:#555;margin-top:0;}
   ol,ul{margin:0;padding-left:16pt;}
   li{margin-bottom:3pt;}
 </style></head>
 <body>
+<div class="WordSection1">
   <h1>POSTEAM 週報</h1>
   <p class="sub">週別：${escapeHtml(range)}</p>
   ${tableHtml}
+</div>
 </body></html>`;
   const blob = new Blob(['\ufeff', html], { type:'application/msword' });
   const filename = `${range.replace(/\./g,'')}_POSTEAM週報.doc`;
@@ -1268,7 +1321,7 @@ exportPdfBtn.addEventListener('click', ()=>{
     if(!proceed) return;
   }
   window.scrollTo(0, 0);
-  const range = weekRangeInput.value || '未設定週別';
+  const range = getWeekRangeLabel() || '未設定週別';
   const printArea = document.getElementById('printArea');
   printArea.innerHTML = `
     <div style="font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;">
