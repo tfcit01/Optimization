@@ -170,8 +170,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     background:var(--teal-soft);padding:8px;border-radius:4px;
   }
 
-  details.raw-log{margin-top:16px;}
-  details.raw-log summary{cursor:pointer;font-size:13px;color:var(--teal);font-weight:600;}
+
   table.rawtable{width:100%;border-collapse:collapse;margin-top:10px;font-size:12.5px;}
   table.rawtable th,table.rawtable td{border:1px solid var(--line-soft);padding:5px 7px;text-align:left;}
   table.rawtable th{background:#f1efe6;}
@@ -206,6 +205,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   .topic-row .remove-topic{flex:none;padding:6px 10px;font-size:12px;}
   .kw-hint{font-size:12px;color:#8b8168;margin:-6px 0 16px;}
   .kw-hint code{background:var(--teal-soft);color:var(--navy-deep);padding:1px 5px;border-radius:3px;font-size:11.5px;}
+
+  .panel-with-sidebar{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;}
+  .panel-main{flex:1 1 480px;min-width:0;}
+  .tips-sidebar{
+    flex:0 0 280px;background:var(--teal-soft);border:1px solid var(--line);
+    border-radius:6px;padding:14px 16px;
+  }
+  .tips-sidebar .tips-title{font-size:12.5px;font-weight:700;color:var(--navy-deep);margin-bottom:8px;}
+  .tips-sidebar ul{margin:0;padding-left:18px;}
+  .tips-sidebar li{font-size:12px;color:#5c5546;line-height:1.6;margin-bottom:8px;}
+  .tips-sidebar li:last-child{margin-bottom:0;}
+  .tips-sidebar code{background:#fff;color:var(--navy-deep);padding:1px 5px;border-radius:3px;font-size:11px;}
 
   .conflict-row{
     display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;
@@ -243,84 +254,97 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <!-- STEP 1: upload -->
   <section class="panel">
     <h2><span class="num">1</span>上傳工作日誌</h2>
-    <div class="row">
-      <label class="upload-box" id="uploadBox">
-        <input type="file" id="fileInput" accept=".xlsx,.xls">
-        <span class="icon">📄</span>
-        <span>點擊或拖曳上傳「工作日誌.xlsx」</span>
-        <div class="fname" id="fname">尚未選擇檔案</div>
-      </label>
-      <div class="field">
-        <label>週別（可手動修正）</label>
-        <div class="row" style="gap:6px;flex-wrap:nowrap;">
-          <input type="date" id="weekStartInput">
-          <span style="color:#8b8168;font-size:13px;">至</span>
-          <input type="date" id="weekEndInput">
+    <div class="panel-with-sidebar">
+      <div class="panel-main">
+        <div class="row">
+          <label class="upload-box" id="uploadBox">
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+            <span class="icon">📄</span>
+            <span>點擊或拖曳上傳「工作日誌.xlsx」</span>
+            <div class="fname" id="fname">尚未選擇檔案</div>
+          </label>
+          <div class="field">
+            <label>週別（可手動修正）</label>
+            <div class="row" style="gap:6px;flex-wrap:nowrap;">
+              <input type="date" id="weekStartInput">
+              <span style="color:#8b8168;font-size:13px;">至</span>
+              <input type="date" id="weekEndInput">
+            </div>
+          </div>
         </div>
+        <div id="statusLine">請上傳 .xlsx 檔案，欄位需包含「日期」「執行內容」「備註」（選填：是否完成）。</div>
+        <button class="btn-ghost" id="viewRawLogBtn" type="button" style="display:none;margin-top:12px;">
+          📄 檢視解析後的原始日誌（開新視窗）
+        </button>
       </div>
+      <aside class="tips-sidebar">
+        <div class="tips-title">💡 使用提示</div>
+        <ul>
+          <li>若使用 Chrome 瀏覽器，選好檔案後需等待數秒才出現「處理中」提示，通常是公司電腦的資安防護軟體正在背景掃描檔案，與本工具無關；可改用 Edge 瀏覽器或耐心等候即可。</li>
+        </ul>
+      </aside>
     </div>
-    <div id="statusLine">請上傳 .xlsx 檔案，欄位需包含「日期」「執行內容」「備註」（選填：是否完成）。</div>
-    <div style="font-size:11.5px;color:#8b8168;margin-top:4px;">
-      💡 若使用 Chrome 瀏覽器，選好檔案後需等待數秒才出現「處理中」提示，通常是公司電腦的資安防護軟體正在背景掃描檔案，與本工具無關；可改用 Edge 瀏覽器或耐心等候即可。
-    </div>
-    <details class="raw-log" id="rawLogDetails" style="display:none;">
-      <summary>展開檢視解析後的原始日誌（灰底刪除線＝已自動略過的例行事項）</summary>
-      <table class="rawtable" id="rawTable"></table>
-    </details>
+    <table class="rawtable" id="rawTable" style="display:none;"></table>
   </section>
 
   <!-- STEP 2: keyword rules -->
   <section class="panel" id="keywordPanel">
     <h2><span class="num">2</span>自訂分類關鍵字設定（選填）</h2>
-    <p class="kw-hint">
-      每個欄位以逗號分隔多個關鍵字；只要「執行內容」或「備註」內含有任一關鍵字即符合該規則。
-      規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥不分先後、同時比對，
-      若同時符合兩個以上類別會列入下方「分類衝突待確認」讓您手動選擇→皆未命中則歸為「其他配合事項」。
-      關鍵字可使用萬用字元 <code>*</code>（半形或全形＊皆可）代表任意文字，例如「與*討論」可比對到「與哈利討論...」「與經理和雅竹討論...」等各種句型。
-      修改後請按下方「套用設定」。
-    </p>
-    <div id="configMetaLine" class="kw-hint" style="margin-top:-10px;"></div>
-    <div class="kwgrid">
-      <div class="kwfield">
-        <label>① 例行事項（略過，不列入週報）</label>
-        <textarea id="kwNoise" rows="3"></textarea>
-      </div>
-      <div class="kwfield">
-        <label>② 其他配合事項（優先判斷，避免被下方規則誤判）</label>
-        <textarea id="kwOther" rows="3"></textarea>
-      </div>
-      <div class="kwfield">
-        <label>③ pos異動及設備整理</label>
-        <textarea id="kwPosMove" rows="3"></textarea>
-      </div>
-      <div class="kwfield">
-        <label>④ 近期專案相關（一般關鍵字）</label>
-        <textarea id="kwProject" rows="3"></textarea>
-      </div>
-      <div class="kwfield">
-        <label>⑤ 處理問題及系統設定</label>
-        <textarea id="kwIssue" rows="3"></textarea>
-      </div>
-      <div class="kwfield">
-        <label>⑥ 行政</label>
-        <textarea id="kwAdmin" rows="3"></textarea>
-      </div>
-    </div>
+    <div class="panel-with-sidebar">
+      <div class="panel-main">
+        <div class="kwgrid">
+          <div class="kwfield">
+            <label>① 例行事項（略過，不列入週報）</label>
+            <textarea id="kwNoise" rows="3"></textarea>
+          </div>
+          <div class="kwfield">
+            <label>② 其他配合事項（優先判斷，避免被下方規則誤判）</label>
+            <textarea id="kwOther" rows="3"></textarea>
+          </div>
+          <div class="kwfield">
+            <label>③ pos異動及設備整理</label>
+            <textarea id="kwPosMove" rows="3"></textarea>
+          </div>
+          <div class="kwfield">
+            <label>④ 近期專案相關（一般關鍵字）</label>
+            <textarea id="kwProject" rows="3"></textarea>
+          </div>
+          <div class="kwfield">
+            <label>⑤ 處理問題及系統設定</label>
+            <textarea id="kwIssue" rows="3"></textarea>
+          </div>
+          <div class="kwfield">
+            <label>⑥ 行政</label>
+            <textarea id="kwAdmin" rows="3"></textarea>
+          </div>
+        </div>
 
-    <div class="kwtopics">
-      <label>⑦ 具名專案主題（關鍵字 → 週報顯示名稱；命中時歸為「近期專案相關」，並自動合併同主題的多筆紀錄為子項目；關鍵字欄位一樣可用逗號填入多個同義關鍵字，符合任一個即算命中）</label>
-      <div id="topicRows"></div>
-      <button class="btn-ghost" id="addTopicRow" type="button">+ 新增專案主題</button>
-    </div>
+        <div class="kwtopics">
+          <label>⑦ 具名專案主題（關鍵字 → 週報顯示名稱；命中時歸為「近期專案相關」，並自動合併同主題的多筆紀錄為子項目；關鍵字欄位一樣可用逗號填入多個同義關鍵字，符合任一個即算命中）</label>
+          <div id="topicRows"></div>
+          <button class="btn-ghost" id="addTopicRow" type="button">+ 新增專案主題</button>
+        </div>
 
-    <div class="row" style="margin-top:18px;">
-      <button class="btn-primary" id="applyConfigBtn">套用設定</button>
-      <button class="btn-ghost" id="resetConfigBtn">恢復預設值</button>
-      <button class="btn-ghost" id="exportConfigBtn">⬇ 匯出關鍵字</button>
-      <label class="btn-ghost" style="cursor:pointer;margin:0;">
-        ⬆ 匯入關鍵字
-        <input type="file" id="importConfigInput" accept=".json" style="display:none;">
-      </label>
+        <div class="row" style="margin-top:18px;">
+          <button class="btn-primary" id="applyConfigBtn">套用設定</button>
+          <button class="btn-ghost" id="resetConfigBtn">恢復預設值</button>
+          <button class="btn-ghost" id="exportConfigBtn">⬇ 匯出關鍵字</button>
+          <label class="btn-ghost" style="cursor:pointer;margin:0;">
+            ⬆ 匯入關鍵字
+            <input type="file" id="importConfigInput" accept=".json" style="display:none;">
+          </label>
+        </div>
+      </div>
+      <aside class="tips-sidebar">
+        <div class="tips-title">💡 使用說明</div>
+        <ul>
+          <li>每個欄位以逗號分隔多個關鍵字；只要「執行內容」或「備註」內含有任一關鍵字即符合該規則。</li>
+          <li>規則比對順序：①例行事項（略過）→②其他配合事項（優先判斷）→③～⑥不分先後、同時比對，若同時符合兩個以上類別會列入下方「分類衝突待確認」讓您手動選擇→皆未命中則歸為「其他配合事項」。</li>
+          <li>關鍵字可使用萬用字元 <code>*</code>（半形或全形＊皆可）代表任意文字，例如「與*討論」可比對到「與哈利討論...」「與經理和雅竹討論...」等各種句型。</li>
+          <li>修改後請按下方「套用設定」。</li>
+        </ul>
+        <div id="configMetaLine" style="margin-top:10px;font-size:12px;color:var(--ok);"></div>
+      </aside>
     </div>
   </section>
 
@@ -437,7 +461,7 @@ const weekRangeDisplay= document.getElementById('weekRangeDisplay');
 const previewPanel    = document.getElementById('previewPanel');
 const exportPanel     = document.getElementById('exportPanel');
 const reportBody      = document.getElementById('reportBody');
-const rawLogDetails   = document.getElementById('rawLogDetails');
+const viewRawLogBtn   = document.getElementById('viewRawLogBtn');
 const rawTable        = document.getElementById('rawTable');
 const reclassifyBtn   = document.getElementById('reclassifyBtn');
 const exportDraftBtn  = document.getElementById('exportDraftBtn');
@@ -707,8 +731,42 @@ function renderRawTable(){
     </tr>`;
   });
   rawTable.innerHTML = html;
-  rawLogDetails.style.display = '';
+  viewRawLogBtn.style.display = '';
 }
+
+// 用瀏覽器原生 window.open 開一個新視窗，把目前的原始日誌檢視表獨立顯示出來，
+// 方便對照查看，也不會佔用主頁面的版面空間。每次點擊都是即時抓「目前」的 rawTable 內容，
+// 所以會反映最新的分類結果（例如剛套用過新的關鍵字設定之後）。
+function openRawLogWindow(){
+  const win = window.open('', '_blank');
+  if(!win){
+    alert('瀏覽器封鎖了彈出視窗，請允許本頁面開啟新視窗後再試一次。');
+    return;
+  }
+  const clone = rawTable.cloneNode(true);
+  clone.style.display = '';
+  const weekLabel = getWeekRangeLabel() || '';
+  win.document.write(`<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8">
+<title>原始日誌檢視${weekLabel ? '｜' + weekLabel : ''}</title>
+<style>
+  body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;padding:24px;color:#1c2b3a;background:#fff;}
+  h2{font-size:18px;margin:0 0 4px;}
+  p.sub{font-size:13px;color:#666;margin:0 0 16px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{border:1px solid #d8d2c2;padding:6px 8px;text-align:left;vertical-align:top;}
+  th{background:#16324a;color:#fff;position:sticky;top:0;}
+  td.noise{color:#a49c88;text-decoration:line-through;}
+  .tag{font-size:11px;color:#fff;background:#0f766e;border-radius:3px;padding:1px 6px;display:inline-block;}
+</style></head>
+<body>
+  <h2>原始日誌檢視</h2>
+  <p class="sub">灰底刪除線＝已自動略過的例行事項；週別：${escapeHtml(weekLabel || '未設定')}</p>
+  ${clone.outerHTML}
+</body></html>`);
+  win.document.close();
+}
+viewRawLogBtn.addEventListener('click', openRawLogWindow);
 
 function escapeHtml(s){
   return String(s || '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1249,17 +1307,17 @@ renderConfigMetaLine();
 --------------------------------------------------------------------- */
 function buildStaticTableHtml(){
   const rows = reportBody.querySelectorAll('tr');
-  let html = '<table style="width:100%;border-collapse:collapse;">' +
-    '<tr><th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;width:110px;text-align:center;">類型</th>' +
-    '<th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;">本週工作</th>' +
-    '<th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;">下週工作</th></tr>';
+  let html = '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">' +
+    '<tr><th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;width:12%;text-align:center;">類型</th>' +
+    '<th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;width:44%;">本週工作</th>' +
+    '<th style="border:1px solid #333;background:#16324a;color:#fff;padding:6px 8px;width:44%;">下週工作</th></tr>';
   rows.forEach(tr=>{
     const cells = tr.querySelectorAll('td');
     html += '<tr>';
     cells.forEach((td, idx)=>{
       const style = idx === 0
-        ? 'border:1px solid #333;background:#e6f3f1;font-weight:bold;padding:6px 8px;vertical-align:middle;text-align:center;'
-        : 'border:1px solid #333;padding:6px 8px;vertical-align:top;';
+        ? 'border:1px solid #333;background:#e6f3f1;font-weight:bold;padding:6px 8px;vertical-align:middle;text-align:center;width:12%;'
+        : 'border:1px solid #333;padding:6px 8px;vertical-align:top;width:44%;word-wrap:break-word;';
       html += `<td style="${style}">${td.innerHTML}</td>`;
     });
     html += '</tr>';
