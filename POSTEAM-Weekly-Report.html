@@ -706,12 +706,11 @@ function renderRawTable(){
   let html = '<tr><th>分頁</th><th>日期</th><th>執行內容</th><th>備註</th><th>狀態</th><th>自動分類</th></tr>';
   rawEntries.forEach(e=>{
     const inRange = !range || (e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime());
+    if(!inRange) return; // 原始日誌檢視只呈現「週別」範圍內的資料，範圍外的直接略過不顯示
     const noise = isNoise(e.content);
-    const cls = (noise || !inRange) ? ' class="noise"' : '';
+    const cls = noise ? ' class="noise"' : '';
     let tag = '';
-    if(!inRange){
-      tag = '不在所選週別';
-    } else if(noise){
+    if(noise){
       tag = '略過（例行事項）';
     } else {
       const result = classify(e);
@@ -753,15 +752,21 @@ function openRawLogWindow(){
   body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;padding:24px;color:#1c2b3a;background:#fff;}
   h2{font-size:18px;margin:0 0 4px;}
   p.sub{font-size:13px;color:#666;margin:0 0 16px;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th,td{border:1px solid #d8d2c2;padding:6px 8px;text-align:left;vertical-align:top;}
+  table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+  th,td{border:1px solid #d8d2c2;padding:6px 8px;text-align:left;vertical-align:top;word-wrap:break-word;overflow-wrap:break-word;}
   th{background:#16324a;color:#fff;position:sticky;top:0;}
+  th:nth-child(1), td:nth-child(1){width:9%;}
+  th:nth-child(2), td:nth-child(2){width:8%;}
+  th:nth-child(3), td:nth-child(3){width:33%;}
+  th:nth-child(4), td:nth-child(4){width:33%;}
+  th:nth-child(5), td:nth-child(5){width:6%;}
+  th:nth-child(6), td:nth-child(6){width:11%;}
   td.noise{color:#a49c88;text-decoration:line-through;}
   .tag{font-size:11px;color:#fff;background:#0f766e;border-radius:3px;padding:1px 6px;display:inline-block;}
 </style></head>
 <body>
   <h2>原始日誌檢視</h2>
-  <p class="sub">灰底刪除線＝已自動略過的例行事項；週別：${escapeHtml(weekLabel || '未設定')}</p>
+  <p class="sub">僅顯示所選「週別」範圍內的資料；灰底刪除線＝已自動略過的例行事項；週別：${escapeHtml(weekLabel || '未設定')}</p>
   ${clone.outerHTML}
 </body></html>`);
   win.document.close();
