@@ -447,6 +447,8 @@ let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
    2. 全域狀態
 --------------------------------------------------------------------- */
 let rawEntries = [];      // {date:Date|null, dateLabel:string, content, note, status, sheetName}
+let currentWorkbook = null;      // 保留已讀取的活頁簿物件，供之後依需要延遲解析其他分頁
+let parsedSheetNames = new Set(); // 已經解析過的分頁名稱，避免重複解析同一個分頁
 
 /* ---------------------------------------------------------------------
    3. DOM 參照
@@ -509,16 +511,53 @@ fileInput.addEventListener('change', (e)=>{
           const t0 = performance.now();
           const data = new Uint8Array(evt.target.result);
           const wb = XLSX.read(data, {type:'array', cellDates:true});
-          const { allEntries, scannedSheets, matchedSheets } = parseWorkbook(wb);
+          currentWorkbook = wb;
+          parsedSheetNames = new Set();
+          rawEntries = [];
+
+          const infos = scanSheetInfos(wb);
+          const knownCount = infos.filter(s => s.ym).length;
+          let smartModeUsed = false;
+          let initialTargets;
+
+          if(infos.length > 3 && knownCount >= Math.ceil(infos.length / 2)){
+            // 分頁數夠多、且大多數分頁名稱可辨識年月時，才啟用智慧篩選：
+            // 先只解析「看起來最新」的月份分頁（以及無法辨識年月、無法排除的分頁），加快首次載入；
+            // 使用者若切換到更早的週別，會在按「修改週別後重新分類」（或調整週別日期）時視需要自動補解析。
+            smartModeUsed = true;
+            const known = infos.filter(s => s.ym).sort((a,b) =>
+              (b.ym.year*12 + b.ym.month) - (a.ym.year*12 + a.ym.month)
+            );
+            const latest = known[0].ym;
+            const prev = latest.month === 1 ? {year:latest.year-1, month:12} : {year:latest.year, month:latest.month-1};
+            initialTargets = infos.filter(s =>
+              !s.ym ||
+              (s.ym.year === latest.year && s.ym.month === latest.month) ||
+              (s.ym.year === prev.year && s.ym.month === prev.month)
+            ).map(s => s.name);
+          } else {
+            initialTargets = infos.map(s => s.name);
+          }
+
+          let { matchedHeaderCount } = parseSpecificSheets(wb, initialTargets);
+
+          // 保底：智慧篩選後完全沒抓到資料時，退回解析全部分頁，避免因分頁命名不規則而讀不到任何東西
+          if(rawEntries.length === 0 && smartModeUsed){
+            const fallback = parseSpecificSheets(wb, wb.SheetNames);
+            matchedHeaderCount += fallback.matchedHeaderCount;
+            smartModeUsed = false;
+          }
+
           const elapsedMs = Math.round(performance.now() - t0);
-          rawEntries = allEntries;
           if(rawEntries.length === 0){
-            setStatus(`已掃描全部 ${scannedSheets.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
+            setStatus(`已掃描全部 ${infos.length} 個分頁，但找不到含「日期」「執行內容」欄位的分頁，請確認欄位名稱。`, 'err');
             return;
           }
-          const sheetNote = matchedSheets.length < scannedSheets.length
-            ? `（共 ${scannedSheets.length} 個分頁，其中 ${matchedSheets.length} 個含日誌欄位：${matchedSheets.join('、')}）`
-            : `（共 ${scannedSheets.length} 個分頁皆已解析）`;
+          const sheetNote = smartModeUsed
+            ? `（共 ${infos.length} 個分頁，僅先解析與最新資料相關的 ${parsedSheetNames.size} 個分頁以加快速度，切換週別時會視需要自動補解析其餘分頁）`
+            : (matchedHeaderCount < infos.length
+                ? `（共 ${infos.length} 個分頁，其中 ${matchedHeaderCount} 個含日誌欄位）`
+                : `（共 ${infos.length} 個分頁皆已解析）`);
           setStatus(`成功解析 ${rawEntries.length} 筆工作紀錄 ${sheetNote}，耗時 ${elapsedMs} 毫秒。已自動略過例行事項並完成初步分類。`, 'ok');
           autoDetectWeekRange();
           renderRawTable();
@@ -575,25 +614,73 @@ function fmtDate(d){
   return `${y}.${String(m).padStart(2,'0')}.${String(day).padStart(2,'0')}`;
 }
 
-// 掃描整本活頁簿的「每一個分頁」，只有欄位標題含「日期」與「執行內容」的分頁才會被解析，
-// 其餘分頁（例如其他用途的頁籤）會被快速略過，不會浪費運算資源。
-// 每個分頁的解析都只是一次性的陣列掃描（時間複雜度 O(列數)），
-// 對瀏覽器來說即使上千列、數十個分頁，通常也是毫秒等級即可完成，不需擔心效能問題。
-function parseWorkbook(wb){
-  const allEntries = [];
-  const scannedSheets = [];
-  const matchedSheets = [];
-  wb.SheetNames.forEach(sheetName=>{
-    scannedSheets.push(sheetName);
+// 分頁名稱年月辨識：支援常見寫法 2025-08、2025/08、2025.08、2025年08月、2025年8月、202508。
+// 辨識不出來時回傳 null（之後一律視為「無法排除」而照樣解析，確保不會漏掉資料）。
+function inferSheetYearMonth(sheetName){
+  const patterns = [
+    /(\d{4})[-/.年](\d{1,2})\s*月?/,
+    /^(\d{4})(\d{2})$/,
+  ];
+  for(const re of patterns){
+    const m = String(sheetName).match(re);
+    if(m){
+      const year = parseInt(m[1], 10);
+      const month = parseInt(m[2], 10);
+      if(year >= 1900 && year <= 2200 && month >= 1 && month <= 12){
+        return { year, month };
+      }
+    }
+  }
+  return null;
+}
+
+// 判斷某分頁（依推測年月）是否與目前週別範圍重疊。
+// 推測不出年月、或尚未設定週別範圍時，保守地回傳 true（一定會解析，不會因為誤判而漏資料）。
+function sheetMonthOverlapsRange(ym, range){
+  if(!ym || !range) return true;
+  const monthStart = new Date(Date.UTC(ym.year, ym.month - 1, 1));
+  const monthEnd = new Date(Date.UTC(ym.year, ym.month, 0, 23, 59, 59));
+  return monthStart.getTime() <= range.end.getTime() && monthEnd.getTime() >= range.start.getTime();
+}
+
+function scanSheetInfos(wb){
+  return wb.SheetNames.map(name => ({ name, ym: inferSheetYearMonth(name) }));
+}
+
+// 解析指定的分頁清單（已經解析過的分頁會自動跳過，不會重複解析）。
+// 回傳這次新增了幾筆紀錄、比對到幾個含日誌欄位的分頁。
+function parseSpecificSheets(wb, sheetNames){
+  let addedCount = 0;
+  let matchedHeaderCount = 0;
+  sheetNames.forEach(sheetName=>{
+    if(parsedSheetNames.has(sheetName)) return;
+    parsedSheetNames.add(sheetName);
     const ws = wb.Sheets[sheetName];
     if(!ws) return;
     const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:'' });
     const headerIdx = rows.findIndex(r => Array.isArray(r) && r.includes('日期') && r.includes('執行內容'));
     if(headerIdx === -1) return; // 此分頁沒有符合的日誌欄位，略過（不列入解析）
-    matchedSheets.push(sheetName);
-    allEntries.push(...parseSheetRows(rows, headerIdx, sheetName));
+    matchedHeaderCount++;
+    const entries = parseSheetRows(rows, headerIdx, sheetName);
+    rawEntries.push(...entries);
+    addedCount += entries.length;
   });
-  return { allEntries, scannedSheets, matchedSheets };
+  return { addedCount, matchedHeaderCount };
+}
+
+// 依目前「週別」欄位範圍，確保相關分頁都已經解析過；尚未解析到的相關分頁，這裡才即時補解析。
+// 這是「智慧分頁載入」的核心：分頁名稱含年月時，可以只解析真正需要的分頁，
+// 大幅減少多年份、多分頁大型檔案的載入與重新分類時間；無法辨識年月的分頁則一律視為相關並解析，確保不漏資料。
+function ensureSheetsForCurrentRange(){
+  if(!currentWorkbook) return { addedCount: 0 };
+  const range = parseWeekRangeInput();
+  const infos = scanSheetInfos(currentWorkbook);
+  const neededNames = infos
+    .filter(s => !parsedSheetNames.has(s.name))
+    .filter(s => sheetMonthOverlapsRange(s.ym, range))
+    .map(s => s.name);
+  if(neededNames.length === 0) return { addedCount: 0 };
+  return parseSpecificSheets(currentWorkbook, neededNames);
 }
 
 function parseSheetRows(rows, headerIdx, sheetName){
@@ -745,6 +832,7 @@ function renderRawTable(){
 // 而不是每次都開一個新分頁，避免瀏覽器裡越開越多個舊視窗、殘留過期內容造成混淆。
 // 內容是點擊當下重新計算，一定跟畫面上目前顯示的「週別」一致。
 function openRawLogWindow(){
+  ensureSheetsForCurrentRange();
   const win = window.open('', 'posteamRawLogWindow');
   if(!win){
     alert('瀏覽器封鎖了彈出視窗，請允許本頁面開啟新視窗後再試一次。');
@@ -784,8 +872,8 @@ viewRawLogBtn.addEventListener('click', openRawLogWindow);
 
 // 週別日期欄位一改變，就立即重新計算原始日誌資料（輕量、不含分類重跑的成本），
 // 避免「畫面顯示的週別」跟「原始日誌實際內容」不同步。
-weekStartInput.addEventListener('change', () => { if(rawEntries.length > 0) renderRawTable(); });
-weekEndInput.addEventListener('change', () => { if(rawEntries.length > 0) renderRawTable(); });
+weekStartInput.addEventListener('change', () => { if(currentWorkbook){ ensureSheetsForCurrentRange(); renderRawTable(); } });
+weekEndInput.addEventListener('change', () => { if(currentWorkbook){ ensureSheetsForCurrentRange(); renderRawTable(); } });
 
 function escapeHtml(s){
   return String(s || '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -953,8 +1041,12 @@ function levenshteinDistance(a, b){
   return dp[m][n];
 }
 reclassifyBtn.addEventListener('click', ()=>{
+  const { addedCount } = ensureSheetsForCurrentRange();
   renderRawTable();
   runRuleClassification();
+  if(addedCount > 0){
+    setStatus(`偵測到所選週別涉及先前尚未載入的分頁，已補充解析 ${addedCount} 筆紀錄後重新分類。`, 'ok');
+  }
 });
 
 // 確保報表表格結構存在（極少數情況下 reportBody 可能是空的，例如尚未執行過任何分類）；
