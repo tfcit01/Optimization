@@ -701,7 +701,9 @@ function isNoise(content){
   return CONFIG.noise.some(k => keywordMatches(k, content));
 }
 
-function renderRawTable(){
+// 產生原始日誌表格的列內容（表頭+資料列），永遠依「當下」的週別欄位即時計算，
+// 不依賴任何快取，避免使用者改了週別欄位卻忘記按「重新分類」時，看到的資料跟畫面上顯示的週別對不上。
+function buildRawLogRowsHtml(){
   const range = parseWeekRangeInput();
   let html = '<tr><th>分頁</th><th>日期</th><th>執行內容</th><th>備註</th><th>狀態</th><th>自動分類</th></tr>';
   rawEntries.forEach(e=>{
@@ -729,22 +731,28 @@ function renderRawTable(){
       <td>${tag}</td>
     </tr>`;
   });
-  rawTable.innerHTML = html;
+  return html;
+}
+
+function renderRawTable(){
+  rawTable.innerHTML = buildRawLogRowsHtml();
   viewRawLogBtn.style.display = '';
 }
 
-// 用瀏覽器原生 window.open 開一個新視窗，把目前的原始日誌檢視表獨立顯示出來，
-// 方便對照查看，也不會佔用主頁面的版面空間。每次點擊都是即時抓「目前」的 rawTable 內容，
-// 所以會反映最新的分類結果（例如剛套用過新的關鍵字設定之後）。
+// 用瀏覽器原生 window.open 開一個新視窗，把原始日誌檢視表獨立顯示出來。
+// 這裡刻意用「具名視窗」（固定名稱）而非每次都用 '_blank'：
+// 重複點擊按鈕時，瀏覽器會重複使用同一個視窗並直接更新內容（同時自動把該視窗帶到最前面），
+// 而不是每次都開一個新分頁，避免瀏覽器裡越開越多個舊視窗、殘留過期內容造成混淆。
+// 內容是點擊當下重新計算，一定跟畫面上目前顯示的「週別」一致。
 function openRawLogWindow(){
-  const win = window.open('', '_blank');
+  const win = window.open('', 'posteamRawLogWindow');
   if(!win){
     alert('瀏覽器封鎖了彈出視窗，請允許本頁面開啟新視窗後再試一次。');
     return;
   }
-  const clone = rawTable.cloneNode(true);
-  clone.style.display = '';
+  const rowsHtml = buildRawLogRowsHtml();
   const weekLabel = getWeekRangeLabel() || '';
+  win.document.open(); // 確保是全新覆寫內容，而不是接在舊內容後面
   win.document.write(`<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8">
 <title>原始日誌檢視${weekLabel ? '｜' + weekLabel : ''}</title>
@@ -767,11 +775,17 @@ function openRawLogWindow(){
 <body>
   <h2>原始日誌檢視</h2>
   <p class="sub">僅顯示所選「週別」範圍內的資料；灰底刪除線＝已自動略過的例行事項；週別：${escapeHtml(weekLabel || '未設定')}</p>
-  ${clone.outerHTML}
+  <table>${rowsHtml}</table>
 </body></html>`);
   win.document.close();
+  win.focus();
 }
 viewRawLogBtn.addEventListener('click', openRawLogWindow);
+
+// 週別日期欄位一改變，就立即重新計算原始日誌資料（輕量、不含分類重跑的成本），
+// 避免「畫面顯示的週別」跟「原始日誌實際內容」不同步。
+weekStartInput.addEventListener('change', () => { if(rawEntries.length > 0) renderRawTable(); });
+weekEndInput.addEventListener('change', () => { if(rawEntries.length > 0) renderRawTable(); });
 
 function escapeHtml(s){
   return String(s || '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
