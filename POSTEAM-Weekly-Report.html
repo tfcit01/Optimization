@@ -231,6 +231,20 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     border:1px solid var(--line);border-radius:4px;padding:7px 8px;font-size:13px;font-family:inherit;
   }
 
+  .repair-stats-block{margin-bottom:24px;}
+  .repair-stats-block:last-child{margin-bottom:0;}
+  .repair-stats-block h3{font-size:14px;color:var(--navy-deep);margin:0 0 10px;}
+  .trend-row{display:flex;align-items:center;gap:10px;margin-bottom:5px;}
+  .trend-label{width:96px;font-size:12px;color:#5c5546;flex:none;}
+  .trend-bar-wrap{flex:1;background:#f1efe6;border-radius:3px;overflow:hidden;height:16px;}
+  .trend-bar{background:var(--teal);height:100%;min-width:2px;}
+  .trend-count{width:32px;text-align:right;font-size:12px;color:var(--navy-deep);flex:none;font-weight:600;}
+  .top3-table{width:100%;border-collapse:collapse;}
+  .top3-table th,.top3-table td{border:1px solid var(--line);padding:6px 8px;font-size:12.5px;text-align:left;}
+  .top3-table th{background:var(--navy);color:#fff;font-weight:600;}
+  .top3-table td.rank{text-align:center;font-weight:700;color:var(--teal);width:44px;}
+  .top3-table td.count{text-align:center;width:64px;font-weight:600;}
+
   footer{text-align:center;color:#8b8168;font-size:11.5px;margin-top:30px;}
 
   @media print{
@@ -287,9 +301,35 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <table class="rawtable" id="rawTable" style="display:none;"></table>
   </section>
 
-  <!-- STEP 2: keyword rules -->
+  <!-- STEP 2: repair log upload (optional) -->
+  <section class="panel">
+    <h2><span class="num">2</span>上傳叫修紀錄（選填）</h2>
+    <div class="panel-with-sidebar">
+      <div class="panel-main">
+        <div class="row">
+          <label class="upload-box" id="repairUploadBox">
+            <input type="file" id="repairFileInput" accept=".xlsx,.xls">
+            <span class="icon">🛠️</span>
+            <span>點擊或拖曳上傳「叫修紀錄.xls」</span>
+            <div class="fname" id="repairFname">尚未選擇檔案</div>
+          </label>
+        </div>
+        <div id="repairStatusLine">選填功能：上傳叫修紀錄後，會依上方「週別」範圍自動統計成圖表，加入週報預覽與匯出內容。</div>
+      </div>
+      <aside class="tips-sidebar">
+        <div class="tips-title">💡 使用說明</div>
+        <ul>
+          <li>檔案需包含「叫修日期」欄位；「問題分類」「次分類」「機型」「店名」「機號」欄位有提供的話，會一併產生統計。</li>
+          <li>只會統計落在上方「週別」範圍內的叫修紀錄，範圍外的會自動略過。</li>
+          <li>之後若調整週別，統計會自動重新計算，不需要重新上傳。</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- STEP 3: keyword rules -->
   <section class="panel" id="keywordPanel">
-    <h2><span class="num">2</span>自訂分類關鍵字設定（選填）</h2>
+    <h2><span class="num">3</span>自訂分類關鍵字設定（選填）</h2>
     <div class="panel-with-sidebar">
       <div class="panel-main">
         <div class="kwgrid">
@@ -350,7 +390,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
   <!-- STEP 3: preview & edit -->
   <section class="panel" id="previewPanel" style="display:none;">
-    <h2><span class="num">3</span>週報預覽與編輯工作區</h2>
+    <h2><span class="num">4</span>週報預覽與編輯工作區</h2>
     <div class="row" style="margin-bottom:6px;">
       <button class="btn-ghost" id="reclassifyBtn">↻ 修改週別後重新分類</button>
       <button class="btn-ghost" id="exportDraftBtn">⬇ 匯出內容</button>
@@ -383,9 +423,15 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div id="conflictList"></div>
   </section>
 
-  <!-- STEP 4: finalize -->
+  <!-- 叫修紀錄統計（選填，有上傳叫修紀錄才會顯示） -->
+  <section class="panel" id="repairStatsPanel" style="display:none;">
+    <h2><span class="num">📊</span>叫修紀錄統計</h2>
+    <div id="repairStatsContent"></div>
+  </section>
+
+  <!-- STEP 5: finalize -->
   <section class="panel" id="exportPanel" style="display:none;">
-    <h2><span class="num">4</span>定稿與匯出</h2>
+    <h2><span class="num">5</span>定稿與匯出</h2>
     <div class="row">
       <button class="btn-primary" id="exportWordBtn">⬇ 匯出 Word (.doc)</button>
       <button class="btn-primary" id="exportPdfBtn">⬇ 匯出 PDF</button>
@@ -449,6 +495,7 @@ let CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 let rawEntries = [];      // {date:Date|null, dateLabel:string, content, note, status, sheetName}
 let currentWorkbook = null;      // 保留已讀取的活頁簿物件，供之後依需要延遲解析其他分頁
 let parsedSheetNames = new Set(); // 已經解析過的分頁名稱，避免重複解析同一個分頁
+let repairEntries = [];   // 叫修紀錄：{date, dateLabel, category, subCategory, model, store, machineNo}
 
 /* ---------------------------------------------------------------------
    3. DOM 參照
@@ -464,6 +511,11 @@ const previewPanel    = document.getElementById('previewPanel');
 const exportPanel     = document.getElementById('exportPanel');
 const reportBody      = document.getElementById('reportBody');
 const viewRawLogBtn   = document.getElementById('viewRawLogBtn');
+const repairFileInput = document.getElementById('repairFileInput');
+const repairFname     = document.getElementById('repairFname');
+const repairStatusLine = document.getElementById('repairStatusLine');
+const repairStatsPanel = document.getElementById('repairStatsPanel');
+const repairStatsContent = document.getElementById('repairStatsContent');
 const rawTable        = document.getElementById('rawTable');
 const reclassifyBtn   = document.getElementById('reclassifyBtn');
 const exportDraftBtn  = document.getElementById('exportDraftBtn');
@@ -870,10 +922,252 @@ function openRawLogWindow(){
 }
 viewRawLogBtn.addEventListener('click', openRawLogWindow);
 
-// 週別日期欄位一改變，就立即重新計算原始日誌資料（輕量、不含分類重跑的成本），
-// 避免「畫面顯示的週別」跟「原始日誌實際內容」不同步。
-weekStartInput.addEventListener('change', () => { if(currentWorkbook){ ensureSheetsForCurrentRange(); renderRawTable(); } });
-weekEndInput.addEventListener('change', () => { if(currentWorkbook){ ensureSheetsForCurrentRange(); renderRawTable(); } });
+// 週別日期欄位一改變，就立即重新計算原始日誌資料與叫修統計（輕量、不含分類重跑的成本），
+// 避免「畫面顯示的週別」跟實際內容不同步。
+weekStartInput.addEventListener('change', () => {
+  if(currentWorkbook){ ensureSheetsForCurrentRange(); renderRawTable(); }
+  if(repairEntries.length > 0) renderRepairStats();
+});
+weekEndInput.addEventListener('change', () => {
+  if(currentWorkbook){ ensureSheetsForCurrentRange(); renderRawTable(); }
+  if(repairEntries.length > 0) renderRepairStats();
+});
+
+/* ---------------------------------------------------------------------
+   叫修紀錄：上傳解析、統計、渲染
+--------------------------------------------------------------------- */
+repairFileInput.addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  repairFname.textContent = f.name;
+  repairStatusLine.textContent = '正在讀取並解析「' + f.name + '」，請稍候…';
+  repairStatusLine.style.color = 'var(--teal)';
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    // 同樣先讓「處理中」文字有機會畫出來，再進行同步解析運算
+    setTimeout(()=>{
+      try{
+        const data = new Uint8Array(evt.target.result);
+        const wb = XLSX.read(data, {type:'array', cellDates:true});
+        const { entries, matchedSheets, totalSheets } = parseRepairWorkbook(wb);
+        repairEntries = entries;
+        if(repairEntries.length === 0){
+          repairStatusLine.textContent = `已掃描 ${totalSheets} 個分頁，但找不到含「叫修日期」欄位的分頁，請確認檔案格式。`;
+          repairStatusLine.style.color = 'var(--danger)';
+          repairStatsPanel.style.display = 'none';
+          return;
+        }
+        repairStatusLine.textContent = `成功解析 ${repairEntries.length} 筆叫修紀錄（共 ${totalSheets} 個分頁，${matchedSheets} 個含叫修日期欄位），將依上方「週別」範圍自動統計。`;
+        repairStatusLine.style.color = 'var(--ok)';
+        renderRepairStats();
+      }catch(err){
+        console.error(err);
+        repairStatusLine.textContent = '叫修紀錄解析失敗：' + err.message;
+        repairStatusLine.style.color = 'var(--danger)';
+      }
+    }, 30);
+  };
+  reader.onerror = ()=>{
+    repairStatusLine.textContent = '檔案讀取失敗，請確認檔案是否毀損或格式是否正確。';
+    repairStatusLine.style.color = 'var(--danger)';
+  };
+  reader.readAsArrayBuffer(f);
+});
+
+// 掃描整本叫修紀錄活頁簿，找出含「叫修日期」欄位的分頁並解析；
+// 「問題分類」「次分類」「機型」「店名」「機號」有提供的話一併讀取，缺欄位時該項目留空字串即可，
+// 不影響其他統計項目正常運作。
+function parseRepairWorkbook(wb){
+  const entries = [];
+  let matchedSheets = 0;
+  wb.SheetNames.forEach(sheetName=>{
+    const ws = wb.Sheets[sheetName];
+    if(!ws) return;
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:'' });
+    const headerIdx = rows.findIndex(r => Array.isArray(r) && r.includes('叫修日期'));
+    if(headerIdx === -1) return;
+    matchedSheets++;
+    const header = rows[headerIdx];
+    const idxDate       = header.indexOf('叫修日期');
+    const idxCategory   = header.indexOf('問題分類');
+    const idxSubCat     = header.indexOf('次分類');
+    const idxModel      = header.indexOf('機型');
+    const idxStore      = header.indexOf('店名');
+    const idxMachineNo  = header.indexOf('機號');
+    for(let i = headerIdx + 1; i < rows.length; i++){
+      const r = rows[i];
+      if(!r || r.length === 0) continue;
+      const dv = idxDate >= 0 ? r[idxDate] : '';
+      if(dv === '' || dv === null || dv === undefined) continue;
+      const date = normalizeDate(dv);
+      if(!date) continue;
+      entries.push({
+        date,
+        dateLabel: fmtDate(date),
+        category:   idxCategory  >= 0 ? String(r[idxCategory]  || '').trim() : '',
+        subCategory:idxSubCat    >= 0 ? String(r[idxSubCat]    || '').trim() : '',
+        model:      idxModel     >= 0 ? String(r[idxModel]     || '').trim() : '',
+        store:      idxStore     >= 0 ? String(r[idxStore]     || '').trim() : '',
+        machineNo:  idxMachineNo >= 0 ? String(r[idxMachineNo] || '').trim() : '',
+      });
+    }
+  });
+  return { entries, matchedSheets, totalSheets: wb.SheetNames.length };
+}
+
+// 依 keyFn 回傳的欄位組合分組計數，並依次數由高到低排序。
+// 用 JSON.stringify 組 key 而非直接串接文字，避免欄位內容剛好含有分隔符號時互相干擾。
+function groupCount(items, keyFn){
+  const map = new Map();
+  items.forEach(it=>{
+    const parts = keyFn(it);
+    if(parts.every(p => !p)) return; // 該筆這些欄位全部是空的，不列入統計
+    const key = JSON.stringify(parts);
+    if(!map.has(key)) map.set(key, { parts, count:0 });
+    map.get(key).count++;
+  });
+  return Array.from(map.values()).sort((a,b) => b.count - a.count);
+}
+
+// 計算目前「週別」範圍內的叫修統計：每日趨勢、問題分類+次分類前三多、機型+店名+機號前三多。
+function computeRepairStats(){
+  const range = parseWeekRangeInput();
+  const filtered = repairEntries.filter(e =>
+    !range || (e.date && e.date.getTime() >= range.start.getTime() && e.date.getTime() <= range.end.getTime())
+  );
+
+  let trend = [];
+  if(range){
+    // range.end 帶有 23:59:59 的時分秒，直接用毫秒差計算天數會因為浮點數捨入誤差多算一天，
+    // 這裡改成只用「日期部分」（去掉時分秒）計算，確保天數精確。
+    const startDateOnly = Date.UTC(range.start.getUTCFullYear(), range.start.getUTCMonth(), range.start.getUTCDate());
+    const endDateOnly = Date.UTC(range.end.getUTCFullYear(), range.end.getUTCMonth(), range.end.getUTCDate());
+    const dayCount = Math.round((endDateOnly - startDateOnly) / 86400000) + 1;
+    const counts = {};
+    filtered.forEach(e=>{ counts[e.dateLabel] = (counts[e.dateLabel] || 0) + 1; });
+    const weekdayNames = ['日','一','二','三','四','五','六'];
+    for(let i = 0; i < dayCount; i++){
+      const d = new Date(range.start.getTime() + i * 86400000);
+      const key = fmtDate(d);
+      const label = `${String(d.getUTCMonth()+1).padStart(2,'0')}/${String(d.getUTCDate()).padStart(2,'0')}(${weekdayNames[d.getUTCDay()]})`;
+      trend.push({ key, label, count: counts[key] || 0 });
+    }
+  }
+
+  const topCategories = groupCount(filtered, e => [e.category, e.subCategory]).slice(0, 3);
+  const topDevices = groupCount(filtered, e => [e.model, e.store, e.machineNo]).slice(0, 3);
+
+  return { totalCount: filtered.length, trend, topCategories, topDevices, range };
+}
+
+// 畫面上的即時預覽版本（用 CSS class 呈現，較美觀，但不需要考慮 Word 相容性）。
+function renderRepairStats(){
+  if(repairEntries.length === 0){
+    repairStatsPanel.style.display = 'none';
+    return;
+  }
+  const stats = computeRepairStats();
+  repairStatsPanel.style.display = '';
+
+  let html = '';
+
+  html += `<div class="repair-stats-block"><h3>📈 叫修數量趨勢${stats.range ? `（共 ${stats.totalCount} 筆）` : ''}</h3>`;
+  if(stats.trend.length > 0){
+    const maxCount = Math.max(1, ...stats.trend.map(d => d.count));
+    stats.trend.forEach(d=>{
+      const pct = Math.round((d.count / maxCount) * 100);
+      html += `<div class="trend-row">
+        <div class="trend-label">${escapeHtml(d.label)}</div>
+        <div class="trend-bar-wrap"><div class="trend-bar" style="width:${pct}%;"></div></div>
+        <div class="trend-count">${d.count}</div>
+      </div>`;
+    });
+  } else {
+    html += `<p style="font-size:13px;color:#8b8168;">請先於上方選擇「週別」範圍。</p>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="repair-stats-block"><h3>🔧 問題分類・次分類（前三多）</h3>`;
+  if(stats.topCategories.length > 0){
+    html += `<table class="top3-table"><tr><th>排名</th><th>問題分類</th><th>次分類</th><th>次數</th></tr>`;
+    stats.topCategories.forEach((it, idx)=>{
+      html += `<tr><td class="rank">${idx+1}</td><td>${escapeHtml(it.parts[0] || '（未填寫）')}</td><td>${escapeHtml(it.parts[1] || '（未填寫）')}</td><td class="count">${it.count}</td></tr>`;
+    });
+    html += `</table>`;
+  } else {
+    html += `<p style="font-size:13px;color:#8b8168;">所選週別範圍內沒有資料。</p>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="repair-stats-block"><h3>🖥️ 機型・店名・機號（前三多）</h3>`;
+  if(stats.topDevices.length > 0){
+    html += `<table class="top3-table"><tr><th>排名</th><th>機型</th><th>店名</th><th>機號</th><th>次數</th></tr>`;
+    stats.topDevices.forEach((it, idx)=>{
+      html += `<tr><td class="rank">${idx+1}</td><td>${escapeHtml(it.parts[0] || '（未填寫）')}</td><td>${escapeHtml(it.parts[1] || '（未填寫）')}</td><td>${escapeHtml(it.parts[2] || '（未填寫）')}</td><td class="count">${it.count}</td></tr>`;
+    });
+    html += `</table>`;
+  } else {
+    html += `<p style="font-size:13px;color:#8b8168;">所選週別範圍內沒有資料。</p>`;
+  }
+  html += `</div>`;
+
+  repairStatsContent.innerHTML = html;
+}
+
+// 匯出用的靜態版本（Word / PDF 共用）：改用色塊表格模擬長條圖，並全部用行內樣式，
+// 確保在 Word 的 HTML 匯入濾鏡下也能正常顯示。
+function buildRepairStatsExportHtml(){
+  if(repairEntries.length === 0) return '';
+  const stats = computeRepairStats();
+  if(stats.trend.length === 0 && stats.topCategories.length === 0 && stats.topDevices.length === 0) return '';
+
+  const thStyle = 'border:1px solid #333;background:#16324a;color:#fff;padding:5px 8px;font-size:10.5pt;text-align:left;';
+  const tdStyle = 'border:1px solid #333;padding:5px 8px;font-size:10.5pt;';
+  const rankStyle = tdStyle + 'text-align:center;font-weight:bold;color:#0f766e;';
+  const countStyle = tdStyle + 'text-align:center;font-weight:bold;';
+
+  let html = '<h2 style="font-size:14pt;margin:18px 0 8px;">叫修紀錄統計</h2>';
+
+  if(stats.trend.length > 0){
+    const maxCount = Math.max(1, ...stats.trend.map(d => d.count));
+    const maxBarPx = 220;
+    html += `<p style="font-size:11pt;margin:10px 0 6px;font-weight:bold;">叫修數量趨勢（共 ${stats.totalCount} 筆）</p>`;
+    html += '<table style="border-collapse:collapse;">';
+    stats.trend.forEach(d=>{
+      const barPx = d.count > 0 ? Math.max(2, Math.round((d.count / maxCount) * maxBarPx)) : 0;
+      html += `<tr>
+        <td style="padding:2px 8px;font-size:10.5pt;white-space:nowrap;">${escapeHtml(d.label)}</td>
+        <td style="padding:2px 0;"><table style="border-collapse:collapse;"><tr><td style="background:#0f766e;width:${barPx}px;height:12px;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>
+        <td style="padding:2px 8px;font-size:10.5pt;text-align:right;">${d.count}</td>
+      </tr>`;
+    });
+    html += '</table>';
+  }
+
+  html += '<p style="font-size:11pt;margin:16px 0 6px;font-weight:bold;">問題分類・次分類（前三多）</p>';
+  if(stats.topCategories.length > 0){
+    html += `<table style="border-collapse:collapse;width:100%;"><tr><th style="${thStyle}">排名</th><th style="${thStyle}">問題分類</th><th style="${thStyle}">次分類</th><th style="${thStyle}">次數</th></tr>`;
+    stats.topCategories.forEach((it, idx)=>{
+      html += `<tr><td style="${rankStyle}">${idx+1}</td><td style="${tdStyle}">${escapeHtml(it.parts[0] || '（未填寫）')}</td><td style="${tdStyle}">${escapeHtml(it.parts[1] || '（未填寫）')}</td><td style="${countStyle}">${it.count}</td></tr>`;
+    });
+    html += '</table>';
+  } else {
+    html += '<p style="font-size:10.5pt;color:#666;">無資料</p>';
+  }
+
+  html += '<p style="font-size:11pt;margin:16px 0 6px;font-weight:bold;">機型・店名・機號（前三多）</p>';
+  if(stats.topDevices.length > 0){
+    html += `<table style="border-collapse:collapse;width:100%;"><tr><th style="${thStyle}">排名</th><th style="${thStyle}">機型</th><th style="${thStyle}">店名</th><th style="${thStyle}">機號</th><th style="${thStyle}">次數</th></tr>`;
+    stats.topDevices.forEach((it, idx)=>{
+      html += `<tr><td style="${rankStyle}">${idx+1}</td><td style="${tdStyle}">${escapeHtml(it.parts[0] || '（未填寫）')}</td><td style="${tdStyle}">${escapeHtml(it.parts[1] || '（未填寫）')}</td><td style="${tdStyle}">${escapeHtml(it.parts[2] || '（未填寫）')}</td><td style="${countStyle}">${it.count}</td></tr>`;
+    });
+    html += '</table>';
+  } else {
+    html += '<p style="font-size:10.5pt;color:#666;">無資料</p>';
+  }
+
+  return html;
+}
 
 function escapeHtml(s){
   return String(s || '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1044,6 +1338,7 @@ reclassifyBtn.addEventListener('click', ()=>{
   const { addedCount } = ensureSheetsForCurrentRange();
   renderRawTable();
   runRuleClassification();
+  if(repairEntries.length > 0) renderRepairStats();
   if(addedCount > 0){
     setStatus(`偵測到所選週別涉及先前尚未載入的分頁，已補充解析 ${addedCount} 筆紀錄後重新分類。`, 'ok');
   }
@@ -1448,6 +1743,7 @@ exportWordBtn.addEventListener('click', ()=>{
   }
   const range = getWeekRangeLabel() || '未設定週別';
   const tableHtml = buildStaticTableHtml();
+  const repairStatsHtml = buildRepairStatsExportHtml();
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8">
 <!--[if gte mso 9]>
@@ -1476,6 +1772,7 @@ exportWordBtn.addEventListener('click', ()=>{
   <h1>POSTEAM 週報</h1>
   <p class="sub">週別：${escapeHtml(range)}</p>
   ${tableHtml}
+  ${repairStatsHtml}
 </div>
 </body></html>`;
   const blob = new Blob(['\ufeff', html], { type:'application/msword' });
@@ -1497,6 +1794,7 @@ exportPdfBtn.addEventListener('click', ()=>{
       <h1 style="font-size:20px;color:#16324a;margin:0 0 4px;">POSTEAM 週報</h1>
       <p style="font-size:13px;color:#555;margin:0 0 14px;">週別：${escapeHtml(range)}</p>
       ${buildStaticTableHtml()}
+      ${buildRepairStatsExportHtml()}
     </div>`;
   const filename = `${range.replace(/\./g,'')}_POSTEAM週報.pdf`;
   exportStatus.textContent = 'PDF 產生中，請稍候...';
