@@ -1799,8 +1799,8 @@ exportWordBtn.addEventListener('click', ()=>{
 <div class="WordSection1">
   <h1>POSTEAM 週報</h1>
   <p class="sub">週別：${escapeHtml(range)}</p>
-  ${tableHtml}
   ${repairStatsHtml}
+  ${tableHtml}
 </div>
 </body></html>`;
   const blob = new Blob(['\ufeff', html], { type:'application/msword' });
@@ -1821,8 +1821,8 @@ exportPdfBtn.addEventListener('click', ()=>{
     <div style="font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;">
       <h1 style="font-size:20px;color:#16324a;margin:0 0 4px;">POSTEAM 週報</h1>
       <p style="font-size:13px;color:#555;margin:0 0 14px;">週別：${escapeHtml(range)}</p>
-      ${buildStaticTableHtml()}
       ${buildRepairStatsExportHtml()}
+      ${buildStaticTableHtml()}
     </div>`;
   const filename = `${range.replace(/\./g,'')}_POSTEAM週報.pdf`;
   exportStatus.textContent = 'PDF 產生中，請稍候...';
