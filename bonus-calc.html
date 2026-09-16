@@ -76,14 +76,14 @@
                         <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> 董事會修正通過版本 (最新修訂)
                     </div>
                     <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-                        全面解讀獎金酬勞修訂 <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-red-400">回歸職務價值，實現平穩發放</span>
+                        全面解讀獎金酬勞修訂 <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-red-400">舊制 EPS 浮動 vs 新制固定 3% 提撥</span>
                     </h2>
                     <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
-                        本次制度重組主要將員工酬勞改採<strong class="text-amber-300">固定 3.0% 稅前淨利提撥</strong>，個人分配點數公式刪除「年資加成」，並壓縮考評差距。點數絕對值雖然收斂，但實際發放金額將更趨透明平穩。
+                        本次制度重組將舊制採 <strong class="text-amber-300">EPS 浮動階梯式提撥（0.5% ~ 2.0%）</strong> 升級改採 <strong class="text-emerald-400">固定 3.0% 稅前淨利提撥</strong>。同時個人點數公式刪除「年資加成」並壓縮考評差距，讓整體利益共享機制更趨透明平穩。
                     </p>
                     <div class="pt-2 flex flex-wrap gap-3">
                         <a href="#simulator" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2 text-sm border border-red-400/30">
-                            <i data-lucide="calculator" class="w-4 h-4"></i> 立即開始試算我的酬勞
+                            <i data-lucide="calculator" class="w-4 h-4"></i> 立即開始 EPS 與新舊制試算
                         </a>
                         <a href="#overview" class="bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2.5 rounded-xl border border-slate-600 transition text-sm flex items-center gap-2">
                             <i data-lucide="file-text" class="w-4 h-4"></i> 閱讀修訂要點
@@ -95,37 +95,33 @@
                 <div class="lg:col-span-5">
                     <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-700/80 shadow-2xl backdrop-blur-md">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-                            <i data-lucide="git-compare" class="w-4 h-4"></i> 點數計算公式轉型示意
+                            <i data-lucide="git-compare" class="w-4 h-4"></i> 點數與金池提撥機制對比
                         </h3>
                         <!-- SVG Diagram -->
                         <svg viewBox="0 0 450 210" class="w-full h-auto text-xs">
                             <!-- Old System Block -->
                             <rect x="10" y="10" width="430" height="85" rx="8" fill="#1E293B" stroke="#475569" stroke-width="1.5" />
-                            <text x="25" y="32" fill="#F8FAFC" font-weight="bold" font-size="12">舊制 (第3版酬勞 / 第4版獎金)</text>
-                            <text x="25" y="52" fill="#94A3B8" font-size="10">個人點數 = 職等 × 考評 × ( 職務×60% + 年資×40% )</text>
-                            <rect x="25" y="60" width="70" height="22" rx="4" fill="#334155" />
-                            <text x="60" y="75" fill="#CBD5E1" font-size="10" text-anchor="middle">職等基數</text>
-                            <text x="103" y="75" fill="#94A3B8" font-size="12">×</text>
-                            <rect x="113" y="60" width="85" height="22" rx="4" fill="#B45309" />
-                            <text x="155" y="75" fill="#FEF3C7" font-size="10" font-weight="bold" text-anchor="middle">考評 1.0~5.5</text>
-                            <text x="205" y="75" fill="#94A3B8" font-size="12">×</text>
-                            <rect x="215" y="60" width="210" height="22" rx="4" fill="#1E3A8A" />
-                            <text x="320" y="75" fill="#BFDBFE" font-size="10" text-anchor="middle">職務60% + 年資最高1.4倍(40%)</text>
+                            <text x="25" y="32" fill="#F8FAFC" font-weight="bold" font-size="12">舊制：EPS 浮動提撥 (0.5%~2.0%) + 年資加成</text>
+                            <text x="25" y="52" fill="#94A3B8" font-size="10">點數 = 職等 × 考評 × ( 職務×60% + 年資×40% )</text>
+                            <rect x="25" y="60" width="110" height="22" rx="4" fill="#B45309" />
+                            <text x="80" y="75" fill="#FEF3C7" font-size="10" font-weight="bold" text-anchor="middle">金池：EPS 浮動級距</text>
+                            <text x="145" y="75" fill="#94A3B8" font-size="12">+</text>
+                            <rect x="155" y="60" width="270" height="22" rx="4" fill="#1E3A8A" />
+                            <text x="290" y="75" fill="#BFDBFE" font-size="10" text-anchor="middle">考評1.0~5.5 / 年資最高1.4倍</text>
 
                             <!-- Arrow -->
                             <path d="M 225 100 L 225 118" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="3,3"/>
 
                             <!-- New System Block -->
                             <rect x="10" y="122" width="430" height="80" rx="8" fill="#022C22" stroke="#059669" stroke-width="1.5" />
-                            <text x="25" y="144" fill="#34D399" font-weight="bold" font-size="12">新制 (第4版酬勞 / 第5版獎金)</text>
-                            <text x="25" y="164" fill="#A7F3D0" font-size="10">個人點數 = ( 職等及職務基數 ) × 考評基數</text>
-                            <rect x="25" y="172" width="160" height="22" rx="4" fill="#065F46" />
-                            <text x="105" y="187" fill="#ECFDF5" font-size="10" font-weight="bold" text-anchor="middle">整合職等職務 (1.0 ~ 7.0)</text>
-                            <text x="193" y="187" fill="#34D399" font-size="12">×</text>
-                            <rect x="203" y="172" width="130" height="22" rx="4" fill="#047857" />
-                            <text x="268" y="187" fill="#D1FAE5" font-size="10" font-weight="bold" text-anchor="middle">考評 0.5~3.0 (倍數收斂)</text>
-                            <rect x="340" y="172" width="90" height="22" rx="4" fill="#991B1B" />
-                            <text x="385" y="187" fill="#FEE2E2" font-size="9" text-anchor="middle">刪除年資加成</text>
+                            <text x="25" y="144" fill="#34D399" font-weight="bold" font-size="12">新制：固定 3.0% 稅前淨利提撥 + 取消年資加成</text>
+                            <text x="25" y="164" fill="#A7F3D0" font-size="10">點數 = ( 職等及職務整合基數 ) × 考評基數 (0.5~3.0)</text>
+                            <rect x="25" y="172" width="150" height="22" rx="4" fill="#065F46" />
+                            <text x="100" y="187" fill="#ECFDF5" font-size="10" font-weight="bold" text-anchor="middle">金池：固定 3.0% 提撥</text>
+                            <rect x="185" y="172" width="140" height="22" rx="4" fill="#047857" />
+                            <text x="255" y="187" fill="#D1FAE5" font-size="10" font-weight="bold" text-anchor="middle">整合職等職務 (1.0~7.0)</text>
+                            <rect x="332" y="172" width="98" height="22" rx="4" fill="#991B1B" />
+                            <text x="381" y="187" fill="#FEE2E2" font-size="9" text-anchor="middle">刪除年資項</text>
                         </svg>
                     </div>
                 </div>
@@ -149,11 +145,11 @@
                     <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">
                         <i data-lucide="coins" class="w-6 h-6"></i>
                     </div>
-                    <h4 class="font-bold text-lg text-slate-800">1. 酬勞金池固定 3.0% 提撥</h4>
+                    <h4 class="font-bold text-lg text-slate-800">1. 金池提撥：舊制 EPS 浮動 → 新制固定 3.0%</h4>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        **修訂前**：採 EPS 級距式提撥（估計約 0.5% ~ 1.8%）。<br>
+                        **修訂前**：採 EPS 級距式浮動提撥（如 EPS < 1元提撥 0.5%，至 EPS ≥ 4元提撥 2.0%）。<br>
                         **修訂後**：**簡化為稅前淨利 (提撥前) × 固定 3.0%**。<br>
-                        <span class="text-emerald-600 font-semibold">福利影響：</span>在常態獲利下保障基礎金池規模，不再受 EPS 分段門檻影響，計算更加透明直觀。
+                        <span class="text-emerald-600 font-semibold">福利影響：</span>常態獲利下大幅擴大基礎總金池，避免因 EPS 跨階門檻造成發放波動。
                     </p>
                 </div>
 
@@ -190,22 +186,22 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-6 gap-4">
                 <div>
                     <div class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-md mb-1">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 個人化線上試算器 (含固定 3.0% 提撥計算)
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 個人化線上試算器 (含舊制 EPS 浮動 vs 新制固定 3.0%)
                     </div>
                     <h3 class="text-2xl font-black text-slate-900">二、 員工分紅與酬勞新舊制對比試算</h3>
-                    <p class="text-xs text-slate-500">輸入您的個人職等、月薪與績效條件，快速預估新舊制個人點數、分紅金額與相當於幾個月月薪</p>
+                    <p class="text-xs text-slate-500">選擇公司預估 EPS 與稅前淨利，並輸入個人職等與考評，精確評估新舊制度金池與個人收益變動</p>
                 </div>
                 <!-- Preset Buttons -->
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-medium text-slate-400 mr-1">載入經典案例：</span>
                     <button onclick="loadCase('A')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例A: 資深基層
+                        案例A: 資深基層 (EPS $2.5)
                     </button>
                     <button onclick="loadCase('B')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例B: 中生代部主管
+                        案例B: 中生代部主管 (EPS $3.5)
                     </button>
                     <button onclick="loadCase('C')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例C: 高階主管
+                        案例C: 高階主管 (EPS $4.5)
                     </button>
                 </div>
             </div>
@@ -214,12 +210,77 @@
                 <!-- Inputs Column -->
                 <div class="lg:col-span-5 space-y-5 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                     <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 border-b border-slate-200 pb-3">
-                        <i data-lucide="sliders" class="w-4 h-4 text-red-600"></i> 請選擇 / 輸入您的個人參數
+                        <i data-lucide="sliders" class="w-4 h-4 text-red-600"></i> 請選擇 / 輸入營運與個人參數
                     </h4>
 
-                    <!-- 1. Role Grade Selection -->
+                    <!-- 1. Pre-tax Profit Input -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">1. 職等與職務對應層級</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">1. 預估公司稅前淨利 (提撥前) (億元)</label>
+                        <div class="relative">
+                            <input type="number" id="inputProfitYi" value="25" min="0.1" step="0.5" oninput="calculate()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800 pr-12" placeholder="例如: 25">
+                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-500 font-bold">億元</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Old System Dynamic EPS Tier Input -->
+                    <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200/80 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-amber-900 flex items-center gap-1">
+                                <i data-lucide="trending-up" class="w-3.5 h-3.5 text-amber-600"></i> 2. 舊制當年度預估 EPS (每股盈餘)
+                            </label>
+                            <span class="text-[10px] text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded font-semibold">舊制採 EPS 浮動</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <select id="inputEpsSelect" onchange="onEpsSelectChange()" class="w-full text-xs font-semibold bg-white border border-amber-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-800">
+                                    <option value="0.8">EPS < 1.0 元 (提撥 0.5%)</option>
+                                    <option value="1.5">EPS 1.0 ~ 2.0 元 (提撥 1.0%)</option>
+                                    <option value="2.5" selected>EPS 2.0 ~ 3.0 元 (提撥 1.5%)</option>
+                                    <option value="3.5">EPS 3.0 ~ 4.0 元 (提撥 1.8%)</option>
+                                    <option value="4.5">EPS ≥ 4.0 元 (提撥 2.0%)</option>
+                                    <option value="custom">自訂 EPS 或 提撥率 %</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-[11px] text-slate-400 font-medium">提撥</span>
+                                    <input type="number" id="inputOldEpsRate" value="1.50" step="0.1" min="0.1" max="10" oninput="calculate()" class="w-full text-xs font-bold text-right bg-white border border-amber-300 rounded-lg p-2 pl-9 pr-6 focus:ring-2 focus:ring-amber-500 text-amber-900">
+                                    <span class="absolute inset-y-0 right-0 pr-2 flex items-center text-xs font-bold text-amber-700">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-amber-800 leading-tight pt-1 flex justify-between items-center" id="epsHelpText">
+                            <span>舊制浮動提撥金池: NT$ 3,750 萬元</span>
+                            <button type="button" onclick="toggleEpsTableModal()" class="underline font-bold text-amber-700 hover:text-amber-900">查看完整舊制 EPS 級距表</button>
+                        </div>
+                    </div>
+
+                    <!-- EPS Tier Modal/Accordion Table -->
+                    <div id="epsTablePanel" class="hidden bg-white p-3 rounded-xl border border-amber-300 text-xs text-slate-700 space-y-1.5 shadow-sm">
+                        <div class="font-bold text-amber-900 text-xs border-b border-amber-200 pb-1 flex justify-between items-center">
+                            <span>舊制酬勞金池 EPS 提撥比率對照表</span>
+                            <span class="text-[10px] text-slate-400">（新制則不論 EPS 一律 3.0%）</span>
+                        </div>
+                        <table class="w-full text-[11px] text-left border-collapse">
+                            <thead>
+                                <tr class="bg-amber-50 text-amber-900 font-bold border-b border-amber-200">
+                                    <th class="p-1">每股盈餘 (EPS 級距)</th>
+                                    <th class="p-1 text-right">舊制酬勞提撥率 (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr><td class="p-1">EPS < 1.0 元</td><td class="p-1 text-right font-bold text-slate-700">0.5 %</td></tr>
+                                <tr><td class="p-1">1.0 元 ≤ EPS < 2.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.0 %</td></tr>
+                                <tr class="bg-amber-50/50"><td class="p-1 font-bold text-amber-900">2.0 元 ≤ EPS < 3.0 元</td><td class="p-1 text-right font-bold text-amber-900">1.5 %</td></tr>
+                                <tr><td class="p-1">3.0 元 ≤ EPS < 4.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.8 %</td></tr>
+                                <tr><td class="p-1">EPS ≥ 4.0 元</td><td class="p-1 text-right font-bold text-slate-700">2.0 %</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 3. Role Grade Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">3. 個人職等與職務對應層級</label>
                         <select id="inputGradeRole" onchange="calculate()" class="w-full text-xs font-medium bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none">
                             <option value="3-4">3-4 職等 / 基層員工 (舊職等1 / 新基數1.0)</option>
                             <option value="5-6" selected>5-6 職等 / 第一層員工 (舊職等2 / 新基數1.5)</option>
@@ -234,9 +295,9 @@
                         </select>
                     </div>
 
-                    <!-- 2. Old Role Category -->
+                    <!-- 4. Old Role Category -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">2. 舊制獨立職務類別 (僅影響舊制計算)</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">4. 舊制獨立職務類別 (僅影響舊制點數)</label>
                         <select id="inputOldRole" onchange="calculate()" class="w-full text-xs font-medium bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none">
                             <option value="1.0" selected>非管理職員工 (舊職務基數 1.0)</option>
                             <option value="1.2">部級主管 (舊職務基數 1.2)</option>
@@ -245,32 +306,19 @@
                         </select>
                     </div>
 
-                    <!-- 3. Monthly Salary -->
+                    <!-- 5. Monthly Salary -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">3. 個人每月底薪/月薪 (NT$)</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">5. 個人每月底薪/月薪 (NT$)</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs text-slate-400 font-semibold">NT$</span>
                             <input type="number" id="inputMonthlySalary" value="60000" min="20000" step="1000" oninput="calculate()" class="w-full pl-11 text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800" placeholder="例如: 60000">
                         </div>
-                        <span class="text-[10px] text-slate-400 mt-1 block">用於將發放酬勞換算為「相當於 X 個月月薪」之指標</span>
                     </div>
 
-                    <!-- 4. Pre-tax Profit Input in "億" units -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">4. 預估公司稅前淨利 (提撥前) (億元)</label>
-                        <div class="relative">
-                            <input type="number" id="inputProfitYi" value="25" min="0.1" step="0.5" oninput="calculate()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800 pr-12" placeholder="例如: 25">
-                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-500 font-bold">億元</span>
-                        </div>
-                        <span class="text-[10px] text-amber-700 mt-1 block font-medium" id="profitHelpText">
-                            新制固定提撥 3.0% = NT$ 7,500 萬元酬勞總金池
-                        </span>
-                    </div>
-
-                    <!-- 5. Years of Seniority -->
+                    <!-- 6. Years of Seniority -->
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="text-xs font-bold text-slate-700">5. 任職年資 (影響舊制年資加成)</label>
+                            <label class="text-xs font-bold text-slate-700">6. 任職年資 (影響舊制年資加成，新制取消)</label>
                             <span id="seniorityValue" class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">15 年 (最高1.4倍)</span>
                         </div>
                         <input type="range" id="inputSeniority" min="0" max="25" value="15" step="1" oninput="calculate()" class="w-full accent-red-600 cursor-pointer">
@@ -283,9 +331,9 @@
                         </div>
                     </div>
 
-                    <!-- 6. Performance Rating -->
+                    <!-- 7. Performance Rating -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">6. 當年度年度考評等第</label>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">7. 當年度考評等第</label>
                         <div class="grid grid-cols-4 gap-2">
                             <label class="cursor-pointer">
                                 <input type="radio" name="inputEval" value="1" onchange="calculate()" class="peer sr-only">
@@ -314,7 +362,7 @@
                         </div>
                     </div>
 
-                    <!-- 7. Advanced Options -->
+                    <!-- Advanced Options -->
                     <div class="pt-3 border-t border-slate-200">
                         <button type="button" onclick="toggleAdvanced()" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-semibold">
                             <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> 進階全公司總點數設定 (點擊展開/收折)
@@ -342,23 +390,26 @@
                         <!-- Old System Result Card -->
                         <div class="bg-slate-900 text-white p-5 rounded-2xl relative overflow-hidden shadow-lg border border-slate-700 flex flex-col justify-between space-y-3">
                             <div>
-                                <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block mb-1">修訂前 (舊制估算)</span>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">修訂前 (舊制 EPS 浮動)</span>
+                                    <span id="oldEpsBadge" class="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/30">EPS 提撥 1.5%</span>
+                                </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span id="oldPointsDisplay" class="text-3xl font-black text-amber-400">12.76</span>
+                                    <span id="oldPointsDisplay" class="text-3xl font-black text-amber-400">4.64</span>
                                     <span class="text-xs text-slate-300">個人點數</span>
                                 </div>
                             </div>
                             <div class="pt-3 border-t border-slate-800 text-xs space-y-1">
                                 <div class="flex justify-between items-baseline">
                                     <span class="text-slate-400">推估酬勞金額：</span>
-                                    <span id="oldAmountDisplay" class="font-bold text-white text-base">NT$ 121,220</span>
+                                    <span id="oldAmountDisplay" class="font-bold text-white text-base">NT$ 38,667</span>
                                 </div>
                                 <div class="flex justify-between items-center text-amber-300 font-bold bg-amber-950/50 px-2 py-1 rounded">
                                     <span>相當於月薪：</span>
-                                    <span id="oldMonthsDisplay" class="text-sm">2.02 個月</span>
+                                    <span id="oldMonthsDisplay" class="text-sm">0.64 個月</span>
                                 </div>
                                 <div class="text-[10px] text-slate-400 truncate pt-1" id="oldFormulaDetail">
-                                    算式：2 × 2.0 × (1.0×60% + 1.4×40%)
+                                    算式：2 × 2.0 × (1.0×60% + 1.4×40%) | 金池: NT$ 3,750 萬 (1.5%)
                                 </div>
                             </div>
                         </div>
@@ -366,7 +417,10 @@
                         <!-- New System Result Card -->
                         <div class="bg-gradient-to-br from-emerald-900 to-teal-950 text-white p-5 rounded-2xl relative overflow-hidden shadow-lg border border-emerald-700 flex flex-col justify-between space-y-3">
                             <div>
-                                <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-300 block mb-1">修訂後 (固定 3.0% 提撥)</span>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] uppercase tracking-wider font-bold text-emerald-300 block">修訂後 (固定 3.0% 提撥)</span>
+                                    <span class="text-[10px] font-bold text-emerald-200 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-400/30">固定 3.0% 提撥</span>
+                                </div>
                                 <div class="flex items-baseline gap-2">
                                     <span id="newPointsDisplay" class="text-3xl font-black text-emerald-300">3.00</span>
                                     <span class="text-xs text-emerald-200">個人點數</span>
@@ -382,24 +436,24 @@
                                     <span id="newMonthsDisplay" class="text-sm">1.44 個月</span>
                                 </div>
                                 <div class="text-[10px] text-emerald-300/70 truncate pt-1" id="newFormulaDetail">
-                                    算式：1.5 × 2.0 | 金池: NT$ 7,500 萬 (3.0%)
+                                    算式：1.5 × 2.0 | 金池: NT$ 7,500 萬 (固定3.0%)
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Variance Summary Box -->
-                    <div id="diffAlertBox" class="p-4 rounded-2xl border bg-amber-50 border-amber-200 text-amber-900 space-y-2">
+                    <div id="diffAlertBox" class="p-4 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-900 space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                <i data-lucide="info" class="w-4 h-4 text-amber-600"></i> 個人點數與金額變動分析
+                                <i data-lucide="info" class="w-4 h-4 text-emerald-600"></i> 新舊制酬勞利益與點數變動分析
                             </span>
-                            <span id="diffBadge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900">
-                                點數 -35.3% | 金額 -28.6%
+                            <span id="diffBadge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                                金額 +123.8%
                             </span>
                         </div>
                         <p id="diffText" class="text-xs leading-relaxed font-medium">
-                            修訂後個人點數下降，主要因全公司計算盤面歸一收斂。得益於新制將酬勞金池改為固定提撥稅前淨利之 3.0%，總金池擴大，能顯著緩解個人點數名目收斂帶來的降幅。
+                            得益於新制將酬勞金池提撥率改為固定 3.0%，總酬勞金池較舊制浮動級距顯著翻倍，大幅提升同仁整體實質收益！
                         </p>
                     </div>
 
@@ -526,41 +580,41 @@
         <section id="cases" class="space-y-6">
             <div class="border-l-4 border-red-600 pl-4">
                 <h3 class="text-2xl font-bold text-slate-900">四、 三大代表性員工情境試算與觀察</h3>
-                <p class="text-sm text-slate-500">摘錄自標準案例分析，呈現不同資歷與層級同仁之點數變化規律</p>
+                <p class="text-sm text-slate-500">摘錄自標準案例分析，呈現不同資歷與層級同仁之點數與提撥變化</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Case A -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <span class="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">案例 A</span>
+                        <span class="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">案例 A (EPS $2.5元)</span>
                         <span class="text-xs text-slate-400">年資 15 年以上</span>
                     </div>
                     <h4 class="font-bold text-slate-800 text-base">資深基層員工 (5-6職等 / 第一層)</h4>
-                    <p class="text-xs text-slate-500">舊制職等2、職務1.0、年資1.4；新制基數1.5 (月薪 NT$ 45,000)</p>
+                    <p class="text-xs text-slate-500">舊制提撥 1.5%、職等2、職務1.0、年資1.4；新制固定 3.0%、基數1.5 (月薪 NT$ 45,000)</p>
 
                     <div class="space-y-2 pt-2 text-xs">
                         <div class="bg-slate-50 p-3 rounded-xl space-y-1">
                             <span class="font-bold text-slate-700 block">考評一等：</span>
                             <div class="flex justify-between">
-                                <span class="text-slate-500">舊制：2 × 5.5 × 1.16</span>
-                                <span class="font-bold text-slate-800">12.76 點</span>
+                                <span class="text-slate-500">舊制 (12.76點 | 1.5%):</span>
+                                <span class="font-bold text-slate-800">NT$ 106,333</span>
                             </div>
                             <div class="flex justify-between text-emerald-600">
-                                <span class="font-semibold">新制：1.5 × 3.0</span>
-                                <span class="font-bold">4.50 點</span>
+                                <span class="font-semibold">新制 (4.50點 | 3.0%):</span>
+                                <span class="font-bold">NT$ 129,808</span>
                             </div>
                         </div>
 
                         <div class="bg-slate-50 p-3 rounded-xl space-y-1">
                             <span class="font-bold text-slate-700 block">考評三等 (基準考評)：</span>
                             <div class="flex justify-between">
-                                <span class="text-slate-500">舊制：2 × 2.0 × 1.16</span>
-                                <span class="font-bold text-slate-800">4.64 點</span>
+                                <span class="text-slate-500">舊制 (4.64點 | 1.5%):</span>
+                                <span class="font-bold text-slate-800">NT$ 38,667</span>
                             </div>
                             <div class="flex justify-between text-emerald-600">
-                                <span class="font-semibold">新制：1.5 × 2.0</span>
-                                <span class="font-bold">3.00 點</span>
+                                <span class="font-semibold">新制 (3.00點 | 3.0%):</span>
+                                <span class="font-bold">NT$ 86,538</span>
                             </div>
                         </div>
                     </div>
@@ -569,34 +623,34 @@
                 <!-- Case B -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">案例 B</span>
+                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">案例 B (EPS $3.5元)</span>
                         <span class="text-xs text-slate-400">年資 5~10 年</span>
                     </div>
                     <h4 class="font-bold text-slate-800 text-base">中生代部級主管 (11-12職等 / 部主管Ⅱ)</h4>
-                    <p class="text-xs text-slate-500">舊制職等5、職務1.2、年資1.2；新制基數4.0 (月薪 NT$ 85,000)</p>
+                    <p class="text-xs text-slate-500">舊制提撥 1.8%、職等5、職務1.2、年資1.2；新制固定 3.0%、基數4.0 (月薪 NT$ 85,000)</p>
 
                     <div class="space-y-2 pt-2 text-xs">
                         <div class="bg-slate-50 p-3 rounded-xl space-y-1">
                             <span class="font-bold text-slate-700 block">考評一等：</span>
                             <div class="flex justify-between">
-                                <span class="text-slate-500">舊制：5 × 5.5 × 1.20</span>
-                                <span class="font-bold text-slate-800">33.00 點</span>
+                                <span class="text-slate-500">舊制 (33.00點 | 1.8%):</span>
+                                <span class="font-bold text-slate-800">NT$ 330,000</span>
                             </div>
                             <div class="flex justify-between text-emerald-600">
-                                <span class="font-semibold">新制：4.0 × 3.0</span>
-                                <span class="font-bold">12.00 點</span>
+                                <span class="font-semibold">新制 (12.00點 | 3.0%):</span>
+                                <span class="font-bold">NT$ 346,154</span>
                             </div>
                         </div>
 
                         <div class="bg-slate-50 p-3 rounded-xl space-y-1">
                             <span class="font-bold text-slate-700 block">考評三等 (基準考評)：</span>
                             <div class="flex justify-between">
-                                <span class="text-slate-500">舊制：5 × 2.0 × 1.20</span>
-                                <span class="font-bold text-slate-800">12.00 點</span>
+                                <span class="text-slate-500">舊制 (12.00點 | 1.8%):</span>
+                                <span class="font-bold text-slate-800">NT$ 120,000</span>
                             </div>
                             <div class="flex justify-between text-emerald-600">
-                                <span class="font-semibold">新制：4.0 × 2.0</span>
-                                <span class="font-bold">8.00 點</span>
+                                <span class="font-semibold">新制 (8.00點 | 3.0%):</span>
+                                <span class="font-bold">NT$ 230,769</span>
                             </div>
                         </div>
                     </div>
@@ -605,34 +659,34 @@
                 <!-- Case C -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">案例 C</span>
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">案例 C (EPS $4.5元)</span>
                         <span class="text-xs text-slate-400">年資 15 年以上</span>
                     </div>
                     <h4 class="font-bold text-slate-800 text-base">高階主管 (15-17職等 / 處級主管Ⅱ)</h4>
-                    <p class="text-xs text-slate-500">舊制職等7、職務1.4、年資1.4；新制基數5.5 (月薪 NT$ 160,000)</p>
+                    <p class="text-xs text-slate-500">舊制提撥 2.0%、職等7、職務1.4、年資1.4；新制固定 3.0%、基數5.5 (月薪 NT$ 160,000)</p>
 
                     <div class="space-y-2 pt-2 text-xs">
                         <div class="bg-slate-50 p-3 rounded-xl space-y-1">
                             <span class="font-bold text-slate-700 block">考評一等：</span>
                             <div class="flex justify-between">
-                                <span class="text-slate-500">舊制：7 × 5.5 × 1.40</span>
-                                <span class="font-bold text-slate-800">53.90 點</span>
+                                <span class="text-slate-500">舊制 (53.90點 | 2.0%):</span>
+                                <span class="font-bold text-slate-800">NT$ 598,889</span>
                             </div>
                             <div class="flex justify-between text-emerald-600">
-                                <span class="font-semibold">新制：5.5 × 3.0</span>
-                                <span class="font-bold">16.50 點</span>
+                                <span class="font-semibold">新制 (16.50點 | 3.0%):</span>
+                                <span class="font-bold">NT$ 475,962</span>
                             </div>
                         </div>
 
                         <div class="bg-slate-50 p-3 rounded-xl space-y-1">
                             <span class="font-bold text-slate-700 block">考評三等 (基準考評)：</span>
                             <div class="flex justify-between">
-                                <span class="text-slate-500">舊制：7 × 2.0 × 1.40</span>
-                                <span class="font-bold text-slate-800">19.60 點</span>
+                                <span class="text-slate-500">舊制 (19.60點 | 2.0%):</span>
+                                <span class="font-bold text-slate-800">NT$ 217,778</span>
                             </div>
                             <div class="flex justify-between text-emerald-600">
-                                <span class="font-semibold">新制：5.5 × 2.0</span>
-                                <span class="font-bold">11.00 點</span>
+                                <span class="font-semibold">新制 (11.00點 | 3.0%):</span>
+                                <span class="font-bold">NT$ 317,308</span>
                             </div>
                         </div>
                     </div>
@@ -650,28 +704,28 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs leading-relaxed">
                 <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 space-y-2">
                     <h4 class="font-bold text-amber-300 text-sm flex items-center gap-2">
-                        <i data-lucide="help-circle" class="w-4 h-4"></i> Q1. 為何我的個人點數絕對值大幅減少？這代表金額等比例縮水嗎？
+                        <i data-lucide="help-circle" class="w-4 h-4"></i> Q1. 舊制 EPS 浮動與新制固定 3.0% 提撥有何實質差別？
                     </h4>
                     <p class="text-slate-300">
-                        **答案是不一定**。點數絕對值縮小是因為新制重新收斂了計算基數盤面（全公司總點數盤面也同步從舊制約 4,500-5,000 點縮小至約 2,500-2,800 點）。實質領取的金額取決於 **「個人點數占全公司總點數之比重」** 與 **「當年度全公司總酬勞金池大小」**。由於新制將酬勞金池改為固定提撥 3.0%，總金池擴大，能很大程度抵銷點數絕對值下降的影響。
+                        舊制提撥率隨著 EPS 階梯浮動（從 0.5% 至最高 2.0%）。當公司 EPS 處於一般獲利（如 EPS 2~3元）時舊制僅提撥 1.5%。**新制改採固定 3.0% 提撥後，整體酬勞金池規模將較舊制顯著提升**，有效擴充利益分享基礎。
                     </p>
                 </div>
 
                 <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 space-y-2">
                     <h4 class="font-bold text-amber-300 text-sm flex items-center gap-2">
-                        <i data-lucide="help-circle" class="w-4 h-4"></i> Q2. 刪除年資加成後，是否有針對資深員工的過渡補償機制？
+                        <i data-lucide="help-circle" class="w-4 h-4"></i> Q2. 為何個人點數絕對值變少，但領到的金額反而可能增加？
                     </h4>
                     <p class="text-slate-300">
-                        根據最新核定修訂條文與說明，**規範中並未提及任何針對取消年資優勢的專屬補償措施**。本次修訂原則為完全回歸「職務價值與當期考評」，將資源集中於現行職務層級責任與實際績效，取消舊制年資滿15年以上最高 1.4 倍的加權。
+                        點數絕對值減少是因為新制重構了計算盤面（全公司總點數盤面也同步從舊制約 4,500 點收斂至約 2,600 點）。實質金額由 **「個人點數占總點數比例 × 酬勞總金池」** 決定。因新制提撥率大幅提升至 3.0%，金池變大足以完全撫平點數名目上的收斂。
                     </p>
                 </div>
 
                 <div class="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 space-y-2">
                     <h4 class="font-bold text-amber-300 text-sm flex items-center gap-2">
-                        <i data-lucide="help-circle" class="w-4 h-4"></i> Q3. 考評基數從 5.5 縮小至 3.0，對高績效員工有何影響？
+                        <i data-lucide="help-circle" class="w-4 h-4"></i> Q3. 刪除年資加成與縮小考評差距的目的為何？
                     </h4>
                     <p class="text-slate-300">
-                        舊制一等與三等相差 2.75 倍（5.5 vs 2.0），新制縮小至 1.5 倍（3.0 vs 2.0）。這項調整能避免單一年度考評落差造成分紅金額被極端拉開，讓整體團隊的分配差距趨於平穩，強調團隊共同獲利的穩定性。
+                        刪除年資最高 1.4 倍加成，可將資源集中於「當前職務層級」與「當期貢獻」；考評倍數由 5.5 倍收斂至 3.0 倍（與基準考評三等落差由 2.75 倍縮至 1.5 倍），避免單一年度考評落差造成分紅金額極端拉開，強調團隊平穩共榮。
                     </p>
                 </div>
             </div>
@@ -714,6 +768,15 @@
             return 1.0;
         }
 
+        // Helper to get Old Rate % from EPS value
+        function getOldEpsRateFromVal(epsVal) {
+            if (epsVal < 1.0) return 0.5;
+            if (epsVal < 2.0) return 1.0;
+            if (epsVal < 3.0) return 1.5;
+            if (epsVal < 4.0) return 1.8;
+            return 2.0;
+        }
+
         let comparisonChart = null;
 
         function initChart() {
@@ -724,13 +787,13 @@
                     labels: ['個人點數比較', '推估分紅金額 (NT$)'],
                     datasets: [
                         {
-                            label: '修訂前 (舊制估計)',
+                            label: '修訂前 (舊制 EPS 浮動)',
                             data: [0, 0],
                             backgroundColor: '#334155',
                             borderRadius: 8
                         },
                         {
-                            label: '修訂後 (固定3.0%提撥)',
+                            label: '修訂後 (固定 3.0% 提撥)',
                             data: [0, 0],
                             backgroundColor: '#059669',
                             borderRadius: 8
@@ -772,6 +835,23 @@
             panel.classList.toggle('hidden');
         }
 
+        function toggleEpsTableModal() {
+            const panel = document.getElementById('epsTablePanel');
+            panel.classList.toggle('hidden');
+        }
+
+        function onEpsSelectChange() {
+            const selectVal = document.getElementById('inputEpsSelect').value;
+            const rateInput = document.getElementById('inputOldEpsRate');
+            
+            if (selectVal !== 'custom') {
+                const epsVal = parseFloat(selectVal);
+                const rate = getOldEpsRateFromVal(epsVal);
+                rateInput.value = rate.toFixed(2);
+            }
+            calculate();
+        }
+
         function calculate() {
             // Read inputs
             const gradeKey = document.getElementById('inputGradeRole').value;
@@ -781,6 +861,10 @@
             // Profit in 億元 -> Convert to NTD
             const profitInYi = Math.max(0.01, parseFloat(document.getElementById('inputProfitYi').value) || 25);
             const preTaxProfitNTD = profitInYi * 100000000; // 億元轉為元
+
+            // Old EPS Rate (%)
+            const oldEpsRatePercent = Math.max(0.01, parseFloat(document.getElementById('inputOldEpsRate').value) || 1.5);
+            const oldRateFraction = oldEpsRatePercent / 100;
 
             const seniorityYears = parseInt(document.getElementById('inputSeniority').value);
             const evalRating = document.querySelector('input[name="inputEval"]:checked').value;
@@ -810,15 +894,22 @@
             const newPoints = newCombinedBase * newEvalBase;
 
             // Pool Money Calculations
-            // 舊制: 依舊制 EPS 級距式提撥估算 (約 1.8% 提撥率)
-            const oldPoolMoney = preTaxProfitNTD * 0.018; 
+            // 舊制: 依當年度 EPS 級距浮動提撥率計算
+            const oldPoolMoney = preTaxProfitNTD * oldRateFraction; 
             
             // 新制: 依新修訂條文規定，固定提撥「稅前淨利 (提撥前) 之 3.0%」
             const newPoolMoney = preTaxProfitNTD * 0.030;
 
-            // Update profit helper text below the input field
+            // Update profit help text
+            const oldPoolWan = Math.round(oldPoolMoney / 10000).toLocaleString();
             const newPoolWan = Math.round(newPoolMoney / 10000).toLocaleString();
-            document.getElementById('profitHelpText').innerText = `新制固定提撥 3.0% = NT$ ${newPoolWan} 萬元酬勞總金池`;
+            
+            document.getElementById('epsHelpText').innerHTML = `
+                <span>舊制浮動金池: NT$ ${oldPoolWan} 萬元 (提撥 ${oldEpsRatePercent.toFixed(1)}%)</span>
+                <button type="button" onclick="toggleEpsTableModal()" class="underline font-bold text-amber-700 hover:text-amber-900">查看完整舊制 EPS 級距表</button>
+            `;
+
+            document.getElementById('oldEpsBadge').innerText = `舊制提撥 ${oldEpsRatePercent.toFixed(1)}%`;
 
             // Individual Amount = (Personal Points / Total Points) * Pool Money
             const oldEstAmount = (oldPoints / oldTotalPoints) * oldPoolMoney;
@@ -840,9 +931,8 @@
             document.getElementById('newMonthsDisplay').innerText = `${newSalaryMonths.toFixed(2)} 個月`;
 
             // Display formula breakdown with pool size
-            const oldPoolWanStr = Math.round(oldPoolMoney / 10000).toLocaleString();
-            document.getElementById('oldFormulaDetail').innerText = `點數算式：${oldGradeBase} × ${oldEvalBase} × (${oldRoleBase}×60% + ${oldSeniorityBase}×40%) | 估計金池: ${oldPoolWanStr}萬 (1.8%)`;
-            document.getElementById('newFormulaDetail').innerText = `點數算式：${newCombinedBase} × ${newEvalBase} | 固定3.0%金池: ${newPoolWan}萬`;
+            document.getElementById('oldFormulaDetail').innerText = `算式：${oldGradeBase} × ${oldEvalBase} × (${oldRoleBase}×60% + ${oldSeniorityBase}×40%) | 金池: NT$ ${oldPoolWan}萬 (${oldEpsRatePercent.toFixed(1)}%)`;
+            document.getElementById('newFormulaDetail').innerText = `算式：${newCombinedBase} × ${newEvalBase} | 固定3.0%金池: NT$ ${newPoolWan}萬`;
 
             // Variance Calculation
             const pointDiffPct = ((newPoints - oldPoints) / oldPoints) * 100;
@@ -850,15 +940,18 @@
 
             const badge = document.getElementById('diffBadge');
             const diffText = document.getElementById('diffText');
+            const diffAlertBox = document.getElementById('diffAlertBox');
 
             badge.innerText = `點數 ${pointDiffPct > 0 ? '+' : ''}${pointDiffPct.toFixed(1)}% | 金額 ${amountDiffPct > 0 ? '+' : ''}${amountDiffPct.toFixed(1)}%`;
 
-            if (pointDiffPct < 0 && amountDiffPct >= -10) {
-                diffText.innerText = `雖然點數絕對值受全盤縮小影響調降 ${Math.abs(pointDiffPct.toFixed(1))}%，但得益於新制將酬勞金池提撥率提高至固定 3.0%（NT$ ${newPoolWan} 萬元），實際推估酬勞僅自 ${oldSalaryMonths.toFixed(2)} 個月月薪微幅變動至 ${newSalaryMonths.toFixed(2)} 個月月薪 (${amountDiffPct.toFixed(1)}%)，大幅緩解了點數名目上的落差。`;
-            } else if (pointDiffPct < 0) {
-                diffText.innerText = `主要受「刪除年資最高1.4倍加成」與「考評倍數縮小」影響，個人點數由 ${oldPoints.toFixed(2)} 降至 ${newPoints.toFixed(2)}（相當月薪由 ${oldSalaryMonths.toFixed(2)} 個月調為 ${newSalaryMonths.toFixed(2)} 個月）。新制將金池提高至固定 3.0%，符合制度回歸當前職務責任、資源不向年資傾斜之修訂宗旨。`;
+            if (amountDiffPct >= 0) {
+                diffAlertBox.className = "p-4 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-900 space-y-2";
+                badge.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900";
+                diffText.innerText = `得益於新制將酬勞金池提撥率調高至固定 3.0%（NT$ ${newPoolWan} 萬元），總金池較舊制的 ${oldEpsRatePercent.toFixed(1)}% 提撥率（NT$ ${oldPoolWan} 萬元）大幅擴張！即便個人名目點數收斂，推估總發放金額仍由 ${oldSalaryMonths.toFixed(2)} 個月月薪增加至 ${newSalaryMonths.toFixed(2)} 個月月薪 (+${amountDiffPct.toFixed(1)}%)。`;
             } else {
-                diffText.innerText = `修訂後個人點數與分紅推估保持穩健增長，相當於 ${newSalaryMonths.toFixed(2)} 個月月薪。新制固定 3.0% 提撥機制進一步提升了分配的透明性與保障性。`;
+                diffAlertBox.className = "p-4 rounded-2xl border bg-amber-50 border-amber-200 text-amber-900 space-y-2";
+                badge.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900";
+                diffText.innerText = `主要受「刪除年資最高1.4倍加成」與「考評倍數差距縮小」影響，個人點數由 ${oldPoints.toFixed(2)} 調為 ${newPoints.toFixed(2)}（相當月薪由 ${oldSalaryMonths.toFixed(2)} 個月調整為 ${newSalaryMonths.toFixed(2)} 個月）。新制固定 3.0% 提撥大幅弭平了點數名目調降帶來的影響，落實薪酬回歸當前職務責任的宗旨。`;
             }
 
             // Update Chart
@@ -875,6 +968,8 @@
                 document.getElementById('inputOldRole').value = '1.0';
                 document.getElementById('inputMonthlySalary').value = 45000;
                 document.getElementById('inputProfitYi').value = 25;
+                document.getElementById('inputEpsSelect').value = '2.5';
+                document.getElementById('inputOldEpsRate').value = '1.50';
                 document.getElementById('inputSeniority').value = 15;
                 document.querySelector('input[name="inputEval"][value="3"]').checked = true;
             } else if (caseType === 'B') { // Middle Manager
@@ -882,6 +977,8 @@
                 document.getElementById('inputOldRole').value = '1.2';
                 document.getElementById('inputMonthlySalary').value = 85000;
                 document.getElementById('inputProfitYi').value = 25;
+                document.getElementById('inputEpsSelect').value = '3.5';
+                document.getElementById('inputOldEpsRate').value = '1.80';
                 document.getElementById('inputSeniority').value = 8;
                 document.querySelector('input[name="inputEval"][value="3"]').checked = true;
             } else if (caseType === 'C') { // Senior Exec
@@ -889,6 +986,8 @@
                 document.getElementById('inputOldRole').value = '1.4';
                 document.getElementById('inputMonthlySalary').value = 160000;
                 document.getElementById('inputProfitYi').value = 25;
+                document.getElementById('inputEpsSelect').value = '4.5';
+                document.getElementById('inputOldEpsRate').value = '2.00';
                 document.getElementById('inputSeniority').value = 16;
                 document.querySelector('input[name="inputEval"][value="1"]').checked = true;
             }
