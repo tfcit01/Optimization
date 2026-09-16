@@ -5,3 +5,5 @@ transaction：更版後檢查交易狀況
 dashboard：叫修紀錄儀表板
 
 POSTEAM-Weekly-Report：週報產生器 (101-Claude)
+
+bonus-calc：獎金試算系統 (101-Gemini)
