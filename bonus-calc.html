@@ -194,14 +194,20 @@
                 <!-- Preset Buttons -->
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-medium text-slate-400 mr-1">載入預設情境：</span>
-                    <button type="button" onclick="loadCase('A')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例A: 資深基層
+                    <button type="button" onclick="loadUserCase2025()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition shadow-xs flex items-center gap-1">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> 2025 實測 (786點 / 1.0%)
                     </button>
-                    <button type="button" onclick="loadCase('B')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例B: 中生代主管
+                    <button type="button" onclick="loadUserCase2024()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition shadow-xs flex items-center gap-1">
+                        <i data-lucide="sliders" class="w-3.5 h-3.5"></i> 2024 校正 (730點 / 1.3%)
                     </button>
-                    <button type="button" onclick="loadCase('C')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例C: 高階主管
+                    <button type="button" onclick="loadCase('A')" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
+                        案例A: 基層
+                    </button>
+                    <button type="button" onclick="loadCase('B')" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
+                        案例B: 部主管
+                    </button>
+                    <button type="button" onclick="loadCase('C')" class="px-2 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
+                        案例C: 處主管
                     </button>
                 </div>
             </div>
@@ -245,7 +251,7 @@
                             <div>
                                 <select id="inputEpsSelect" onchange="onEpsSelectChange()" class="w-full text-xs font-semibold bg-white border border-amber-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-800">
                                     <option value="0.8">EPS &lt; 1.0 元 (提撥 0.5%)</option>
-                                    <option value="1.93" selected>EPS 1.0 ~ 2.0 元 (提撥 1.0%)</option>
+                                    <option value="1.93" selected>EPS 1.0 ~ 2.0 元 (條文 1.0%)</option>
                                     <option value="2.5">EPS 2.0 ~ 3.0 元 (提撥 1.5%)</option>
                                     <option value="3.5">EPS 3.0 ~ 4.0 元 (提撥 1.8%)</option>
                                     <option value="4.5">EPS ≥ 4.0 元 (提撥 2.0%)</option>
@@ -255,11 +261,23 @@
                             <div>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-[11px] text-slate-400 font-medium">提撥</span>
-                                    <input type="number" id="inputOldEpsRate" value="1.00" step="0.1" min="0.1" max="10" oninput="calculate()" class="w-full text-xs font-bold text-right bg-white border border-amber-300 rounded-lg p-2 pl-9 pr-6 focus:ring-2 focus:ring-amber-500 text-amber-900">
+                                    <input type="number" id="inputOldEpsRate" value="1.00" step="0.05" min="0.1" max="10" oninput="calculate()" class="w-full text-xs font-bold text-right bg-white border border-amber-300 rounded-lg p-2 pl-9 pr-6 focus:ring-2 focus:ring-amber-500 text-amber-900">
                                     <span class="absolute inset-y-0 right-0 pr-2 flex items-center text-xs font-bold text-amber-700">%</span>
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Quick Calibration Buttons -->
+                        <div class="flex items-center justify-between text-[11px] pt-1.5 border-t border-amber-200/60">
+                            <span class="text-amber-800 font-medium text-[10px]">提撥率校正：</span>
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="setEpsRate(1.00)" class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-800 rounded border border-amber-300 transition">2025實測 (1.0%)</button>
+                                <button type="button" onclick="setEpsRate(1.30)" class="px-2 py-0.5 text-[10px] font-bold bg-amber-600 hover:bg-amber-700 text-white rounded shadow-xs transition flex items-center gap-1">
+                                    <i data-lucide="check-circle-2" class="w-3 h-3"></i> 2024實質校正 (1.3%)
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="text-[10px] text-amber-800 leading-tight pt-1 flex justify-between items-center" id="epsHelpText">
                             <span>舊制浮動提撥金池: NT$ 3,552 萬元</span>
                             <button type="button" onclick="toggleEpsTableModal()" class="underline font-bold text-amber-700 hover:text-amber-900">查看完整舊制 EPS 級距表</button>
@@ -683,6 +701,26 @@
             '19': { name: '19 職等 / 總經理', oldGrade: 8, newBase: 7.0 }
         };
 
+        function onProfitSelectChange() {
+            const selectVal = document.getElementById('selectHistoricalProfit').value;
+            if (selectVal === '35.52') {
+                loadUserCase2025();
+            } else if (selectVal === '32.08') {
+                loadUserCase2024();
+            } else if (selectVal) {
+                document.getElementById('inputProfitYi').value = selectVal;
+                calculate();
+            }
+        }
+
+        function setEpsRate(rateVal) {
+            const rateInput = document.getElementById('inputOldEpsRate');
+            if (rateInput) {
+                rateInput.value = rateVal.toFixed(2);
+                calculate();
+            }
+        }
+
         const oldEvalBases = { '1': 5.5, '2': 3.5, '3': 2.0, '4': 1.0 };
         const newEvalBases = { '1': 3.0, '2': 2.5, '3': 2.0, '4': 0.5 };
 
@@ -703,14 +741,6 @@
             if (epsVal < 3.0) return 1.5;
             if (epsVal < 4.0) return 1.8;
             return 2.0;
-        }
-
-        function onProfitSelectChange() {
-            const selectVal = document.getElementById('selectHistoricalProfit').value;
-            if (selectVal) {
-                document.getElementById('inputProfitYi').value = selectVal;
-                calculate();
-            }
         }
 
         let pointsChart = null;
@@ -981,12 +1011,13 @@
             }
         }
 
-        // 2025 User Real Test Case (35.4萬 / 786點)
+        // 2025 User Real Test Case (35.4萬 / 786點 / 1.00%)
         function loadUserCase2025() {
             document.getElementById('inputGradeRole').value = '5-6';
             document.getElementById('inputOldRole').value = '1.0';
             document.getElementById('inputMonthlySalary').value = 46967;
             document.getElementById('inputProfitYi').value = 35.52;
+            document.getElementById('selectHistoricalProfit').value = '35.52';
             document.getElementById('inputEpsSelect').value = '1.93';
             document.getElementById('inputOldEpsRate').value = '1.00';
             document.getElementById('inputSeniority').value = 11;
@@ -996,14 +1027,15 @@
             calculate();
         }
 
-        // 2024 User Real Test Case (29.5萬 / 730點)
+        // 2024 User Real Test Case (29.5萬 / 730點 / 1.30% 實質校正)
         function loadUserCase2024() {
             document.getElementById('inputGradeRole').value = '5-6';
             document.getElementById('inputOldRole').value = '1.0';
             document.getElementById('inputMonthlySalary').value = 45045;
             document.getElementById('inputProfitYi').value = 32.08;
-            document.getElementById('inputEpsSelect').value = '2.5';
-            document.getElementById('inputOldEpsRate').value = '1.50';
+            document.getElementById('selectHistoricalProfit').value = '32.08';
+            document.getElementById('inputEpsSelect').value = 'custom';
+            document.getElementById('inputOldEpsRate').value = '1.30';
             document.getElementById('inputSeniority').value = 10;
             document.getElementById('inputOldTotalPoints').value = 730;
             document.getElementById('inputNewTotalPoints').value = 422;
