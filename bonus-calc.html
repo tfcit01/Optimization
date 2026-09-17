@@ -523,6 +523,20 @@
                                     <span>相當於月薪：</span>
                                     <span id="newMonthsDisplay" class="text-sm">18.74 個月</span>
                                 </div>
+                                <div id="newUserBonusBreakdown" class="bg-emerald-950/80 p-2.5 rounded-xl text-[11px] text-emerald-200/90 space-y-1 border border-emerald-800 mt-1">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-emerald-200/80">① 員工年終酬勞(新分紅):</span>
+                                        <span id="newBreakdownRemuneration" class="font-bold text-white">NT$ 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-emerald-200/80">② 職務工作績效獎金(估算):</span>
+                                        <span id="newBreakdownPerfBonus" class="font-bold text-emerald-300">NT$ 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-t border-emerald-800/80 pt-1 text-emerald-300 font-extrabold text-xs">
+                                        <span>新制年度領取總額估算:</span>
+                                        <span id="newBreakdownTotalComp">NT$ 0</span>
+                                    </div>
+                                </div>
                                 <div class="text-[10px] text-emerald-300/80 truncate pt-1" id="newFormulaDetail">
                                     算式：1.5 × 2.5 | 固定3.0%金池: NT$ 10,656 萬
                                 </div>
@@ -951,11 +965,17 @@
             const perfMultiplier = perfBonusMultipliers[evalRating] || 4.54;
             const estPerfBonus = monthlySalary * perfMultiplier;
             const estOldTotalComp = oldEstAmount + estPerfBonus;
+            const estNewTotalComp = newEstAmount + estPerfBonus;
 
-            // Update Dynamic Breakdown UI
+            // Update Dynamic Breakdown UI (Old System)
             document.getElementById('breakdownRemuneration').innerText = `NT$ ${Math.round(oldEstAmount).toLocaleString()}`;
             document.getElementById('breakdownPerfBonus').innerText = monthlySalary > 0 ? `NT$ ${Math.round(estPerfBonus).toLocaleString()} (${perfMultiplier}個月)` : '請輸入月薪';
             document.getElementById('breakdownTotalComp').innerText = `NT$ ${Math.round(estOldTotalComp).toLocaleString()}`;
+
+            // Update Dynamic Breakdown UI (New System)
+            document.getElementById('newBreakdownRemuneration').innerText = `NT$ ${Math.round(newEstAmount).toLocaleString()}`;
+            document.getElementById('newBreakdownPerfBonus').innerText = monthlySalary > 0 ? `NT$ ${Math.round(estPerfBonus).toLocaleString()} (${perfMultiplier}個月)` : '請輸入月薪';
+            document.getElementById('newBreakdownTotalComp').innerText = `NT$ ${Math.round(estNewTotalComp).toLocaleString()}`;
 
             // Calculate Equivalent Salary Multiples
             const oldSalaryMonths = monthlySalary > 0 ? oldEstAmount / monthlySalary : 0;
