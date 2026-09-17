@@ -224,11 +224,11 @@
                             <!-- Historical Profit Dropdown -->
                             <select id="selectHistoricalProfit" onchange="onProfitSelectChange()" class="w-full text-xs font-medium bg-slate-100 border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-red-500 text-slate-700 cursor-pointer">
                                 <option value="" selected>或從近五年歷史稅前淨利快速帶入...</option>
-                                <option value="35.52">2024 年度：35.52 億元</option>
-                                <option value="32.08">2023 年度：32.08 億元</option>
-                                <option value="28.50">2022 年度：28.50 億元</option>
-                                <option value="24.20">2021 年度：24.20 億元</option>
-                                <option value="18.60">2020 年度：18.60 億元</option>
+                                <option value="35.52">2025 年度：35.52 億元</option>
+                                <option value="32.08">2024 年度：32.08 億元</option>
+                                <option value="28.50">2023 年度：28.50 億元</option>
+                                <option value="24.20">2022 年度：24.20 億元</option>
+                                <option value="18.60">2021 年度：18.60 億元</option>
                             </select>
                         </div>
                     </div>
@@ -424,6 +424,16 @@
                             <p class="text-[10px] text-slate-400 leading-tight">
                                 * 移動上方橫 BAR 即可輕鬆調整舊制點數，系統將依約 57.78% 自動連動換算新制總點數。
                             </p>
+
+                            <!-- Added Explanation Note for Dynamic Total Points -->
+                            <div class="mt-2 text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 leading-relaxed space-y-1">
+                                <div class="font-bold text-slate-800 flex items-center gap-1">
+                                    <i data-lucide="info" class="w-3.5 h-3.5 text-blue-600"></i> 全公司總點數並非固定常數：
+                                </div>
+                                <p class="text-[11px] text-slate-600">
+                                    全公司總點數是「全公司所有合資格員工個人點數的加總」。每年會隨著公司總人數增減、全公司考評等第分佈（一、二、三等的人數比例）、員工升遷以及年資累積而動態變化。
+                                </p>
+                            </div>
                         </div>
                     </div>
 
