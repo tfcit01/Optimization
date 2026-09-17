@@ -194,14 +194,17 @@
                 <!-- Preset Buttons -->
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs font-medium text-slate-400 mr-1">載入經典案例：</span>
+                    <button onclick="loadUserCase()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white transition shadow-sm flex items-center gap-1">
+                        <i data-lucide="user-check" class="w-3.5 h-3.5"></i> 2025個人實測 (786點反推)
+                    </button>
                     <button onclick="loadCase('A')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例A: 資深基層 (EPS $2.5)
+                        案例A: 資深基層
                     </button>
                     <button onclick="loadCase('B')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例B: 中生代部主管 (EPS $3.5)
+                        案例B: 中生代主管
                     </button>
                     <button onclick="loadCase('C')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition border border-slate-200">
-                        案例C: 高階主管 (EPS $4.5)
+                        案例C: 高階主管
                     </button>
                 </div>
             </div>
@@ -217,7 +220,7 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">1. 預估公司稅前淨利 (提撥前) (億元)</label>
                         <div class="relative">
-                            <input type="number" id="inputProfitYi" value="25" min="0.1" step="0.5" oninput="calculate()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800 pr-12" placeholder="例如: 25">
+                            <input type="number" id="inputProfitYi" value="35.52" min="0.1" step="0.1" oninput="calculate()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800 pr-12" placeholder="例如: 35.52">
                             <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-500 font-bold">億元</span>
                         </div>
                     </div>
@@ -234,8 +237,8 @@
                             <div>
                                 <select id="inputEpsSelect" onchange="onEpsSelectChange()" class="w-full text-xs font-semibold bg-white border border-amber-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-800">
                                     <option value="0.8">EPS < 1.0 元 (提撥 0.5%)</option>
-                                    <option value="1.5">EPS 1.0 ~ 2.0 元 (提撥 1.0%)</option>
-                                    <option value="2.5" selected>EPS 2.0 ~ 3.0 元 (提撥 1.5%)</option>
+                                    <option value="1.93" selected>EPS 1.0 ~ 2.0 元 (提撥 1.0%)</option>
+                                    <option value="2.5">EPS 2.0 ~ 3.0 元 (提撥 1.5%)</option>
                                     <option value="3.5">EPS 3.0 ~ 4.0 元 (提撥 1.8%)</option>
                                     <option value="4.5">EPS ≥ 4.0 元 (提撥 2.0%)</option>
                                     <option value="custom">自訂 EPS 或 提撥率 %</option>
@@ -244,13 +247,13 @@
                             <div>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-[11px] text-slate-400 font-medium">提撥</span>
-                                    <input type="number" id="inputOldEpsRate" value="1.50" step="0.1" min="0.1" max="10" oninput="calculate()" class="w-full text-xs font-bold text-right bg-white border border-amber-300 rounded-lg p-2 pl-9 pr-6 focus:ring-2 focus:ring-amber-500 text-amber-900">
+                                    <input type="number" id="inputOldEpsRate" value="1.00" step="0.1" min="0.1" max="10" oninput="calculate()" class="w-full text-xs font-bold text-right bg-white border border-amber-300 rounded-lg p-2 pl-9 pr-6 focus:ring-2 focus:ring-amber-500 text-amber-900">
                                     <span class="absolute inset-y-0 right-0 pr-2 flex items-center text-xs font-bold text-amber-700">%</span>
                                 </div>
                             </div>
                         </div>
                         <div class="text-[10px] text-amber-800 leading-tight pt-1 flex justify-between items-center" id="epsHelpText">
-                            <span>舊制浮動提撥金池: NT$ 3,750 萬元</span>
+                            <span>舊制浮動提撥金池: NT$ 3,552 萬元</span>
                             <button type="button" onclick="toggleEpsTableModal()" class="underline font-bold text-amber-700 hover:text-amber-900">查看完整舊制 EPS 級距表</button>
                         </div>
                     </div>
@@ -270,8 +273,8 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <tr><td class="p-1">EPS < 1.0 元</td><td class="p-1 text-right font-bold text-slate-700">0.5 %</td></tr>
-                                <tr><td class="p-1">1.0 元 ≤ EPS < 2.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.0 %</td></tr>
-                                <tr class="bg-amber-50/50"><td class="p-1 font-bold text-amber-900">2.0 元 ≤ EPS < 3.0 元</td><td class="p-1 text-right font-bold text-amber-900">1.5 %</td></tr>
+                                <tr class="bg-amber-50/50"><td class="p-1 font-bold text-amber-900">1.0 元 ≤ EPS < 2.0 元</td><td class="p-1 text-right font-bold text-amber-900">1.0 %</td></tr>
+                                <tr><td class="p-1">2.0 元 ≤ EPS < 3.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.5 %</td></tr>
                                 <tr><td class="p-1">3.0 元 ≤ EPS < 4.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.8 %</td></tr>
                                 <tr><td class="p-1">EPS ≥ 4.0 元</td><td class="p-1 text-right font-bold text-slate-700">2.0 %</td></tr>
                             </tbody>
@@ -311,7 +314,7 @@
                         <label class="block text-xs font-bold text-slate-700 mb-1">5. 個人每月底薪/月薪 (NT$)</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-xs text-slate-400 font-semibold">NT$</span>
-                            <input type="number" id="inputMonthlySalary" value="60000" min="20000" step="1000" oninput="calculate()" class="w-full pl-11 text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800" placeholder="例如: 60000">
+                            <input type="number" id="inputMonthlySalary" value="46967" min="20000" step="1000" oninput="calculate()" class="w-full pl-11 text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-red-500 focus:outline-none text-slate-800" placeholder="例如: 46967">
                         </div>
                     </div>
 
@@ -319,9 +322,9 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs font-bold text-slate-700">6. 任職年資 (影響舊制年資加成，新制取消)</label>
-                            <span id="seniorityValue" class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">15 年 (最高1.4倍)</span>
+                            <span id="seniorityValue" class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">11 年 (1.3倍)</span>
                         </div>
-                        <input type="range" id="inputSeniority" min="0" max="25" value="15" step="1" oninput="calculate()" class="w-full accent-red-600 cursor-pointer">
+                        <input type="range" id="inputSeniority" min="0" max="25" value="11" step="1" oninput="calculate()" class="w-full accent-red-600 cursor-pointer">
                         <div class="flex justify-between text-[10px] text-slate-400 mt-1">
                             <span><1年 (1.0x)</span>
                             <span>1-5年 (1.1x)</span>
@@ -342,13 +345,13 @@
                                 </div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="radio" name="inputEval" value="2" onchange="calculate()" class="peer sr-only">
+                                <input type="radio" name="inputEval" value="2" checked onchange="calculate()" class="peer sr-only">
                                 <div class="text-center p-2 rounded-xl border border-slate-300 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-600 text-xs font-bold text-slate-700 transition">
                                     二等<br><span class="text-[10px] opacity-80">(舊3.5/新2.5)</span>
                                 </div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="radio" name="inputEval" value="3" checked onchange="calculate()" class="peer sr-only">
+                                <input type="radio" name="inputEval" value="3" onchange="calculate()" class="peer sr-only">
                                 <div class="text-center p-2 rounded-xl border border-slate-300 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-600 text-xs font-bold text-slate-700 transition">
                                     三等 (基準)<br><span class="text-[10px] opacity-80">(舊2.0/新2.0)</span>
                                 </div>
@@ -362,22 +365,28 @@
                         </div>
                     </div>
 
-                    <!-- Advanced Options -->
-                    <div class="pt-3 border-t border-slate-200">
-                        <button type="button" onclick="toggleAdvanced()" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-semibold">
-                            <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> 進階全公司總點數設定 (點擊展開/收折)
-                        </button>
-                        <div id="advancedPanel" class="hidden mt-3 space-y-3 bg-white p-3 rounded-xl border border-slate-200 text-xs">
+                    <!-- Dynamic Linked Total Points Panel -->
+                    <div class="pt-3 border-t border-slate-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                                <i data-lucide="calculator" class="w-3.5 h-3.5 text-red-600"></i> 全公司總點數設定 (支援連動自動換算)
+                            </span>
+                            <span class="text-[10px] text-slate-400 bg-slate-200/80 px-2 py-0.5 rounded font-medium">修訂比率 57.78%</span>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-2">
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="block font-bold text-slate-600 mb-0.5">舊制全公司總點數</label>
-                                    <input type="number" id="inputOldTotalPoints" value="4500" step="100" oninput="calculate()" class="w-full border rounded p-1 text-slate-700">
+                                    <label class="block font-bold text-slate-700 mb-0.5">舊制全公司總點數</label>
+                                    <input type="number" id="inputOldTotalPoints" value="786" step="10" oninput="onOldPointsChange()" class="w-full border border-slate-300 rounded p-1.5 font-bold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none">
                                 </div>
                                 <div>
-                                    <label class="block font-bold text-slate-600 mb-0.5">新制全公司總點數</label>
-                                    <input type="number" id="inputNewTotalPoints" value="2600" step="100" oninput="calculate()" class="w-full border rounded p-1 text-slate-700">
+                                    <label class="block font-bold text-emerald-800 mb-0.5">新制全公司總點數 (連動)</label>
+                                    <input type="number" id="inputNewTotalPoints" value="454" step="10" oninput="calculate()" class="w-full border border-emerald-300 bg-emerald-50/50 rounded p-1.5 font-bold text-emerald-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                                 </div>
                             </div>
+                            <p class="text-[10px] text-slate-400 leading-tight">
+                                * 輸入舊制總點數時，系統會依點數結構變更比例 (約 57.78%) 自動換算新制總點數。亦可自行手動微調。
+                            </p>
                         </div>
                     </div>
 
@@ -392,24 +401,29 @@
                             <div>
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">修訂前 (舊制 EPS 浮動)</span>
-                                    <span id="oldEpsBadge" class="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/30">EPS 提撥 1.5%</span>
+                                    <span id="oldEpsBadge" class="text-[10px] font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/30">EPS 提撥 1.0%</span>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span id="oldPointsDisplay" class="text-3xl font-black text-amber-400">4.64</span>
+                                    <span id="oldPointsDisplay" class="text-3xl font-black text-amber-400">7.84</span>
                                     <span class="text-xs text-slate-300">個人點數</span>
                                 </div>
                             </div>
                             <div class="pt-3 border-t border-slate-800 text-xs space-y-1">
                                 <div class="flex justify-between items-baseline">
                                     <span class="text-slate-400">推估酬勞金額：</span>
-                                    <span id="oldAmountDisplay" class="font-bold text-white text-base">NT$ 38,667</span>
+                                    <span id="oldAmountDisplay" class="font-bold text-white text-base">NT$ 354,295</span>
                                 </div>
                                 <div class="flex justify-between items-center text-amber-300 font-bold bg-amber-950/50 px-2 py-1 rounded">
                                     <span>相當於月薪：</span>
-                                    <span id="oldMonthsDisplay" class="text-sm">0.64 個月</span>
+                                    <span id="oldMonthsDisplay" class="text-sm">7.54 個月</span>
+                                </div>
+                                <div id="userBonusBreakdown" class="bg-slate-800/80 p-2 rounded text-[11px] text-amber-200/90 space-y-0.5 border border-slate-700 mt-1">
+                                    <div class="flex justify-between"><span>實測年終獎金:</span> <span class="font-bold">NT$ 354,101</span></div>
+                                    <div class="flex justify-between"><span>工作績效獎金:</span> <span class="font-bold">NT$ 430,192</span></div>
+                                    <div class="flex justify-between border-t border-slate-700 pt-0.5 text-amber-300 font-bold"><span>年度領取總額:</span> <span>NT$ 784,293</span></div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 truncate pt-1" id="oldFormulaDetail">
-                                    算式：2 × 2.0 × (1.0×60% + 1.4×40%) | 金池: NT$ 3,750 萬 (1.5%)
+                                    算式：2 × 3.5 × (1.0×60% + 1.3×40%) | 金池: NT$ 3,552 萬 (1.0%)
                                 </div>
                             </div>
                         </div>
@@ -422,21 +436,21 @@
                                     <span class="text-[10px] font-bold text-emerald-200 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-400/30">固定 3.0% 提撥</span>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span id="newPointsDisplay" class="text-3xl font-black text-emerald-300">3.00</span>
+                                    <span id="newPointsDisplay" class="text-3xl font-black text-emerald-300">3.75</span>
                                     <span class="text-xs text-emerald-200">個人點數</span>
                                 </div>
                             </div>
                             <div class="pt-3 border-t border-emerald-800/80 text-xs space-y-1">
                                 <div class="flex justify-between items-baseline">
                                     <span class="text-emerald-200">推估酬勞金額：</span>
-                                    <span id="newAmountDisplay" class="font-bold text-white text-base">NT$ 86,538</span>
+                                    <span id="newAmountDisplay" class="font-bold text-white text-base">NT$ 880,705</span>
                                 </div>
                                 <div class="flex justify-between items-center text-emerald-300 font-bold bg-emerald-950/60 px-2 py-1 rounded border border-emerald-500/30">
                                     <span>相當於月薪：</span>
-                                    <span id="newMonthsDisplay" class="text-sm">1.44 個月</span>
+                                    <span id="newMonthsDisplay" class="text-sm">18.75 個月</span>
                                 </div>
                                 <div class="text-[10px] text-emerald-300/70 truncate pt-1" id="newFormulaDetail">
-                                    算式：1.5 × 2.0 | 金池: NT$ 7,500 萬 (固定3.0%)
+                                    算式：1.5 × 2.5 | 固定3.0%金池: NT$ 10,656 萬
                                 </div>
                             </div>
                         </div>
@@ -449,17 +463,34 @@
                                 <i data-lucide="info" class="w-4 h-4 text-emerald-600"></i> 新舊制酬勞利益與點數變動分析
                             </span>
                             <span id="diffBadge" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
-                                金額 +123.8%
+                                金額 +148.6%
                             </span>
                         </div>
                         <p id="diffText" class="text-xs leading-relaxed font-medium">
-                            得益於新制將酬勞金池提撥率改為固定 3.0%，總酬勞金池較舊制浮動級距顯著翻倍，大幅提升同仁整體實質收益！
+                            得益於新制將酬勞金池提撥率改為固定 3.0%，總酬勞金池較舊制顯著擴張！
                         </p>
                     </div>
 
-                    <!-- Visual Comparison Bar Chart -->
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 h-52">
-                        <canvas id="comparisonChart"></canvas>
+                    <!-- Visual Comparison Dual Charts -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                            <div class="text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span class="flex items-center gap-1"><i data-lucide="award" class="w-3.5 h-3.5 text-amber-600"></i> 個人點數對比</span>
+                                <span class="text-[10px] text-slate-400 font-medium">單位：點</span>
+                            </div>
+                            <div class="h-36 relative">
+                                <canvas id="pointsChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                            <div class="text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span class="flex items-center gap-1"><i data-lucide="coins" class="w-3.5 h-3.5 text-emerald-600"></i> 推估分紅金額對比</span>
+                                <span class="text-[10px] text-slate-400 font-medium">單位：NT$</span>
+                            </div>
+                            <div class="h-36 relative">
+                                <canvas id="amountChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -716,7 +747,7 @@
                         <i data-lucide="help-circle" class="w-4 h-4"></i> Q2. 為何個人點數絕對值變少，但領到的金額反而可能增加？
                     </h4>
                     <p class="text-slate-300">
-                        點數絕對值減少是因為新制重構了計算盤面（全公司總點數盤面也同步從舊制約 4,500 點收斂至約 2,600 點）。實質金額由 **「個人點數占總點數比例 × 酬勞總金池」** 決定。因新制提撥率大幅提升至 3.0%，金池變大足以完全撫平點數名目上的收斂。
+                        點數絕對值減少是因為新制重構了計算盤面（全公司總點數盤面也同步從舊制約 786/4,500 點收斂至約 454/2,600 點）。實質金額由 **「個人點數占總點數比例 × 酬勞總金池」** 決定。因新制提撥率大幅提升至 3.0%，金池變大足以完全撫平點數名目上的收斂。
                     </p>
                 </div>
 
@@ -768,7 +799,6 @@
             return 1.0;
         }
 
-        // Helper to get Old Rate % from EPS value
         function getOldEpsRateFromVal(epsVal) {
             if (epsVal < 1.0) return 0.5;
             if (epsVal < 2.0) return 1.0;
@@ -777,45 +807,32 @@
             return 2.0;
         }
 
-        let comparisonChart = null;
+        let pointsChart = null;
+        let amountChart = null;
 
         function initChart() {
-            const ctx = document.getElementById('comparisonChart').getContext('2d');
-            comparisonChart = new Chart(ctx, {
+            const ctxPoints = document.getElementById('pointsChart').getContext('2d');
+            pointsChart = new Chart(ctxPoints, {
                 type: 'bar',
                 data: {
-                    labels: ['個人點數比較', '推估分紅金額 (NT$)'],
-                    datasets: [
-                        {
-                            label: '修訂前 (舊制 EPS 浮動)',
-                            data: [0, 0],
-                            backgroundColor: '#334155',
-                            borderRadius: 8
-                        },
-                        {
-                            label: '修訂後 (固定 3.0% 提撥)',
-                            data: [0, 0],
-                            backgroundColor: '#059669',
-                            borderRadius: 8
-                        }
-                    ]
+                    labels: ['修訂前 (舊制)', '修訂後 (新制)'],
+                    datasets: [{
+                        label: '個人點數',
+                        data: [0, 0],
+                        backgroundColor: ['#334155', '#059669'],
+                        borderRadius: 6,
+                        barThickness: 28
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top', labels: { font: { size: 11 } } },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) label += ': ';
-                                    if (context.dataIndex === 1) {
-                                        label += 'NT$ ' + Math.round(context.raw).toLocaleString();
-                                    } else {
-                                        label += context.raw.toFixed(2) + ' 點';
-                                    }
-                                    return label;
+                                    return '個人點數: ' + context.raw.toFixed(2) + ' 點';
                                 }
                             }
                         }
@@ -824,15 +841,56 @@
                         y: {
                             beginAtZero: true,
                             ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 11, weight: 'bold' } }
                         }
                     }
                 }
             });
-        }
 
-        function toggleAdvanced() {
-            const panel = document.getElementById('advancedPanel');
-            panel.classList.toggle('hidden');
+            const ctxAmount = document.getElementById('amountChart').getContext('2d');
+            amountChart = new Chart(ctxAmount, {
+                type: 'bar',
+                data: {
+                    labels: ['修訂前 (舊制)', '修訂後 (新制)'],
+                    datasets: [{
+                        label: '推估金額',
+                        data: [0, 0],
+                        backgroundColor: ['#334155', '#059669'],
+                        borderRadius: 6,
+                        barThickness: 28
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '分紅金額: NT$ ' + Math.round(context.raw).toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 9 },
+                                callback: function(value) {
+                                    return value >= 10000 ? (value / 10000) + '萬' : value;
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: { font: { size: 11, weight: 'bold' } }
+                        }
+                    }
+                }
+            });
         }
 
         function toggleEpsTableModal() {
@@ -852,26 +910,35 @@
             calculate();
         }
 
+        // Automatic Linking of Old Total Points to New Total Points
+        function onOldPointsChange() {
+            const oldTotal = parseFloat(document.getElementById('inputOldTotalPoints').value) || 0;
+            // 2600 / 4500 ratio ≈ 0.57777...
+            const newTotal = Math.round(oldTotal * (2600 / 4500));
+            document.getElementById('inputNewTotalPoints').value = newTotal;
+            calculate();
+        }
+
         function calculate() {
             // Read inputs
             const gradeKey = document.getElementById('inputGradeRole').value;
             const oldRoleBase = parseFloat(document.getElementById('inputOldRole').value);
-            const monthlySalary = Math.max(1, parseFloat(document.getElementById('inputMonthlySalary').value) || 60000);
+            const monthlySalary = Math.max(1, parseFloat(document.getElementById('inputMonthlySalary').value) || 46967);
             
             // Profit in 億元 -> Convert to NTD
-            const profitInYi = Math.max(0.01, parseFloat(document.getElementById('inputProfitYi').value) || 25);
-            const preTaxProfitNTD = profitInYi * 100000000; // 億元轉為元
+            const profitInYi = Math.max(0.01, parseFloat(document.getElementById('inputProfitYi').value) || 35.52);
+            const preTaxProfitNTD = profitInYi * 100000000;
 
             // Old EPS Rate (%)
-            const oldEpsRatePercent = Math.max(0.01, parseFloat(document.getElementById('inputOldEpsRate').value) || 1.5);
+            const oldEpsRatePercent = Math.max(0.01, parseFloat(document.getElementById('inputOldEpsRate').value) || 1.0);
             const oldRateFraction = oldEpsRatePercent / 100;
 
             const seniorityYears = parseInt(document.getElementById('inputSeniority').value);
             const evalRating = document.querySelector('input[name="inputEval"]:checked').value;
 
             // Financial total points
-            const oldTotalPoints = parseFloat(document.getElementById('inputOldTotalPoints').value) || 4500;
-            const newTotalPoints = parseFloat(document.getElementById('inputNewTotalPoints').value) || 2600;
+            const oldTotalPoints = parseFloat(document.getElementById('inputOldTotalPoints').value) || 786;
+            const newTotalPoints = parseFloat(document.getElementById('inputNewTotalPoints').value) || 454;
 
             // Seniority UI update
             document.getElementById('seniorityValue').innerText = `${seniorityYears} 年 (${getSeniorityBase(seniorityYears)}倍加成)`;
@@ -886,18 +953,12 @@
             const newEvalBase = newEvalBases[evalRating];
 
             // Formula Calculations
-            // Old Personal Points = 職等基數 × 考評基數 ×（職務基數 × 60% + 年資基數 × 40%）
             const oldRoleSeniorityWeighted = (oldRoleBase * 0.6) + (oldSeniorityBase * 0.4);
             const oldPoints = oldGradeBase * oldEvalBase * oldRoleSeniorityWeighted;
-
-            // New Personal Points = 職等及職務基數 × 考評基數
             const newPoints = newCombinedBase * newEvalBase;
 
             // Pool Money Calculations
-            // 舊制: 依當年度 EPS 級距浮動提撥率計算
             const oldPoolMoney = preTaxProfitNTD * oldRateFraction; 
-            
-            // 新制: 依新修訂條文規定，固定提撥「稅前淨利 (提撥前) 之 3.0%」
             const newPoolMoney = preTaxProfitNTD * 0.030;
 
             // Update profit help text
@@ -915,7 +976,7 @@
             const oldEstAmount = (oldPoints / oldTotalPoints) * oldPoolMoney;
             const newEstAmount = (newPoints / newTotalPoints) * newPoolMoney;
 
-            // Calculate Equivalent Salary Multiples (月薪月數)
+            // Calculate Equivalent Salary Multiples
             const oldSalaryMonths = oldEstAmount / monthlySalary;
             const newSalaryMonths = newEstAmount / monthlySalary;
 
@@ -930,7 +991,7 @@
             document.getElementById('oldMonthsDisplay').innerText = `${oldSalaryMonths.toFixed(2)} 個月`;
             document.getElementById('newMonthsDisplay').innerText = `${newSalaryMonths.toFixed(2)} 個月`;
 
-            // Display formula breakdown with pool size
+            // Display formula breakdown
             document.getElementById('oldFormulaDetail').innerText = `算式：${oldGradeBase} × ${oldEvalBase} × (${oldRoleBase}×60% + ${oldSeniorityBase}×40%) | 金池: NT$ ${oldPoolWan}萬 (${oldEpsRatePercent.toFixed(1)}%)`;
             document.getElementById('newFormulaDetail').innerText = `算式：${newCombinedBase} × ${newEvalBase} | 固定3.0%金池: NT$ ${newPoolWan}萬`;
 
@@ -947,23 +1008,39 @@
             if (amountDiffPct >= 0) {
                 diffAlertBox.className = "p-4 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-900 space-y-2";
                 badge.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900";
-                diffText.innerText = `得益於新制將酬勞金池提撥率調高至固定 3.0%（NT$ ${newPoolWan} 萬元），總金池較舊制的 ${oldEpsRatePercent.toFixed(1)}% 提撥率（NT$ ${oldPoolWan} 萬元）大幅擴張！即便個人名目點數收斂，推估總發放金額仍由 ${oldSalaryMonths.toFixed(2)} 個月月薪增加至 ${newSalaryMonths.toFixed(2)} 個月月薪 (+${amountDiffPct.toFixed(1)}%)。`;
+                diffText.innerText = `得益於新制將酬勞金池提撥率調高至固定 3.0%（NT$ ${newPoolWan} 萬元），總金池較舊制的 ${oldEpsRatePercent.toFixed(1)}% 提撥率（NT$ ${oldPoolWan} 萬元）大幅擴張！推估總發放金額由 ${oldSalaryMonths.toFixed(2)} 個月月薪增加至 ${newSalaryMonths.toFixed(2)} 個月月薪 (+${amountDiffPct.toFixed(1)}%)。`;
             } else {
                 diffAlertBox.className = "p-4 rounded-2xl border bg-amber-50 border-amber-200 text-amber-900 space-y-2";
                 badge.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900";
-                diffText.innerText = `主要受「刪除年資最高1.4倍加成」與「考評倍數差距縮小」影響，個人點數由 ${oldPoints.toFixed(2)} 調為 ${newPoints.toFixed(2)}（相當月薪由 ${oldSalaryMonths.toFixed(2)} 個月調整為 ${newSalaryMonths.toFixed(2)} 個月）。新制固定 3.0% 提撥大幅弭平了點數名目調降帶來的影響，落實薪酬回歸當前職務責任的宗旨。`;
+                diffText.innerText = `受「刪除年資最高1.4倍加成」與「考評倍數差距縮小」影響，個人點數由 ${oldPoints.toFixed(2)} 調為 ${newPoints.toFixed(2)}。新制固定 3.0% 提撥大幅弭平了點數名目調降帶來的影響。`;
             }
 
-            // Update Chart
-            if (comparisonChart) {
-                comparisonChart.data.datasets[0].data = [oldPoints, oldEstAmount];
-                comparisonChart.data.datasets[1].data = [newPoints, newEstAmount];
-                comparisonChart.update();
+            // Update Dual Charts
+            if (pointsChart && amountChart) {
+                pointsChart.data.datasets[0].data = [oldPoints, newPoints];
+                pointsChart.update();
+
+                amountChart.data.datasets[0].data = [oldEstAmount, newEstAmount];
+                amountChart.update();
             }
         }
 
+        function loadUserCase() {
+            document.getElementById('inputGradeRole').value = '5-6';
+            document.getElementById('inputOldRole').value = '1.0';
+            document.getElementById('inputMonthlySalary').value = 46967;
+            document.getElementById('inputProfitYi').value = 35.52;
+            document.getElementById('inputEpsSelect').value = '1.93';
+            document.getElementById('inputOldEpsRate').value = '1.00';
+            document.getElementById('inputSeniority').value = 11;
+            document.getElementById('inputOldTotalPoints').value = 786;
+            document.getElementById('inputNewTotalPoints').value = 454;
+            document.querySelector('input[name="inputEval"][value="2"]').checked = true;
+            calculate();
+        }
+
         function loadCase(caseType) {
-            if (caseType === 'A') { // Senior Junior Staff
+            if (caseType === 'A') {
                 document.getElementById('inputGradeRole').value = '5-6';
                 document.getElementById('inputOldRole').value = '1.0';
                 document.getElementById('inputMonthlySalary').value = 45000;
@@ -971,8 +1048,10 @@
                 document.getElementById('inputEpsSelect').value = '2.5';
                 document.getElementById('inputOldEpsRate').value = '1.50';
                 document.getElementById('inputSeniority').value = 15;
+                document.getElementById('inputOldTotalPoints').value = 4500;
+                document.getElementById('inputNewTotalPoints').value = 2600;
                 document.querySelector('input[name="inputEval"][value="3"]').checked = true;
-            } else if (caseType === 'B') { // Middle Manager
+            } else if (caseType === 'B') {
                 document.getElementById('inputGradeRole').value = '11-12';
                 document.getElementById('inputOldRole').value = '1.2';
                 document.getElementById('inputMonthlySalary').value = 85000;
@@ -980,8 +1059,10 @@
                 document.getElementById('inputEpsSelect').value = '3.5';
                 document.getElementById('inputOldEpsRate').value = '1.80';
                 document.getElementById('inputSeniority').value = 8;
+                document.getElementById('inputOldTotalPoints').value = 4500;
+                document.getElementById('inputNewTotalPoints').value = 2600;
                 document.querySelector('input[name="inputEval"][value="3"]').checked = true;
-            } else if (caseType === 'C') { // Senior Exec
+            } else if (caseType === 'C') {
                 document.getElementById('inputGradeRole').value = '15-17';
                 document.getElementById('inputOldRole').value = '1.4';
                 document.getElementById('inputMonthlySalary').value = 160000;
@@ -989,6 +1070,8 @@
                 document.getElementById('inputEpsSelect').value = '4.5';
                 document.getElementById('inputOldEpsRate').value = '2.00';
                 document.getElementById('inputSeniority').value = 16;
+                document.getElementById('inputOldTotalPoints').value = 4500;
+                document.getElementById('inputNewTotalPoints').value = 2600;
                 document.querySelector('input[name="inputEval"][value="1"]').checked = true;
             }
             calculate();
