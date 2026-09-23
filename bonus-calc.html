@@ -60,6 +60,7 @@
                 <a href="#overview" class="hover:text-amber-400 transition">修訂重點</a>
                 <a href="#simulator" class="hover:text-amber-400 transition flex items-center gap-1 text-amber-300 font-bold"><i data-lucide="calculator" class="w-4 h-4"></i> 新舊制試算</a>
                 <a href="#comparison" class="hover:text-amber-400 transition">條文對照</a>
+                <a href="#growth-bonus" class="hover:text-amber-400 transition">績效獎金</a>
                 <a href="#cases" class="hover:text-amber-400 transition">代表性情境</a>
                 <a href="#qa" class="hover:text-amber-400 transition">常見問答</a>
             </nav>
@@ -244,11 +245,11 @@
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <select id="inputEpsSelect" onchange="onEpsSelectChange()" class="w-full text-xs font-semibold bg-white border border-amber-300 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none text-slate-800">
-                                    <option value="0.8">EPS &lt; 1.0 元 (提撥 0.5%)</option>
-                                    <option value="1.93" selected>EPS 1.0 ~ 2.0 元 (條文 1.0%)</option>
-                                    <option value="2.5">EPS 2.0 ~ 3.0 元 (提撥 1.5%)</option>
-                                    <option value="3.5">EPS 3.0 ~ 4.0 元 (提撥 1.8%)</option>
-                                    <option value="4.5">EPS ≥ 4.0 元 (提撥 2.0%)</option>
+                                    <option value="0.3">EPS 0.3 元 (未達0.5，提撥0.5%)</option>
+                                    <option value="0.7">EPS 0.7 元 (0.5~1.0，提撥1.0%)</option>
+                                    <option value="1.93" selected>EPS 1.93 元 (提撥約1.43%)</option>
+                                    <option value="2.5">EPS 2.5 元 (提撥約2.0%)</option>
+                                    <option value="3.5">EPS 3.5 元 (提撥約3.0%)</option>
                                     <option value="custom">自訂 EPS 或 提撥率 %</option>
                                 </select>
                             </div>
@@ -287,18 +288,17 @@
                         <table class="w-full text-[11px] text-left border-collapse">
                             <thead>
                                 <tr class="bg-amber-50 text-amber-900 font-bold border-b border-amber-200">
-                                    <th class="p-1">每股盈餘 (EPS 級距)</th>
+                                    <th class="p-1">每股盈餘 (EPS 區間)</th>
                                     <th class="p-1 text-right">舊制酬勞提撥率 (%)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                <tr><td class="p-1">EPS &lt; 1.0 元</td><td class="p-1 text-right font-bold text-slate-700">0.5 %</td></tr>
-                                <tr class="bg-amber-50/50"><td class="p-1 font-bold text-amber-900">1.0 元 ≤ EPS &lt; 2.0 元</td><td class="p-1 text-right font-bold text-amber-900">1.0 %</td></tr>
-                                <tr><td class="p-1">2.0 元 ≤ EPS &lt; 3.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.5 %</td></tr>
-                                <tr><td class="p-1">3.0 元 ≤ EPS &lt; 4.0 元</td><td class="p-1 text-right font-bold text-slate-700">1.8 %</td></tr>
-                                <tr><td class="p-1">EPS ≥ 4.0 元</td><td class="p-1 text-right font-bold text-slate-700">2.0 %</td></tr>
+                                <tr><td class="p-1">逾 0 元 至 0.5 元 (不含)</td><td class="p-1 text-right font-bold text-slate-700">0.5 %</td></tr>
+                                <tr><td class="p-1">逾 0.5 元 至 1.0 元 (不含)</td><td class="p-1 text-right font-bold text-slate-700">1.0 %</td></tr>
+                                <tr class="bg-amber-50/50"><td class="p-1 font-bold text-amber-900">1.0 元（含）以上</td><td class="p-1 text-right font-bold text-amber-900">EPS=1.0時為1.5%，<br>其後每+0.1元、+0.1%</td></tr>
                             </tbody>
                         </table>
+                        <p class="text-[10px] text-slate-400 pt-1">＊條文未設提撥率上限，故本試算不封頂；例：EPS 1.93 元 → 1.5% + (1.93-1.0)×1.0 ≈ 2.43%。</p>
                     </div>
 
                     <!-- 3. Role Grade Selection -->
@@ -478,16 +478,16 @@
                                 </div>
                                 <div id="userBonusBreakdown" class="bg-slate-800/80 p-2.5 rounded-xl text-[11px] text-amber-200/90 space-y-1 border border-slate-700 mt-1">
                                     <div class="flex justify-between items-center">
-                                        <span class="text-slate-300">① 員工年終酬勞(舊分紅):</span>
+                                        <span class="text-slate-300">① 職務工作績效獎金 (依點數分配，占酬勞總額≥95%):</span>
                                         <span id="breakdownRemuneration" class="font-bold text-white">NT$ 354,101</span>
                                     </div>
                                     <div class="flex justify-between items-center">
-                                        <span class="text-slate-300">② 職務工作績效獎金(估算):</span>
-                                        <span id="breakdownPerfBonus" class="font-bold text-amber-300">NT$ 430,192</span>
+                                        <span class="text-slate-400">② 卓越績效獎金 (≤5%，由董事長／總經理視特殊貢獻核給):</span>
+                                        <span id="breakdownPerfBonus" class="font-bold text-slate-400">依個案核給，無法試算</span>
                                     </div>
                                     <div class="flex justify-between items-center border-t border-slate-700/80 pt-1 text-amber-400 font-extrabold text-xs">
-                                        <span>舊制年度領取總額估算:</span>
-                                        <span id="breakdownTotalComp">NT$ 784,293</span>
+                                        <span>舊制年度員工酬勞估算 (不含卓越績效獎金):</span>
+                                        <span id="breakdownTotalComp">NT$ 354,101</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 truncate pt-1" id="oldFormulaDetail">
@@ -519,15 +519,15 @@
                                 </div>
                                 <div id="newUserBonusBreakdown" class="bg-emerald-950/80 p-2.5 rounded-xl text-[11px] text-emerald-200/90 space-y-1 border border-emerald-800 mt-1">
                                     <div class="flex justify-between items-center">
-                                        <span class="text-emerald-200/80">① 員工年終酬勞(新分紅):</span>
+                                        <span class="text-emerald-200/80">① 職務工作績效獎金 (依點數分配，占酬勞總額≥95%):</span>
                                         <span id="newBreakdownRemuneration" class="font-bold text-white">NT$ 0</span>
                                     </div>
                                     <div class="flex justify-between items-center">
-                                        <span class="text-emerald-200/80">② 職務工作績效獎金(估算):</span>
-                                        <span id="newBreakdownPerfBonus" class="font-bold text-emerald-300">NT$ 0</span>
+                                        <span class="text-emerald-200/50">② 卓越績效獎金 (≤5%，由董事長／總經理視特殊貢獻核給):</span>
+                                        <span id="newBreakdownPerfBonus" class="font-bold text-emerald-200/50">依個案核給，無法試算</span>
                                     </div>
                                     <div class="flex justify-between items-center border-t border-emerald-800/80 pt-1 text-emerald-300 font-extrabold text-xs">
-                                        <span>新制年度領取總額估算:</span>
+                                        <span>新制年度員工酬勞估算 (不含卓越績效獎金):</span>
                                         <span id="newBreakdownTotalComp">NT$ 0</span>
                                     </div>
                                 </div>
@@ -607,12 +607,10 @@
                             <tr class="hover:bg-slate-50">
                                 <td class="p-4 font-bold text-slate-900 bg-slate-50">1. 酬勞金池提撥機制</td>
                                 <td class="p-4 border-l">
-                                    <span class="font-bold text-amber-700">EPS 階梯式浮動提撥</span>：<br>
-                                    • EPS &lt; 1.0 元：提撥 0.5%<br>
-                                    • 1.0 ≤ EPS &lt; 2.0 元：提撥 1.0%<br>
-                                    • 2.0 ≤ EPS &lt; 3.0 元：提撥 1.5%<br>
-                                    • 3.0 ≤ EPS &lt; 4.0 元：提撥 1.8%<br>
-                                    • EPS ≥ 4.0 元：提撥 2.0%
+                                    <span class="font-bold text-amber-700">EPS 級距 + 連續遞增提撥</span>：<br>
+                                    • 逾0~0.5元(不含)：提撥 0.5%<br>
+                                    • 逾0.5~1.0元(不含)：提撥 1.0%<br>
+                                    • 1.0元(含)以上：EPS=1.0時1.5%，其後每增加0.1元、提撥率增加0.1%（條文未設封頂）
                                 </td>
                                 <td class="p-4 border-l bg-emerald-50/30">
                                     <span class="font-bold text-emerald-800">固定 3.0% 稅前淨利提撥</span>：<br>
@@ -655,7 +653,68 @@
             </div>
         </section>
 
-        <!-- Section 4: FAQ Section -->
+        <!-- Section 4: 績效獎金 (a separate bonus category from 員工酬勞, per full 員工獎金辦法 text) -->
+        <section id="growth-bonus" class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 space-y-5">
+            <div class="border-l-4 border-blue-600 pl-4">
+                <h3 class="text-2xl font-bold text-slate-900">四、 績效獎金試算（獨立於上方「員工酬勞」之外的另一種獎金）</h3>
+                <p class="text-sm text-slate-500 font-normal">《員工獎金辦法》第四條規定，公司獎金共分「考評獎金」「績效獎金」「員工酬勞」三項，各自獨立計算與發放。上方一～三節試算的是「員工酬勞」；本節試算的是「績效獎金」，兩者不可相加混用。</p>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-900 leading-relaxed space-y-1">
+                <p class="font-bold">條文重點（第四條二、績效獎金）：</p>
+                <p>績效獎金 = 項目一(稅前淨利預算達成率级距，以「月薪資總額」倍數計) + 項目二(當年度稅前淨利較去年同期增加金額，依成長率分級提撥5%/10%/15%/0%)；發放須同時符合「發放後稅前淨利仍須大於零」。個人分配依「績效獎金權數」(一等1.5/二等1.2/三等1.0/四等0.5)辦理，權重表與「職務工作績效獎金」的職等點數制不同。</p>
+                <p class="text-blue-700">＊全公司月薪資總額、全公司績效獎金權數總和屬公司彙總數據，若未填寫，僅顯示金池總額，不會換算為個人金額。</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <p class="text-xs font-bold text-slate-800">項目一：稅前淨利預算達成率</p>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">達成率級距</label>
+                        <select id="inputBudgetTier" onchange="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="0">80%(不含)以下：原則上不發放</option>
+                            <option value="0.5" selected>80%(含)~90%(不含)：0.5個月月薪資總額</option>
+                            <option value="1.0">90%(含)~100%(不含)：1.0個月月薪資總額</option>
+                            <option value="1.5">100%(含)以上：1.5個月月薪資總額</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">全公司月薪資總額 (萬元，前一年12月本薪+伙食津貼+主管加給)</label>
+                        <input type="number" id="inputCompanyMonthlySalary" value="0" min="0" step="1" oninput="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="留空則此項目不計算">
+                    </div>
+                    <p class="text-xs font-bold text-slate-800 pt-2">項目二：獲利成長率加碼</p>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">去年度稅前淨利 (提撥前，億元)</label>
+                        <input type="number" id="inputLastYearProfit" value="32.08" min="0" step="0.01" oninput="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">今年度稅前淨利 (提撥前，億元)</label>
+                        <input type="number" id="inputThisYearProfit" value="35.52" min="0" step="0.01" oninput="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <p class="text-xs font-bold text-slate-800 pt-2">個人試算（選填）</p>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">全公司績效獎金權數總和</label>
+                        <input type="number" id="inputTotalBonusWeight" value="" min="0" step="0.1" oninput="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="留空則不換算個人金額">
+                    </div>
+                </div>
+                <div class="bg-blue-900 text-white p-5 rounded-2xl space-y-2">
+                    <div class="flex justify-between text-xs"><span class="text-blue-200">項目一金額 (達成率倍數 × 全公司月薪資總額)：</span><span id="item1PoolDisplay" class="font-bold">--</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-blue-200">兩期成長率：</span><span id="growthRateDisplay" class="font-bold">--</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-blue-200">項目二適用提撥率：</span><span id="growthTierDisplay" class="font-bold">--</span></div>
+                    <div class="flex justify-between text-xs"><span class="text-blue-200">項目二金額 (增加金額 × 提撥率)：</span><span id="growthPoolDisplay" class="font-bold">--</span></div>
+                    <div class="flex justify-between text-sm border-t border-blue-800 pt-2 font-extrabold">
+                        <span>績效獎金總金池 (項目一+項目二)：</span><span id="totalPerfBonusPoolDisplay" class="text-amber-300">--</span>
+                    </div>
+                    <div class="flex justify-between text-sm border-t border-blue-800 pt-2 font-extrabold">
+                        <span>依您所選考評等第估算個人金額：</span><span id="perfBonusPersonalDisplay" class="text-amber-300">請填全公司績效獎金權數總和</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed">
+                <p class="font-bold text-slate-800">附註：考評獎金（第三種獎金，本工具未提供試算）</p>
+                <p>《員工獎金辦法》第四條一、另訂有「考評獎金」，總發放額以全公司月薪資總額二倍為限，須先依各部門「獎金計分卡」達成率(門檻80%)決定各部門考評獎金總額，再依部門內個人考評等第（權數同為1.5/1.2/1.0/0.5）分配。因涉及各部門計分卡達成率與各部門獎金總額等公司內部數據，本工具未提供試算，如需要請提供部門別數據。</p>
+            </div>
+        </section>
+
+        <!-- Section 4b: FAQ Section -->
         <section id="qa" class="space-y-6">
             <div class="border-l-4 border-red-600 pl-4">
                 <h3 class="text-2xl font-bold text-slate-900">四、 常見問答 (FAQ)</h3>
@@ -732,9 +791,6 @@
         const oldEvalBases = { '1': 5.5, '2': 3.5, '3': 2.0, '4': 1.0 };
         const newEvalBases = { '1': 3.0, '2': 2.5, '3': 2.0, '4': 0.5 };
 
-        // Dynamic multiplier estimation for Job Performance Bonus based on evaluation rating
-        const perfBonusMultipliers = { '1': 12.0, '2': 9.16, '3': 4.54, '4': 2.0 };
-
         function getSeniorityBase(years) {
             if (years >= 15) return 1.4;
             if (years >= 10) return 1.3;
@@ -743,12 +799,15 @@
             return 1.0;
         }
 
+        // 依《員工獎金辦法》第四條第三項「原條文（第四版）」之文字重寫：
+        // 逾0元至0.5元(不含)：0.5%
+        // 逾0.5元至1元(不含)：1.0%
+        // 1.0元(含)以上：EPS=1.0時提撥率1.5%，其後每增加0.1元，提撥率增加0.1%（條文未載明上限，故不設封頂）
         function getOldEpsRateFromVal(epsVal) {
-            if (epsVal < 1.0) return 0.5;
-            if (epsVal < 2.0) return 1.0;
-            if (epsVal < 3.0) return 1.5;
-            if (epsVal < 4.0) return 1.8;
-            return 2.0;
+            if (epsVal <= 0) return 0;
+            if (epsVal < 0.5) return 0.5;
+            if (epsVal < 1.0) return 1.0;
+            return 1.5 + (epsVal - 1.0) * 1.0;
         }
 
         let pointsChart = null;
@@ -945,30 +1004,27 @@
             const newPoolWan = Math.round(newPoolMoney / 10000).toLocaleString();
             
             document.getElementById('epsHelpText').innerHTML = `
-                <span>舊制浮動金池: NT$ ${oldPoolWan} 萬元 (提撥 ${oldEpsRatePercent.toFixed(1)}%)</span>
+                <span>舊制浮動金池: NT$ ${oldPoolWan} 萬元 (提撥 ${oldEpsRatePercent.toFixed(2)}%)</span>
                 <button type="button" onclick="toggleEpsTableModal()" class="underline font-bold text-amber-700 hover:text-amber-900">查看完整舊制 EPS 級距表</button>
             `;
 
-            document.getElementById('oldEpsBadge').innerText = `舊制提撥 ${oldEpsRatePercent.toFixed(1)}%`;
+            document.getElementById('oldEpsBadge').innerText = `舊制提撥 ${oldEpsRatePercent.toFixed(2)}%`;
 
             // Individual Amount = (Personal Points / Total Points) * Pool Money
             const oldEstAmount = oldTotalPoints > 0 ? (oldPoints / oldTotalPoints) * oldPoolMoney : 0;
             const newEstAmount = newTotalPoints > 0 ? (newPoints / newTotalPoints) * newPoolMoney : 0;
 
-            // Calculate Dynamic Job Performance Bonus based on Monthly Salary and Evaluation Grade
-            const perfMultiplier = perfBonusMultipliers[evalRating] || 4.54;
-            const estPerfBonus = monthlySalary * perfMultiplier;
-            const estOldTotalComp = oldEstAmount + estPerfBonus;
-            const estNewTotalComp = newEstAmount + estPerfBonus;
+            // 卓越績效獎金（≤5%）依條文為董事長／總經理視個人特殊或卓越貢獻核給，無公式可循，故不試算，
+            // 年度員工酬勞估算 = 職務工作績效獎金（點數分配部分，≥95%）
+            const estOldTotalComp = oldEstAmount;
+            const estNewTotalComp = newEstAmount;
 
             // Update Dynamic Breakdown UI (Old System)
             document.getElementById('breakdownRemuneration').innerText = `NT$ ${Math.round(oldEstAmount).toLocaleString()}`;
-            document.getElementById('breakdownPerfBonus').innerText = monthlySalary > 0 ? `NT$ ${Math.round(estPerfBonus).toLocaleString()} (${perfMultiplier}個月)` : '請輸入月薪';
             document.getElementById('breakdownTotalComp').innerText = `NT$ ${Math.round(estOldTotalComp).toLocaleString()}`;
 
             // Update Dynamic Breakdown UI (New System)
             document.getElementById('newBreakdownRemuneration').innerText = `NT$ ${Math.round(newEstAmount).toLocaleString()}`;
-            document.getElementById('newBreakdownPerfBonus').innerText = monthlySalary > 0 ? `NT$ ${Math.round(estPerfBonus).toLocaleString()} (${perfMultiplier}個月)` : '請輸入月薪';
             document.getElementById('newBreakdownTotalComp').innerText = `NT$ ${Math.round(estNewTotalComp).toLocaleString()}`;
 
             // Calculate Equivalent Salary Multiples
@@ -987,7 +1043,7 @@
             document.getElementById('newMonthsDisplay').innerText = monthlySalary > 0 ? `${newSalaryMonths.toFixed(2)} 個月` : '請輸入月薪計算';
 
             // Display formula breakdown
-            document.getElementById('oldFormulaDetail').innerText = gradeKey ? `算式：${oldGradeBase} × ${oldEvalBase} × (${oldRoleBase}×60% + ${oldSeniorityBase}×40%) | 金池: NT$ ${oldPoolWan}萬 (${oldEpsRatePercent.toFixed(1)}%)` : '請選擇職等與職務層級';
+            document.getElementById('oldFormulaDetail').innerText = gradeKey ? `算式：${oldGradeBase} × ${oldEvalBase} × (${oldRoleBase}×60% + ${oldSeniorityBase}×40%) | 金池: NT$ ${oldPoolWan}萬 (${oldEpsRatePercent.toFixed(2)}%)` : '請選擇職等與職務層級';
             document.getElementById('newFormulaDetail').innerText = gradeKey ? `算式：${newCombinedBase} × ${newEvalBase} | 固定3.0%金池: NT$ ${newPoolWan}萬` : '請選擇職等與職務層級';
 
             // Variance Calculation
@@ -1007,7 +1063,7 @@
                 if (amountDiffPct >= 0) {
                     diffAlertBox.className = "p-4 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-900 space-y-2";
                     badge.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900";
-                    diffText.innerText = `得益於新制將酬勞金池提撥率調高至固定 3.0%（NT$ ${newPoolWan} 萬元），總金池較舊制的 ${oldEpsRatePercent.toFixed(1)}% 提撥率（NT$ ${oldPoolWan} 萬元）大幅擴張！推估總發放金額為 NT$ ${Math.round(newEstAmount).toLocaleString()}${monthlySalary > 0 ? ` (相當於 ${newSalaryMonths.toFixed(2)} 個月月薪)` : ''}。`;
+                    diffText.innerText = `得益於新制將酬勞金池提撥率調高至固定 3.0%（NT$ ${newPoolWan} 萬元），總金池較舊制的 ${oldEpsRatePercent.toFixed(2)}% 提撥率（NT$ ${oldPoolWan} 萬元）大幅擴張！推估總發放金額為 NT$ ${Math.round(newEstAmount).toLocaleString()}${monthlySalary > 0 ? ` (相當於 ${newSalaryMonths.toFixed(2)} 個月月薪)` : ''}。`;
                 } else {
                     diffAlertBox.className = "p-4 rounded-2xl border bg-amber-50 border-amber-200 text-amber-900 space-y-2";
                     badge.className = "text-xs font-black px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900";
@@ -1023,6 +1079,8 @@
                 amountChart.data.datasets[0].data = [oldEstAmount, newEstAmount];
                 amountChart.update();
             }
+
+            if (typeof calculateGrowthBonus === 'function') calculateGrowthBonus();
         }
 
         // 2025 User Real Test Case (35.4萬 / 786點 / 1.00%)
@@ -1095,10 +1153,75 @@
             calculate();
         }
 
+        // 《員工獎金辦法》第五版 第四條第二項第(一)款之項目二：依成長率分級提撥
+        function getGrowthTierRate(growthPct) {
+            if (growthPct <= 0) return 0;
+            if (growthPct < 10) return 5;
+            if (growthPct < 20) return 10;
+            return 15;
+        }
+
+        // 績效獎金權數 (第四條二、(二))：與職務工作績效獎金的職等點數制不同，僅依考評等第決定
+        const perfBonusWeights = { '1': 1.5, '2': 1.2, '3': 1.0, '4': 0.5 };
+
+        function calculateGrowthBonus() {
+            const item1PoolEl = document.getElementById('item1PoolDisplay');
+            const growthRateEl = document.getElementById('growthRateDisplay');
+            const tierEl = document.getElementById('growthTierDisplay');
+            const poolEl = document.getElementById('growthPoolDisplay');
+            const totalEl = document.getElementById('totalPerfBonusPoolDisplay');
+            const personalEl = document.getElementById('perfBonusPersonalDisplay');
+            if (!growthRateEl || !tierEl || !poolEl || !totalEl) return;
+
+            // 項目一：達成率級距 × 全公司月薪資總額
+            const budgetMultiplier = parseFloat(document.getElementById('inputBudgetTier').value) || 0;
+            const companyMonthlySalaryWan = parseFloat(document.getElementById('inputCompanyMonthlySalary').value) || 0;
+            const item1PoolNTD = budgetMultiplier * companyMonthlySalaryWan * 10000;
+            item1PoolEl.innerText = companyMonthlySalaryWan > 0
+                ? `NT$ ${Math.round(item1PoolNTD / 10000).toLocaleString()} 萬元 (${budgetMultiplier}個月)`
+                : `未填全公司月薪資總額 (級距倍數 ${budgetMultiplier} 個月)`;
+
+            // 項目二：獲利成長率加碼
+            const lastYear = parseFloat(document.getElementById('inputLastYearProfit').value) || 0;
+            const thisYear = parseFloat(document.getElementById('inputThisYearProfit').value) || 0;
+            let item2PoolNTD = 0;
+            if (lastYear <= 0) {
+                growthRateEl.innerText = '請輸入去年度數值';
+                tierEl.innerText = '--';
+                poolEl.innerText = '--';
+            } else {
+                const growthAmountYi = thisYear - lastYear;
+                const growthPct = (growthAmountYi / lastYear) * 100;
+                const tierRate = getGrowthTierRate(growthPct);
+                item2PoolNTD = growthAmountYi > 0 ? growthAmountYi * 100000000 * (tierRate / 100) : 0;
+                growthRateEl.innerText = `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(2)}%`;
+                tierEl.innerText = growthAmountYi <= 0 ? '0% (較去年減少或持平)' : `${tierRate}%`;
+                poolEl.innerText = `NT$ ${Math.round(item2PoolNTD / 10000).toLocaleString()} 萬元`;
+            }
+
+            const totalPoolNTD = item1PoolNTD + item2PoolNTD;
+            totalEl.innerText = `NT$ ${Math.round(totalPoolNTD / 10000).toLocaleString()} 萬元`;
+
+            // 個人試算（選填）：需要全公司績效獎金權數總和才能換算
+            if (personalEl) {
+                const totalWeight = parseFloat(document.getElementById('inputTotalBonusWeight').value) || 0;
+                const evalRadio = document.querySelector('input[name="inputEval"]:checked');
+                const evalRating = evalRadio ? evalRadio.value : '2';
+                const myWeight = perfBonusWeights[evalRating] || 1.2;
+                if (totalWeight > 0 && totalPoolNTD > 0) {
+                    const personalAmount = (myWeight / totalWeight) * totalPoolNTD;
+                    personalEl.innerText = `NT$ ${Math.round(personalAmount).toLocaleString()} (權數${myWeight}/${totalWeight})`;
+                } else {
+                    personalEl.innerText = '請填全公司績效獎金權數總和';
+                }
+            }
+        }
+
         window.onload = function() {
             lucide.createIcons();
             initChart();
             calculate();
+            calculateGrowthBonus();
         };
     </script>
 </body>
