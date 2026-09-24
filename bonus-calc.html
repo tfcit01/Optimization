@@ -530,18 +530,18 @@
                                 </div>
                             </div>
                             <div class="pt-3 border-t border-slate-800 text-xs space-y-1">
-                                <div class="flex justify-between items-baseline">
-                                    <span class="text-slate-400">推估酬勞金額：</span>
-                                    <span id="oldAmountDisplay" class="font-bold text-white text-base">NT$ 354,295</span>
-                                </div>
-                                <div class="flex justify-between items-center text-amber-300 font-bold bg-amber-950/50 px-2 py-1 rounded">
-                                    <span>相當於月薪：</span>
-                                    <span id="oldMonthsDisplay" class="text-sm">7.54 個月</span>
-                                </div>
-                                <div id="userBonusBreakdown" class="bg-slate-800/80 p-2.5 rounded-xl text-[11px] text-amber-200/90 space-y-1 border border-slate-700 mt-1">
-                                    <div class="flex justify-between items-center text-amber-400 font-extrabold text-xs">
-                                        <span>舊制年終酬勞/分紅估算 (農曆過年前發放):</span>
-                                        <span id="breakdownTotalComp">NT$ 354,101</span>
+                                <div id="userBonusBreakdown" class="bg-slate-800/80 p-3 rounded-xl text-xs text-slate-200 space-y-1.5 border-2 border-amber-500/40">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-300">年終酬勞/分紅 <span class="text-slate-500">(農曆年前)</span>：</span>
+                                        <span id="breakdownTotalComp" class="font-bold text-white">NT$ 354,101</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-300">工作績效獎金 <span class="text-slate-500">(5月)</span>：</span>
+                                        <span id="oldPerfBonusDisplay" class="font-bold text-white">NT$ 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-amber-300 font-extrabold border-t border-slate-700 pt-1.5">
+                                        <span>相當月薪：</span>
+                                        <span id="oldMonthsDisplay" class="text-sm">7.54 個月</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-slate-400 truncate pt-1" id="oldFormulaDetail">
@@ -563,18 +563,18 @@
                                 </div>
                             </div>
                             <div class="pt-3 border-t border-emerald-800/80 text-xs space-y-1">
-                                <div class="flex justify-between items-baseline">
-                                    <span class="text-emerald-200">推估酬勞金額：</span>
-                                    <span id="newAmountDisplay" class="font-bold text-white text-base">NT$ 880,176</span>
-                                </div>
-                                <div class="flex justify-between items-center text-emerald-200 font-bold bg-emerald-950/60 px-2 py-1 rounded">
-                                    <span>相當於月薪：</span>
-                                    <span id="newMonthsDisplay" class="text-sm">18.74 個月</span>
-                                </div>
-                                <div id="newUserBonusBreakdown" class="bg-emerald-950/80 p-2.5 rounded-xl text-[11px] text-emerald-200/90 space-y-1 border border-emerald-800 mt-1">
-                                    <div class="flex justify-between items-center text-emerald-300 font-extrabold text-xs">
-                                        <span>新制年終酬勞/分紅估算 (農曆過年前發放):</span>
-                                        <span id="newBreakdownTotalComp">NT$ 0</span>
+                                <div id="newUserBonusBreakdown" class="bg-emerald-950/80 p-3 rounded-xl text-xs text-emerald-100 space-y-1.5 border-2 border-emerald-400/40">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-emerald-200">年終酬勞/分紅 <span class="text-emerald-400/70">(農曆年前)</span>：</span>
+                                        <span id="newBreakdownTotalComp" class="font-bold text-white">NT$ 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-emerald-200">工作績效獎金 <span class="text-emerald-400/70">(5月)</span>：</span>
+                                        <span id="newPerfBonusDisplay" class="font-bold text-white">NT$ 0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-emerald-300 font-extrabold border-t border-emerald-800 pt-1.5">
+                                        <span>相當月薪：</span>
+                                        <span id="newMonthsDisplay" class="text-sm">18.74 個月</span>
                                     </div>
                                 </div>
                                 <div class="text-[10px] text-emerald-300/80 truncate pt-1" id="newFormulaDetail">
@@ -596,19 +596,6 @@
                         </div>
                         <p id="diffText" class="text-xs leading-relaxed">
                             得益於新制將酬勞金池提撥率調高至固定 3.0%（NT$ 10,656 萬元），總金池較舊制的 1.0% 提撥率（NT$ 3,552 萬元）大幅擴張！推估總發放金額由 7.54 個月月薪增加至 18.74 個月月薪 (+148.4%)。
-                        </p>
-                    </div>
-
-                    <!-- Merged 工作績效獎金 panel (auto-calculated from salary/eval grade above; 《員工獎金辦法》，5月發放，與上方員工酬勞是不同的錢) -->
-                    <div class="p-4 rounded-2xl border border-blue-200 bg-blue-50 text-blue-900 space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-1">
-                                <i data-lucide="calendar-days" class="w-4 h-4 text-blue-600"></i> 工作績效獎金 (《員工獎金辦法》，5月發放，非上方員工酬勞)
-                            </span>
-                            <span id="perfMonthsDisplay" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-blue-200 text-blue-900">-- 個月</span>
-                        </div>
-                        <p class="text-xs leading-relaxed">
-                            依您目前輸入的月薪與考評等第自動估算：<span id="perfBonusPersonalDisplay" class="font-bold">--</span>（此為另一筆獨立獎金，不併入上方員工酬勞金額）
                         </p>
                     </div>
 
@@ -953,16 +940,23 @@
             document.getElementById('breakdownTotalComp').innerText = `NT$ ${Math.round(estOldTotalComp).toLocaleString()}`;
             document.getElementById('newBreakdownTotalComp').innerText = `NT$ ${Math.round(estNewTotalComp).toLocaleString()}`;
 
-            // Calculate Equivalent Salary Multiples
-            const oldSalaryMonths = monthlySalary > 0 ? oldEstAmount / monthlySalary : 0;
-            const newSalaryMonths = monthlySalary > 0 ? newEstAmount / monthlySalary : 0;
+            // 工作績效獎金 (《員工獎金辦法》，5月發放，與員工酬勞是不同的錢，新舊制金額相同)
+            const isRealAnchor = perfRealAnchors[evalRating] !== undefined;
+            const perfMonths = isRealAnchor
+                ? perfRealAnchors[evalRating]
+                : perfRealAnchors[perfDefaultAnchorGrade] * (perfBonusWeights[evalRating] / perfBonusWeights[perfDefaultAnchorGrade]);
+            const perfBonusAmount = monthlySalary > 0 ? monthlySalary * perfMonths : 0;
+            const perfBonusText = monthlySalary > 0 ? `NT$ ${Math.round(perfBonusAmount).toLocaleString()}` : '請輸入月薪計算';
+            document.getElementById('oldPerfBonusDisplay').innerText = perfBonusText;
+            document.getElementById('newPerfBonusDisplay').innerText = perfBonusText;
+
+            // Calculate Equivalent Salary Multiples (年終酬勞/分紅 + 工作績效獎金 合計相當月薪)
+            const oldSalaryMonths = monthlySalary > 0 ? (oldEstAmount + perfBonusAmount) / monthlySalary : 0;
+            const newSalaryMonths = monthlySalary > 0 ? (newEstAmount + perfBonusAmount) / monthlySalary : 0;
 
             // UI Render Points & Amounts
             document.getElementById('oldPointsDisplay').innerText = oldPoints.toFixed(2);
             document.getElementById('newPointsDisplay').innerText = newPoints.toFixed(2);
-
-            document.getElementById('oldAmountDisplay').innerText = `NT$ ${Math.round(oldEstAmount).toLocaleString()}`;
-            document.getElementById('newAmountDisplay').innerText = `NT$ ${Math.round(newEstAmount).toLocaleString()}`;
 
             // Render Salary Multiples
             document.getElementById('oldMonthsDisplay').innerText = monthlySalary > 0 ? `${oldSalaryMonths.toFixed(2)} 個月` : '請輸入月薪計算';
@@ -1006,7 +1000,6 @@
                 amountChart.update();
             }
 
-            if (typeof calculateGrowthBonus === 'function') calculateGrowthBonus();
         }
 
         // 2026年5月發放 真實資料 (依2025年度財報35.52億，績效獎金430,192，二等)
@@ -1090,37 +1083,10 @@
         const perfRealAnchors = { '2': 9.16, '3': 4.54 };
         const perfDefaultAnchorGrade = '2';
 
-        function calculateGrowthBonus() {
-            const monthsEl = document.getElementById('perfMonthsDisplay');
-            const personalEl = document.getElementById('perfBonusPersonalDisplay');
-            if (!monthsEl || !personalEl) return;
-
-            const evalRadio = document.querySelector('input[name="inputEval"]:checked');
-            const evalRating = evalRadio ? evalRadio.value : '2';
-
-            const isRealAnchor = perfRealAnchors[evalRating] !== undefined;
-            const months = isRealAnchor
-                ? perfRealAnchors[evalRating]
-                : perfRealAnchors[perfDefaultAnchorGrade] * (perfBonusWeights[evalRating] / perfBonusWeights[perfDefaultAnchorGrade]);
-
-            monthsEl.innerText = `${months.toFixed(2)} 個月${isRealAnchor ? ' (實測校正值)' : ' (依比例推算，非實測)'}`;
-
-            const mainSalaryInput = parseFloat(document.getElementById('inputMonthlySalary').value);
-            const salary = !isNaN(mainSalaryInput) && mainSalaryInput > 0 ? mainSalaryInput : 0;
-
-            if (salary > 0) {
-                const amount = salary * months;
-                personalEl.innerText = `NT$ ${Math.round(amount).toLocaleString()}`;
-            } else {
-                personalEl.innerText = '請於上方輸入月薪';
-            }
-        }
-
         window.onload = function() {
             lucide.createIcons();
             initChart();
             calculate();
-            calculateGrowthBonus();
         };
     </script>
 </body>
