@@ -58,10 +58,8 @@
             </div>
             <nav class="hidden md:flex space-x-6 text-sm font-medium">
                 <a href="#overview" class="hover:text-amber-400 transition">修訂重點</a>
-                <a href="#simulator" class="hover:text-amber-400 transition flex items-center gap-1 text-amber-300 font-bold"><i data-lucide="calculator" class="w-4 h-4"></i> 新舊制試算</a>
                 <a href="#comparison" class="hover:text-amber-400 transition">條文對照</a>
-                <a href="#growth-bonus" class="hover:text-amber-400 transition">工作績效獎金</a>
-                <a href="#cases" class="hover:text-amber-400 transition">代表性情境</a>
+                <a href="#simulator" class="hover:text-amber-400 transition flex items-center gap-1 text-amber-300 font-bold"><i data-lucide="calculator" class="w-4 h-4"></i> 新舊制試算</a>
                 <a href="#qa" class="hover:text-amber-400 transition">常見問答</a>
             </nav>
         </div>
@@ -182,14 +180,79 @@
             </div>
         </section>
 
-        <!-- Section 2: Interactive Simulator -->
+        <section id="comparison" class="space-y-6">
+            <div class="border-l-4 border-red-600 pl-4">
+                <h3 class="text-2xl font-bold text-slate-900">二、 新舊辦法條文核心變更對照表</h3>
+                <p class="text-sm text-slate-500 font-normal">精確條文分析與規範結構對照</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-white font-bold">
+                                <th class="p-4 w-1/5">比較項目</th>
+                                <th class="p-4 w-2/5 border-l border-slate-700">修訂前規範 (舊制)</th>
+                                <th class="p-4 w-2/5 border-l border-slate-700 bg-emerald-950/80 text-emerald-200">修訂後規範 (新制)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-slate-700">
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-bold text-slate-900 bg-slate-50">1. 酬勞金池提撥機制</td>
+                                <td class="p-4 border-l">
+                                    <span class="font-bold text-amber-700">EPS 級距 + 連續遞增提撥</span>：<br>
+                                    • 逾0~0.5元(不含)：提撥 0.5%<br>
+                                    • 逾0.5~1.0元(不含)：提撥 1.0%<br>
+                                    • 1.0元(含)以上：EPS=1.0時1.5%，其後每增加0.1元、提撥率增加0.1%（條文未設封頂）
+                                </td>
+                                <td class="p-4 border-l bg-emerald-50/30">
+                                    <span class="font-bold text-emerald-800">固定 3.0% 稅前淨利提撥</span>：<br>
+                                    • 不再受 EPS 階梯門檻限制。<br>
+                                    • 取當年度未扣除員工酬勞及董事酬勞前之稅前淨利，固定提撥 3.0%。
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-bold text-slate-900 bg-slate-50">2. 個人點數計算公式</td>
+                                <td class="p-4 border-l">
+                                    <code class="bg-slate-100 p-1 rounded font-bold">職等基數 × 考評基數 × (職務基數×60% + 年資基數×40%)</code>
+                                </td>
+                                <td class="p-4 border-l bg-emerald-50/30">
+                                    <code class="bg-emerald-100/80 text-emerald-900 p-1 rounded font-bold">職等及職務整合基數 × 考評基數</code>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-bold text-slate-900 bg-slate-50">3. 年資加成因子</td>
+                                <td class="p-4 border-l">
+                                    <span class="text-amber-700 font-semibold">保留年資加成</span>：滿1年1.1倍、5年1.2倍、10年1.3倍、15年以上1.4倍。
+                                </td>
+                                <td class="p-4 border-l bg-emerald-50/30">
+                                    <span class="text-red-600 font-bold">刪除年資項目</span>：資源完全回歸當前職務價值與考績表現。
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-bold text-slate-900 bg-slate-50">4. 考評基數跨幅</td>
+                                <td class="p-4 border-l">
+                                    一等 5.5 / 二等 3.5 / 三等 2.0 / 四等 1.0<br>
+                                    <span class="text-slate-500">(一等 vs 三等差距 2.75 倍)</span>
+                                </td>
+                                <td class="p-4 border-l bg-emerald-50/30">
+                                    一等 3.0 / 二等 2.5 / 三等 2.0 / 四等 0.5<br>
+                                    <span class="text-emerald-800 font-semibold">(一等 vs 三等差距收斂至 1.5 倍)</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <section id="simulator" class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 space-y-8">
             <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 pb-6 gap-4">
                 <div>
                     <div class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-md mb-1">
                         <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 個人化線上試算器 (含舊制 EPS 浮動 vs 新制固定 3.0%)
                     </div>
-                    <h3 class="text-2xl font-black text-slate-900">二、 員工分紅與酬勞新舊制對比試算</h3>
+                    <h3 class="text-2xl font-black text-slate-900">三、 新舊制對比試算</h3>
                     <p class="text-xs text-slate-500">選擇公司預估 EPS 與稅前淨利，並輸入個人職等與考評，精確評估新舊制度金池與個人收益變動</p>
                 </div>
                 <!-- Preset Buttons -->
@@ -536,6 +599,19 @@
                         </p>
                     </div>
 
+                    <!-- Merged 工作績效獎金 panel (auto-calculated from salary/eval grade above; 《員工獎金辦法》，5月發放，與上方員工酬勞是不同的錢) -->
+                    <div class="p-4 rounded-2xl border border-blue-200 bg-blue-50 text-blue-900 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-1">
+                                <i data-lucide="calendar-days" class="w-4 h-4 text-blue-600"></i> 工作績效獎金 (《員工獎金辦法》，5月發放，非上方員工酬勞)
+                            </span>
+                            <span id="perfMonthsDisplay" class="text-xs font-black px-2.5 py-0.5 rounded-full bg-blue-200 text-blue-900">-- 個月</span>
+                        </div>
+                        <p class="text-xs leading-relaxed">
+                            依您目前輸入的月薪與考評等第自動估算：<span id="perfBonusPersonalDisplay" class="font-bold">--</span>（此為另一筆獨立獎金，不併入上方員工酬勞金額）
+                        </p>
+                    </div>
+
                     <!-- Side-by-Side Dual Independent Charts -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- Chart 1: Personal Points -->
@@ -569,121 +645,6 @@
             </div>
         </section>
 
-        <!-- Section 3: Detailed Rules Comparison Table -->
-        <section id="comparison" class="space-y-6">
-            <div class="border-l-4 border-red-600 pl-4">
-                <h3 class="text-2xl font-bold text-slate-900">三、 新舊辦法條文核心變更對照表</h3>
-                <p class="text-sm text-slate-500 font-normal">精確條文分析與規範結構對照</p>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead>
-                            <tr class="bg-slate-800 text-white font-bold">
-                                <th class="p-4 w-1/5">比較項目</th>
-                                <th class="p-4 w-2/5 border-l border-slate-700">修訂前規範 (舊制)</th>
-                                <th class="p-4 w-2/5 border-l border-slate-700 bg-emerald-950/80 text-emerald-200">修訂後規範 (新制)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 text-slate-700">
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-4 font-bold text-slate-900 bg-slate-50">1. 酬勞金池提撥機制</td>
-                                <td class="p-4 border-l">
-                                    <span class="font-bold text-amber-700">EPS 級距 + 連續遞增提撥</span>：<br>
-                                    • 逾0~0.5元(不含)：提撥 0.5%<br>
-                                    • 逾0.5~1.0元(不含)：提撥 1.0%<br>
-                                    • 1.0元(含)以上：EPS=1.0時1.5%，其後每增加0.1元、提撥率增加0.1%（條文未設封頂）
-                                </td>
-                                <td class="p-4 border-l bg-emerald-50/30">
-                                    <span class="font-bold text-emerald-800">固定 3.0% 稅前淨利提撥</span>：<br>
-                                    • 不再受 EPS 階梯門檻限制。<br>
-                                    • 取當年度未扣除員工酬勞及董事酬勞前之稅前淨利，固定提撥 3.0%。
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-4 font-bold text-slate-900 bg-slate-50">2. 個人點數計算公式</td>
-                                <td class="p-4 border-l">
-                                    <code class="bg-slate-100 p-1 rounded font-bold">職等基數 × 考評基數 × (職務基數×60% + 年資基數×40%)</code>
-                                </td>
-                                <td class="p-4 border-l bg-emerald-50/30">
-                                    <code class="bg-emerald-100/80 text-emerald-900 p-1 rounded font-bold">職等及職務整合基數 × 考評基數</code>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-4 font-bold text-slate-900 bg-slate-50">3. 年資加成因子</td>
-                                <td class="p-4 border-l">
-                                    <span class="text-amber-700 font-semibold">保留年資加成</span>：滿1年1.1倍、5年1.2倍、10年1.3倍、15年以上1.4倍。
-                                </td>
-                                <td class="p-4 border-l bg-emerald-50/30">
-                                    <span class="text-red-600 font-bold">刪除年資項目</span>：資源完全回歸當前職務價值與考績表現。
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-4 font-bold text-slate-900 bg-slate-50">4. 考評基數跨幅</td>
-                                <td class="p-4 border-l">
-                                    一等 5.5 / 二等 3.5 / 三等 2.0 / 四等 1.0<br>
-                                    <span class="text-slate-500">(一等 vs 三等差距 2.75 倍)</span>
-                                </td>
-                                <td class="p-4 border-l bg-emerald-50/30">
-                                    一等 3.0 / 二等 2.5 / 三等 2.0 / 四等 0.5<br>
-                                    <span class="text-emerald-800 font-semibold">(一等 vs 三等差距收斂至 1.5 倍)</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 4: 工作績效獎金 (《員工獎金辦法》，簡化為個人月薪×考評等第對應月數，5月發放) -->
-        <section id="growth-bonus" class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 space-y-5">
-            <div class="border-l-4 border-blue-600 pl-4">
-                <h3 class="text-2xl font-bold text-slate-900">四、 工作績效獎金試算（《員工獎金辦法》，5月發放）</h3>
-                <p class="text-sm text-slate-500 font-normal">跟上方「員工酬勞（年終酬勞/分紅，農曆過年前發放）」是兩筆不同的錢，發放依據、時間都不同，不可相加。</p>
-            </div>
-            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-900 leading-relaxed space-y-1">
-                <p class="font-bold">校正後試算公式：</p>
-                <p>「績效獎金權數」(1.5/1.2/1.0/0.5) 只是分配比例，不是實際月數——實際月數每年依公司當年度達成率/成長率變動，年度之間不可互相套用。目前已有兩個不同年度、不同等第的真實校正點：<b>2025年5月發放(依2024年度)三等＝4.54個月</b>；<b>2026年5月發放(依2025年度)二等＝9.16個月</b>。請先選您要試算的「基準年度/等第」，同年度內其他等第再依權數比例推算(非實測)。</p>
-                <p class="text-blue-700">＊若您有其他等第或年度的實際領取金額，歡迎提供，可再新增校正點。</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">個人月薪 / 底薪</label>
-                        <input type="number" id="inputPerfMonthlySalary" value="" min="0" step="1000" oninput="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="可直接使用上方已輸入的月薪">
-                        <p class="text-[10px] text-slate-400 mt-1">留空則自動帶入上方「員工酬勞」試算區塊已輸入的月薪</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">考評等第（沿用上方選擇）</label>
-                        <div id="perfEvalDisplay" class="text-xs font-semibold bg-white border border-slate-300 rounded-xl p-2.5 text-slate-600">二等</div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">校正基準等第</label>
-                            <select id="inputPerfBaseGrade" onchange="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-amber-300 rounded-xl p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                                <option value="1">一等</option>
-                                <option value="2" selected>二等 (2026/5, 依2025年度)</option>
-                                <option value="3">三等 (2025/5, 依2024年度)</option>
-                                <option value="4">四等</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">基準月數(可校正)</label>
-                            <input type="number" id="inputPerfBaseMonths" value="9.16" min="0" step="0.01" oninput="calculateGrowthBonus()" class="w-full text-xs font-semibold bg-white border border-amber-300 rounded-xl p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-blue-900 text-white p-5 rounded-2xl space-y-2 flex flex-col justify-center">
-                    <div class="flex justify-between text-xs"><span class="text-blue-200">適用月數：</span><span id="perfMonthsDisplay" class="font-bold">--</span></div>
-                    <div class="flex justify-between text-sm border-t border-blue-800 pt-2 font-extrabold">
-                        <span>工作績效獎金估算：</span><span id="perfBonusPersonalDisplay" class="text-amber-300">--</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 4b: FAQ Section -->
         <section id="qa" class="space-y-6">
             <div class="border-l-4 border-red-600 pl-4">
                 <h3 class="text-2xl font-bold text-slate-900">四、 常見問答 (FAQ)</h3>
@@ -1063,8 +1024,6 @@
             document.getElementById('inputOldTotalPoints').value = 786;
             document.getElementById('inputNewTotalPoints').value = 454;
             document.querySelector('input[name="inputEval"][value="2"]').checked = true;
-            document.getElementById('inputPerfBaseGrade').value = '2';
-            document.getElementById('inputPerfBaseMonths').value = '9.16';
             calculate();
         }
 
@@ -1081,8 +1040,6 @@
             document.getElementById('inputOldTotalPoints').value = 730;
             document.getElementById('inputNewTotalPoints').value = 422;
             document.querySelector('input[name="inputEval"][value="3"]').checked = true;
-            document.getElementById('inputPerfBaseGrade').value = '3';
-            document.getElementById('inputPerfBaseMonths').value = '4.54';
             calculate();
         }
 
@@ -1124,45 +1081,38 @@
             calculate();
         }
 
-        // 簡化試算：工作績效獎金 ≈ 個人月薪 × 考評等第對應月數 (績效獎金權數 1.5/1.2/1.0/0.5)
+        // 簡化試算：工作績效獎金 ≈ 個人月薪 × 考評等第對應月數 (績效獎金權數 1.5/1.2/1.0/0.5 僅為分配比例)
         const perfBonusWeights = { '1': 1.5, '2': 1.2, '3': 1.0, '4': 0.5 };
-        const perfEvalLabels = { '1': '一等', '2': '二等', '3': '三等', '4': '四等' };
+        // 目前僅有的兩個真實校正點 (來自使用者實際領取金額反推)：
+        // 二等 9.16個月 -> 2026年5月發放 (依2025年度35.52億)
+        // 三等 4.54個月 -> 2025年5月發放 (依2024年度32.08億)
+        // 同一年度內若沒有實測值的等第 (一等/四等)，以最新一期(二等9.16)為錨點依權數比例推算，非實測。
+        const perfRealAnchors = { '2': 9.16, '3': 4.54 };
+        const perfDefaultAnchorGrade = '2';
 
         function calculateGrowthBonus() {
             const monthsEl = document.getElementById('perfMonthsDisplay');
             const personalEl = document.getElementById('perfBonusPersonalDisplay');
-            const evalDisplayEl = document.getElementById('perfEvalDisplay');
-            const baseGradeEl = document.getElementById('inputPerfBaseGrade');
-            const baseMonthsEl = document.getElementById('inputPerfBaseMonths');
             if (!monthsEl || !personalEl) return;
 
             const evalRadio = document.querySelector('input[name="inputEval"]:checked');
             const evalRating = evalRadio ? evalRadio.value : '2';
 
-            // 以「選定的校正基準等第/月數」(同一年度內的真實數字) 為錨點，
-            // 同年度其他等第依績效獎金權數比例 (1.5:1.2:1.0:0.5) 推算 (非實測)；
-            // 不同年度的校正點不可互相比例換算，因為每年公司達成率/成長率不同。
-            const baseGrade = baseGradeEl ? baseGradeEl.value : '2';
-            const baseMonths = baseMonthsEl ? (parseFloat(baseMonthsEl.value) || 9.16) : 9.16;
-            const months = baseMonths * (perfBonusWeights[evalRating] / perfBonusWeights[baseGrade]);
+            const isRealAnchor = perfRealAnchors[evalRating] !== undefined;
+            const months = isRealAnchor
+                ? perfRealAnchors[evalRating]
+                : perfRealAnchors[perfDefaultAnchorGrade] * (perfBonusWeights[evalRating] / perfBonusWeights[perfDefaultAnchorGrade]);
 
-            if (evalDisplayEl) {
-                evalDisplayEl.innerText = `${perfEvalLabels[evalRating]}`;
-            }
-            monthsEl.innerText = `${months.toFixed(2)} 個月${evalRating === baseGrade ? ' (實測校正值)' : ' (同年度依比例推算)'}`;
+            monthsEl.innerText = `${months.toFixed(2)} 個月${isRealAnchor ? ' (實測校正值)' : ' (依比例推算，非實測)'}`;
 
-            // 個人月薪：優先使用本區塊自己輸入的值，否則沿用上方員工酬勞試算區塊的月薪
-            const perfSalaryInput = parseFloat(document.getElementById('inputPerfMonthlySalary').value);
             const mainSalaryInput = parseFloat(document.getElementById('inputMonthlySalary').value);
-            const salary = !isNaN(perfSalaryInput) && perfSalaryInput > 0
-                ? perfSalaryInput
-                : (!isNaN(mainSalaryInput) && mainSalaryInput > 0 ? mainSalaryInput : 0);
+            const salary = !isNaN(mainSalaryInput) && mainSalaryInput > 0 ? mainSalaryInput : 0;
 
             if (salary > 0) {
                 const amount = salary * months;
                 personalEl.innerText = `NT$ ${Math.round(amount).toLocaleString()}`;
             } else {
-                personalEl.innerText = '請輸入月薪';
+                personalEl.innerText = '請於上方輸入月薪';
             }
         }
 
