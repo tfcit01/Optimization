@@ -289,11 +289,8 @@
                             <!-- Historical Profit Dropdown -->
                             <select id="selectHistoricalProfit" onchange="onProfitSelectChange()" class="w-full text-xs font-medium bg-slate-100 border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-red-500 text-slate-700 cursor-pointer">
                                 <option value="" selected>或從近五年歷史稅前淨利快速帶入...</option>
-                                <option value="35.52">2025年度35.52億 → 帶入2026年真實案例(二等)</option>
-                                <option value="32.08">2024年度32.08億 → 帶入2025年真實案例(二等)</option>
-                                <option value="27.69">2023年度27.69億 → 帶入2024年案例(三等，⚠️金額對不起來)</option>
-                                <option value="19.08">2022 年度：19.08 億元 (官方確認，無實領資料可核對)</option>
-                                <option value="16.10">2021 年度：16.10 億元 (官方確認，無實領資料可核對)</option>
+                                <option value="35.52">2025年度35.52億 → 計算2026年實領金額</option>
+                                <option value="32.08">2024年度32.08億 → 計算2025年實領金額</option>
                             </select>
                         </div>
                     </div>
@@ -678,8 +675,6 @@
                 loadUserCase2025();
             } else if (selectVal === '32.08') {
                 loadUserCase2024();
-            } else if (selectVal === '27.69') {
-                loadUserCase2024Anomaly();
             } else if (selectVal) {
                 document.getElementById('inputProfitYi').value = selectVal;
                 calculate();
@@ -1006,40 +1001,23 @@
 
         }
 
-        // 2026年2月/5月發放 真實資料 (依2025年度財報35.52億；年終354,101、績效獎金430,192；官方尚未公布2025年終考評等第，
-        // 但用二等回推的金額與354,101幾乎完全吻合(誤差NT$80內)，故暫以二等試算)
+        // 計算2026年實領金額：只帶入營運參數(稅前淨利、全公司總點數)，個人參數(職等/職務/月薪/年資/考評)維持使用者目前輸入
+        // 全公司總點數2,445：依2026年真實案例(二等7.84點、年終354,101)反推得出 (誤差僅NT$80)
         function loadUserCase2025() {
-            document.getElementById('inputGradeRole').value = '5-6';
-            document.getElementById('inputOldRole').value = '1.0';
-            document.getElementById('inputMonthlySalary').value = 46967;
             document.getElementById('inputProfitYi').value = 35.52;
             document.getElementById('selectHistoricalProfit').value = '35.52';
-            document.getElementById('inputSeniority').value = 11;
-            // 總點數 2,445：用二等7.84點反推354,101精確得出 (誤差僅NT$80)
             document.getElementById('inputOldTotalPoints').value = 2445;
             document.getElementById('inputNewTotalPoints').value = 1413;
-            document.querySelector('input[name="inputEval"][value="2"]').checked = true;
-            document.getElementById('inputPerfEval').value = '2';
-            calculate();
-            perfBonusOverride = 430192;
             calculate();
         }
 
-        // 2025年2月/5月發放 真實資料 (依2024年度財報32.08億；年終295,251、績效獎金204,465；考評二等)
+        // 計算2025年實領金額：只帶入營運參數(稅前淨利、全公司總點數)，個人參數維持使用者目前輸入
+        // 全公司總點數2,376：依2025年真實案例(二等7.84點、年終295,251)反推得出 (誤差僅NT$1)
         function loadUserCase2024() {
-            document.getElementById('inputGradeRole').value = '5-6';
-            document.getElementById('inputOldRole').value = '1.0';
-            document.getElementById('inputMonthlySalary').value = 45045;
             document.getElementById('inputProfitYi').value = 32.08;
             document.getElementById('selectHistoricalProfit').value = '32.08';
-            document.getElementById('inputSeniority').value = 10;
-            // 總點數 2,376：用二等7.84點反推295,251精確得出 (誤差僅NT$1)
             document.getElementById('inputOldTotalPoints').value = 2376;
             document.getElementById('inputNewTotalPoints').value = 1373;
-            document.querySelector('input[name="inputEval"][value="2"]').checked = true;
-            document.getElementById('inputPerfEval').value = '2';
-            calculate();
-            perfBonusOverride = 204465;
             calculate();
         }
 
